@@ -1,0 +1,43 @@
+[build-system]
+requires = ["briefcase"]
+build-backend = "briefcase.build"
+
+[project]
+name = "biblia_app"
+version = "1.0.1"
+description = "Aplicación bíblica con pantalla de bienvenida"
+authors = [{ name = "Juan" }]
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+
+[tool.flet.app]
+exclude = [
+    "build",
+    "dist",
+    "Lib",
+    "Scripts",
+    "__pycache__",
+    ".gradle",
+    ".gradle-user-home",
+    ".gradle-user-home-apk",
+    "*.jks",
+    "*.bat",
+    "roots.sst",
+]
+
+[tool.briefcase]
+project_name = "Biblia App"
+bundle = "com.jmgalmedina"
+version = "1.0.1"
+url = "https://tiktok.com/@jmgalmedina"
+author = "Juan"
+author_email = "example@example.com"
+
+[tool.briefcase.app.biblia_app]
+formal_name = "Biblia App"
+description = "Aplicación bíblica con bienvenida y menú"
+sources = ["src/biblia_app"]
+requires = ["flet", "certifi"]
+module = "biblia_app"
+
+
