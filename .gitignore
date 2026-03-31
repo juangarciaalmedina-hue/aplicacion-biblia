@@ -8,6 +8,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.dist-info/
 
 build/
 dist/
@@ -32,4 +33,3 @@ sync.ffs_db
 roots.sst
 cacert.pem
 certifi.py
-
