@@ -64,5 +64,3 @@ Publicar una version web local:
 ```powershell
 flet publish main.py --distpath dist
 ```
-
-Despues de publicar, los archivos web generados quedan en `build/flutter/web`.
