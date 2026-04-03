@@ -1,6 +1,6 @@
 [build]
   command = "python -m pip install --upgrade pip && pip install -r requirements.txt && flet publish main.py --distpath dist"
-  publish = "dist"
+  publish = "build/flutter/web"
   functions = "netlify/functions"
 
 [build.environment]

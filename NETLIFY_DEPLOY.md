@@ -26,7 +26,7 @@ El repositorio debe estar en GitHub sin incluir `.env`, claves reales, ni carpet
 Netlify deberia detectar `netlify.toml` y usar:
 
 - comando de build: `python -m pip install --upgrade pip && pip install -r requirements.txt && flet publish main.py --distpath dist`
-- carpeta publicada: `dist`
+- carpeta publicada: `build/flutter/web`
 - funciones: `netlify/functions`
 
 ## 3. Variables de entorno en Netlify
