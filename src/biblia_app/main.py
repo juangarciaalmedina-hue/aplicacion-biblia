@@ -59,6 +59,9 @@ def main(page: ft.Page):
         }
         return titulos.get(clave, titulos["startup"]).get(idioma_actual["code"], titulos["startup"]["es"])
 
+    def detalle_error(exc: Exception) -> str:
+        return f"{exc}\n\n{traceback.format_exc()}"
+
     def detectar_idioma_dispositivo() -> str:
         try:
             locale_cfg = getattr(page, "locale_configuration", None)
@@ -112,7 +115,7 @@ def main(page: ft.Page):
                 precarga_lanzada["ok"] = True
                 page.run_task(precalentar_idioma_detectado_async, idioma_detectado)
         except Exception as exc:
-            mostrar_error(page, titulo_error("welcome"), f"{exc}\n\n{traceback.format_exc()}")
+            mostrar_error(page, titulo_error("welcome"), detalle_error(exc))
 
     def mostrar_saludos(idioma: str):
         try:
@@ -133,7 +136,7 @@ def main(page: ft.Page):
             )
             page.update()
         except Exception as exc:
-            mostrar_error(page, titulo_error("greetings"), f"{exc}\n\n{traceback.format_exc()}")
+            mostrar_error(page, titulo_error("greetings"), detalle_error(exc))
 
     def mostrar_carga_saludo(idioma: str):
         try:
@@ -150,7 +153,7 @@ def main(page: ft.Page):
             page.update()
             page.run_task(cargar_contenido_async, idioma)
         except Exception as exc:
-            mostrar_error(page, titulo_error("loading"), f"{exc}\n\n{traceback.format_exc()}")
+            mostrar_error(page, titulo_error("loading"), detalle_error(exc))
 
     async def cargar_contenido_async(idioma: str):
         await asyncio.sleep(10)
@@ -175,7 +178,7 @@ def main(page: ft.Page):
             )
             page.update()
         except Exception as exc:
-            mostrar_error(page, "Error en seleccion de entrada", f"{exc}\n\n{traceback.format_exc()}")
+            mostrar_error(page, titulo_error("entry"), detalle_error(exc))
 
     def mostrar_contenido(idioma: str | None = None, inicio: str = "biblia"):
         try:
@@ -190,12 +193,12 @@ def main(page: ft.Page):
             )
             page.update()
         except Exception as exc:
-            mostrar_error(page, titulo_error("content"), f"{exc}\n\n{traceback.format_exc()}")
+            mostrar_error(page, titulo_error("content"), detalle_error(exc))
 
     try:
         mostrar_selector_idioma()
     except Exception as exc:
-        mostrar_error(page, titulo_error("startup"), f"{exc}\n\n{traceback.format_exc()}")
+        mostrar_error(page, titulo_error("startup"), detalle_error(exc))
 
 
 if __name__ == "__main__":
