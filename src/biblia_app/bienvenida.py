@@ -490,6 +490,19 @@ def pantalla_carga_saludo(page: ft.Page, language_code: str):
     theme = get_language_theme(language_code)
     welcome = cfg["welcome"]
     saludo_mostrar = _obtener_siguiente_saludo(language_code)
+    aviso_actualizacion = ft.Container(
+        content=ft.Text(
+            welcome["update_notice"],
+            size=18,
+            color=theme["text"],
+            text_align=ft.TextAlign.CENTER,
+        ),
+        padding=20,
+        bgcolor=theme["accent"],
+        border=ft.border.all(4, theme["panel_border"]),
+        border_radius=16,
+        width=360,
+    )
 
     return ft.Column(
         controls=[
@@ -516,6 +529,7 @@ def pantalla_carga_saludo(page: ft.Page, language_code: str):
                 border_radius=16,
                 width=360,
             ),
+            aviso_actualizacion,
         ],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=22,

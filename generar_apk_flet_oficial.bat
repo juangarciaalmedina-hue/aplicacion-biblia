@@ -1,9 +1,12 @@
 @echo off
 setlocal
 
+chcp 65001 >nul
+set "PYTHONUTF8=1"
+set "PYTHONIOENCODING=utf-8"
+
 set "PROJECT_DIR=%~dp0"
 set "JAVA_HOME=C:\Program Files\Microsoft\jdk-17.0.10.7-hotspot"
-set "FLET_EXE=C:\Users\ester\AppData\Local\Programs\Python\Python311\Scripts\flet.exe"
 
 echo.
 echo === Generar APK con Flet oficial ===
@@ -16,14 +19,15 @@ if not exist "%JAVA_HOME%\bin\java.exe" (
     exit /b 1
 )
 
-if not exist "%FLET_EXE%" (
-    echo No se encontro la CLI de Flet en:
-    echo %FLET_EXE%
+cd /d "%PROJECT_DIR%"
+
+python validar_openrouter.py
+if errorlevel 1 (
+    echo.
+    echo La configuracion de IA no es valida. Corrige OPENROUTER_PROXY_URL o OPENROUTER_API_KEY antes de generar el APK.
     pause
     exit /b 1
 )
-
-cd /d "%PROJECT_DIR%"
 
 python -m pip install -U flet
 if errorlevel 1 (
@@ -33,7 +37,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-"%FLET_EXE%" build apk . --clear-cache --product "Biblia IA" --org com.jmgalmedina --bundle-id com.jmgalmedina.biblia_app
+flet build apk . --clear-cache --product "Biblia IA" --org com.jmgalmedina --bundle-id com.jmgalmedina.biblia_app
 if errorlevel 1 (
     echo.
     echo Fallo la generacion del APK con Flet.

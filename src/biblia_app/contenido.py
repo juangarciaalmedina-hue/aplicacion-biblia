@@ -4,9 +4,12 @@ import asyncio
 import random
 import re
 import ssl
+import subprocess
+import textwrap
 import unicodedata
 import urllib.error
 import urllib.request
+from datetime import datetime
 from pathlib import Path
 import sys
 
@@ -41,6 +44,7 @@ cargar_env_local()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 NETLIFY_OPENROUTER_PROXY_URL = "/api/openrouter"
+OPENROUTER_PROXY_URL = os.getenv("OPENROUTER_PROXY_URL", "").strip()
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini").strip()
 OPENROUTER_FALLBACK_MODELS = [
     model.strip()
@@ -56,6 +60,32 @@ OPENROUTER_TOP_P = float(os.getenv("OPENROUTER_TOP_P", "0.9"))
 
 def ejecutando_en_web_estatica() -> bool:
     return sys.platform == "emscripten"
+
+
+def plataforma_actual() -> str:
+    return (os.getenv("FLET_PLATFORM", "") or sys.platform or "").strip().lower()
+
+
+def ejecutando_en_android() -> bool:
+    return "android" in plataforma_actual()
+
+
+def ejecutando_en_ios() -> bool:
+    return plataforma_actual() in {"ios", "iphone", "ipad"}
+
+
+def ejecutando_en_movil_publicable() -> bool:
+    return ejecutando_en_android() or ejecutando_en_ios()
+
+
+def obtener_url_proxy_openrouter() -> str:
+    if ejecutando_en_web_estatica():
+        return OPENROUTER_PROXY_URL or NETLIFY_OPENROUTER_PROXY_URL
+    return OPENROUTER_PROXY_URL
+
+
+def debe_usar_proxy_openrouter() -> bool:
+    return ejecutando_en_web_estatica() or ejecutando_en_movil_publicable() or bool(OPENROUTER_PROXY_URL)
 
 
 def construir_system_prompt(lang_code: str, mode: str = "study") -> str:
@@ -143,8 +173,114 @@ def mensaje_configuracion_ia(lang_code: str) -> str:
     )
 
 
+def mensaje_configuracion_proxy(lang_code: str) -> str:
+    if lang_code == "ca":
+        return (
+            "Error: falta configurar el proxy segur de la IA.\n\n"
+            "Per publicar l'aplicació a Android o iOS sense exposar la clau, configura `OPENROUTER_PROXY_URL` amb una URL HTTPS del teu backend o de Netlify, per exemple:\n\n"
+            "```env\n"
+            "OPENROUTER_PROXY_URL=https://el-teu-lloc.netlify.app/api/openrouter\n"
+            "```\n\n"
+            "La clau `OPENROUTER_API_KEY` ha d'estar només al servidor, no dins de l'APK."
+        )
+    if lang_code == "fr":
+        return (
+            "Erreur : le proxy sécurisé de l'IA n'est pas configuré.\n\n"
+            "Pour publier l'application sur Android ou iOS sans exposer la clé, configure `OPENROUTER_PROXY_URL` avec une URL HTTPS de ton backend ou de Netlify, par exemple :\n\n"
+            "```env\n"
+            "OPENROUTER_PROXY_URL=https://ton-site.netlify.app/api/openrouter\n"
+            "```\n\n"
+            "La clé `OPENROUTER_API_KEY` doit rester uniquement sur le serveur, jamais dans l'APK."
+        )
+    if lang_code == "en":
+        return (
+            "Error: the secure AI proxy is not configured.\n\n"
+            "To publish the app on Android or iOS without exposing the key, set `OPENROUTER_PROXY_URL` to an HTTPS URL from your backend or Netlify, for example:\n\n"
+            "```env\n"
+            "OPENROUTER_PROXY_URL=https://your-site.netlify.app/api/openrouter\n"
+            "```\n\n"
+            "`OPENROUTER_API_KEY` must stay on the server only, never inside the APK."
+        )
+    return (
+        "Error: falta configurar el proxy seguro de la IA.\n\n"
+        "Para publicar la aplicación en Android o iOS sin exponer la clave, configura `OPENROUTER_PROXY_URL` con una URL HTTPS de tu backend o de Netlify, por ejemplo:\n\n"
+        "```env\n"
+        "OPENROUTER_PROXY_URL=https://tu-sitio.netlify.app/api/openrouter\n"
+        "```\n\n"
+        "La clave `OPENROUTER_API_KEY` debe quedarse solo en el servidor, nunca dentro de la APK."
+    )
+
+
+def mensaje_proxy_inseguro(lang_code: str) -> str:
+    if lang_code == "ca":
+        return "Error: `OPENROUTER_PROXY_URL` ha de ser una URL HTTPS vàlida per a la versió mòbil publicable."
+    if lang_code == "fr":
+        return "Erreur : `OPENROUTER_PROXY_URL` doit être une URL HTTPS valide pour la version mobile publiable."
+    if lang_code == "en":
+        return "Error: `OPENROUTER_PROXY_URL` must be a valid HTTPS URL for the publishable mobile build."
+    return "Error: `OPENROUTER_PROXY_URL` debe ser una URL HTTPS válida para la versión móvil publicable."
+
+
+def formatear_error_openrouter(status_code: int, detalle: str, lang_code: str = "es") -> str:
+    mensaje_api = ""
+
+    try:
+        data = json.loads(detalle)
+        mensaje_api = (
+            data.get("error", {}).get("message")
+            or data.get("message")
+            or ""
+        ).strip()
+    except Exception:
+        mensaje_api = (detalle or "").strip()
+
+    if status_code == 401 and "user not found" in mensaje_api.lower():
+        if lang_code == "en":
+            return (
+                "Authentication error with OpenRouter: the configured user was not found.\n\n"
+                "Check that `OPENROUTER_API_KEY` belongs to an active OpenRouter account and replace it with a new key if needed."
+            )
+        if lang_code == "fr":
+            return (
+                "Erreur d'authentification OpenRouter : l'utilisateur configuré est introuvable.\n\n"
+                "Vérifie que `OPENROUTER_API_KEY` appartient à un compte OpenRouter actif et remplace-la par une nouvelle clé si nécessaire."
+            )
+        if lang_code == "ca":
+            return (
+                "Error d'autenticació amb OpenRouter: no s'ha trobat l'usuari configurat.\n\n"
+                "Comprova que `OPENROUTER_API_KEY` pertany a un compte OpenRouter actiu i substitueix-la per una clau nova si cal."
+            )
+        return (
+            "Error de autenticacion con OpenRouter: no se encontro el usuario asociado a la clave configurada.\n\n"
+            "Revisa que `OPENROUTER_API_KEY` pertenezca a una cuenta activa de OpenRouter y, si hace falta, genera una clave nueva en OpenRouter y actualizala en tu `.env` o en Netlify."
+        )
+
+    if status_code == 401:
+        return f"Error de autenticacion con OpenRouter ({status_code}). Detalle: {mensaje_api or detalle}"
+
+    if status_code == 402:
+        return "OpenRouter rechazo la solicitud por credito o facturacion. Revisa tu saldo y limites de cuenta."
+
+    if status_code == 404:
+        return f"OpenRouter no encontro el recurso o modelo solicitado. Detalle: {mensaje_api or detalle}"
+
+    if status_code == 429:
+        return "OpenRouter esta limitando temporalmente las solicitudes. Espera un momento e intentalo de nuevo."
+
+    return f"Error HTTP {status_code}: {mensaje_api or detalle}"
+
+
 def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str:
-    if not ejecutando_en_web_estatica() and not OPENROUTER_API_KEY:
+    usa_proxy = debe_usar_proxy_openrouter()
+    proxy_url = obtener_url_proxy_openrouter()
+
+    if usa_proxy and not proxy_url:
+        return mensaje_configuracion_proxy(lang_code)
+
+    if ejecutando_en_movil_publicable() and proxy_url and not proxy_url.lower().startswith("https://"):
+        return mensaje_proxy_inseguro(lang_code)
+
+    if not usa_proxy and not OPENROUTER_API_KEY:
         return mensaje_configuracion_ia(lang_code)
 
     payload = {
@@ -163,25 +299,40 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
         headers = {"Content-Type": "application/json"}
         url = OPENROUTER_URL
 
-        if ejecutando_en_web_estatica():
-            from js import XMLHttpRequest
+        if usa_proxy:
+            url = proxy_url
 
-            xhr = XMLHttpRequest.new()
-            xhr.open("POST", NETLIFY_OPENROUTER_PROXY_URL, False)
-            xhr.setRequestHeader("Content-Type", "application/json")
-            xhr.send(json.dumps(payload))
+            if ejecutando_en_web_estatica():
+                from js import XMLHttpRequest
 
-            body = str(xhr.responseText or "")
-            status = int(xhr.status or 0)
+                xhr = XMLHttpRequest.new()
+                xhr.open("POST", url, False)
+                xhr.setRequestHeader("Content-Type", "application/json")
+                xhr.send(json.dumps(payload))
 
-            if status >= 400:
-                if status == 404:
-                    return (
-                        "Error de despliegue: la Function de Netlify no esta disponible. "
-                        "Verifica que el sitio esta desplegado con la carpeta "
-                        "`netlify/functions` y que la ruta `/api/openrouter` existe."
-                    )
-                return f"Error HTTP {status}: {body}"
+                body = str(xhr.responseText or "")
+                status = int(xhr.status or 0)
+
+                if status >= 400:
+                    if status == 404:
+                        return (
+                            "Error de despliegue: el proxy de IA no esta disponible. "
+                            "Verifica que el sitio este desplegado con la carpeta "
+                            "`netlify/functions` o que `OPENROUTER_PROXY_URL` apunte a una ruta valida."
+                        )
+                    return formatear_error_openrouter(status, body, lang_code)
+            else:
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers=headers,
+                    method="POST",
+                )
+
+                ssl_context = ssl.create_default_context()
+
+                with urllib.request.urlopen(req, timeout=30, context=ssl_context) as response:
+                    body = response.read().decode("utf-8")
         else:
             url = OPENROUTER_URL
             headers.update(
@@ -211,7 +362,7 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
             detalle = exc.read().decode("utf-8")
         except Exception:
             detalle = str(exc)
-        return f"Error HTTP {exc.code}: {detalle}"
+        return formatear_error_openrouter(exc.code, detalle, lang_code)
     except urllib.error.URLError as exc:
         return f"Error de conexión: {exc.reason}"
     except ssl.SSLError as exc:
@@ -525,6 +676,98 @@ def mostrar_mensaje(page: ft.Page, texto: str):
     page.update()
 
 
+def _quitar_markdown_para_pdf(texto: str) -> str:
+    texto_limpio = texto.replace("\r\n", "\n")
+    texto_limpio = re.sub(r"```+", "", texto_limpio)
+    texto_limpio = re.sub(r"^\s{0,3}#{1,6}\s*", "", texto_limpio, flags=re.MULTILINE)
+    texto_limpio = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1 (\2)", texto_limpio)
+    for token in ("**", "__", "`"):
+        texto_limpio = texto_limpio.replace(token, "")
+    texto_limpio = re.sub(r"(?<!\*)\*(?!\*)", "", texto_limpio)
+    texto_limpio = re.sub(r"(?<!_)_(?!_)", "", texto_limpio)
+    texto_limpio = re.sub(r"^\s*>\s?", "", texto_limpio, flags=re.MULTILINE)
+    return texto_limpio.strip()
+
+
+def _envolver_linea_pdf(linea: str, ancho: int = 92) -> list[str]:
+    if not linea.strip():
+        return [""]
+
+    match = re.match(r"^(\s*(?:[-*]|\d+\.))\s+(.*)$", linea)
+    if match:
+        prefijo = f"{match.group(1)} "
+        cuerpo = match.group(2)
+        partes = textwrap.wrap(cuerpo, width=max(20, ancho - len(prefijo)), break_long_words=False, break_on_hyphens=False)
+        if not partes:
+            return [prefijo.rstrip()]
+        return [prefijo + partes[0], *[(" " * len(prefijo)) + parte for parte in partes[1:]]]
+
+    return textwrap.wrap(linea, width=ancho, break_long_words=False, break_on_hyphens=False) or [linea]
+
+
+def _escapar_texto_pdf(texto: str) -> bytes:
+    escapado = texto.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+    return escapado.encode("cp1252", errors="replace")
+
+
+def _crear_pdf_basico(ruta: Path, lineas: list[str]) -> None:
+    max_lineas_por_pagina = 46
+    paginas = [lineas[i:i + max_lineas_por_pagina] for i in range(0, len(lineas), max_lineas_por_pagina)] or [[""]]
+
+    objetos: list[bytes] = []
+    total_paginas = len(paginas)
+    total_objetos = 3 + (total_paginas * 2)
+
+    objetos.append(b"<< /Type /Catalog /Pages 2 0 R >>")
+
+    kids = " ".join(f"{4 + indice * 2} 0 R" for indice in range(total_paginas))
+    objetos.append(f"<< /Type /Pages /Kids [{kids}] /Count {total_paginas} >>".encode("ascii"))
+    objetos.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
+
+    for indice, pagina in enumerate(paginas):
+        numero_pagina = 4 + indice * 2
+        numero_contenido = numero_pagina + 1
+        contenido = [b"BT", b"/F1 11 Tf", b"14 TL", b"50 790 Td"]
+        primera = True
+        for linea in pagina:
+            if not primera:
+                contenido.append(b"T*")
+            primera = False
+            if linea:
+                contenido.append(b"(" + _escapar_texto_pdf(linea) + b") Tj")
+        contenido.append(b"ET")
+        stream = b"\n".join(contenido)
+        objetos.append(
+            f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 3 0 R >> >> /Contents {numero_contenido} 0 R >>".encode("ascii")
+        )
+        objetos.append(f"<< /Length {len(stream)} >>\nstream\n".encode("ascii") + stream + b"\nendstream")
+
+    buffer = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = [0]
+    for indice, objeto in enumerate(objetos, start=1):
+        offsets.append(len(buffer))
+        buffer.extend(f"{indice} 0 obj\n".encode("ascii"))
+        buffer.extend(objeto)
+        buffer.extend(b"\nendobj\n")
+
+    inicio_xref = len(buffer)
+    buffer.extend(f"xref\n0 {total_objetos + 1}\n".encode("ascii"))
+    buffer.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        buffer.extend(f"{offset:010d} 00000 n \n".encode("ascii"))
+    buffer.extend(
+        f"trailer\n<< /Size {total_objetos + 1} /Root 1 0 R >>\nstartxref\n{inicio_xref}\n%%EOF".encode("ascii")
+    )
+    ruta.write_bytes(buffer)
+
+
+def _slug_para_nombre_archivo(texto: str, max_len: int = 60) -> str:
+    normalizado = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii")
+    limpio = re.sub(r"[^a-zA-Z0-9]+", "_", normalizado.lower()).strip("_")
+    limpio = re.sub(r"_+", "_", limpio)
+    return (limpio[:max_len].strip("_") or "resultado")
+
+
 def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="biblia", on_volver_inicio=None):
     lang = get_language_config(idioma)
     theme = get_language_theme(idioma)
@@ -603,12 +846,28 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         "fr": {"filter": "Filtre", "book": "Livre", "passage": "Passage", "type": "Type", "topic": "Theme"},
         "en": {"filter": "Filter", "book": "Book", "passage": "Passage", "type": "Type", "topic": "Topic"},
     }.get(lang_code, {"filter": "Filter", "book": "Book", "passage": "Passage", "type": "Type", "topic": "Topic"})
+    contexto_activo_titulo = {
+        "es": "CONTEXTO ACTIVO",
+        "ca": "CONTEXT ACTIU",
+        "fr": "CONTEXTE ACTIF",
+        "en": "ACTIVE CONTEXT",
+    }.get(lang_code, "ACTIVE CONTEXT")
+    contexto_activo_labels = {
+        "es": {"topic": "Tema", "character": "Personaje", "group": "Grupo", "people": "Pueblo", "place": "Lugar", "religion": "Religion", "passage": "Pasaje"},
+        "ca": {"topic": "Tema", "character": "Personatge", "group": "Grup", "people": "Poble", "place": "Lloc", "religion": "Religio", "passage": "Passatge"},
+        "fr": {"topic": "Theme", "character": "Personnage", "group": "Groupe", "people": "Peuple", "place": "Lieu", "religion": "Religion", "passage": "Passage"},
+        "en": {"topic": "Topic", "character": "Character", "group": "Group", "people": "People", "place": "Place", "religion": "Religion", "passage": "Passage"},
+    }.get(
+        lang_code,
+        {"topic": "Topic", "character": "Character", "group": "Group", "people": "People", "place": "Place", "religion": "Religion", "passage": "Passage"},
+    )
     study_type_labels = {
         "Solo versiculos": only_verses,
         "Estudio informativo": ui["study_info"],
         "Estudio versiculos": ui["verse_study"],
         "Reflexion biblica": ui["biblical_reflection"],
         "Aplicacion practica": ui["practical_application"],
+        "Bosquejo para predicar": ui["sermon_outline"],
         "Devocional breve": ui["brief_devotional"],
     }
     book_translations = {
@@ -2534,6 +2793,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     dd_pais = crear_dropdown(ui["place"], [], default=no_selection, formatter=localize_catalog_item, border_color=theme["field_border"], label_color=theme["primary"], fill_color=theme["field_bg"])
     dd_religion = crear_dropdown(ui["religions"], [], default=no_selection, formatter=localize_catalog_item, border_color=theme["field_border"], label_color=theme["primary"], fill_color=theme["field_bg"])
     especiales = [dd_hombre, dd_mujer, dd_grupo, dd_pueblo, dd_pais, dd_religion]
+    tipo_contexto_por_dropdown = {
+        dd_hombre: "character",
+        dd_mujer: "character",
+        dd_grupo: "group",
+        dd_pueblo: "people",
+        dd_pais: "place",
+        dd_religion: "religion",
+    }
     for dropdown in [dd_hombre, dd_mujer, dd_grupo, dd_pueblo, dd_pais, dd_religion]:
         dropdown.border_color = theme["field_border"]
         dropdown.label_style = label_style_theme
@@ -2555,6 +2822,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ft.dropdown.Option(key="Estudio versiculos", text=ui["verse_study"]),
             ft.dropdown.Option(key="Reflexion biblica", text=ui["biblical_reflection"]),
             ft.dropdown.Option(key="Aplicacion practica", text=ui["practical_application"]),
+            ft.dropdown.Option(key="Bosquejo para predicar", text=ui["sermon_outline"]),
             ft.dropdown.Option(key="Devocional breve", text=ui["brief_devotional"]),
         ],
         value="Ninguno",
@@ -4353,6 +4621,23 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return None
         return localize_catalog_item(str(valor))
 
+    def obtener_contexto_activo_destacado() -> tuple[str | None, str | None]:
+        activo = next((d for d in especiales if d.value != no_selection), None)
+        if activo is not None:
+            tipo = tipo_contexto_por_dropdown.get(activo)
+            return contexto_activo_labels.get(tipo), valor_localizado(activo.value)
+
+        if dd_tema_sugerido.value != "Ninguno":
+            return contexto_activo_labels["topic"], etiqueta_tema(dd_tema_sugerido.value)
+
+        if dd_libro.value != no_selection and dd_cap.value and dd_ini.value and dd_fin.value:
+            return (
+                contexto_activo_labels["passage"],
+                f"{localize_book_name(dd_libro.value)} {dd_cap.value}:{dd_ini.value}-{dd_fin.value}",
+            )
+
+        return None, None
+
     dd_tema_sugerido = ft.Dropdown(
         label=ui["suggested_topic"].upper(),
         options=[ft.dropdown.Option(key="Ninguno", text=ui["no_selection"])],
@@ -4410,6 +4695,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
     )
     clipboard_service = ft.Clipboard()
+    share_service = ft.Share()
 
     tf_resultado_vacio = ft.TextField(
         value="",
@@ -4448,6 +4734,37 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         f"{resumen_prefijo}: {resumen_vacio}",
         color="#666666",
         size=12,
+    )
+    texto_consulta_resultado = ft.Text(
+        "",
+        color=theme["muted"],
+        size=12,
+        italic=True,
+        text_align=ft.TextAlign.RIGHT,
+        visible=False,
+    )
+    texto_contexto_activo_titulo = ft.Text(
+        contexto_activo_titulo,
+        color=theme["primary"],
+        size=11,
+        weight=ft.FontWeight.W_700,
+    )
+    texto_contexto_activo_valor = ft.Text(
+        "",
+        color=theme["primary"],
+        size=16,
+        weight=ft.FontWeight.W_700,
+    )
+    contenedor_contexto_activo = ft.Container(
+        content=ft.Column(
+            [texto_contexto_activo_titulo, texto_contexto_activo_valor],
+            spacing=4,
+        ),
+        padding=ft.padding.symmetric(horizontal=12, vertical=10),
+        bgcolor=theme["accent"],
+        border=ft.border.all(4, theme["panel_border"]),
+        border_radius=16,
+        visible=False,
     )
     texto_estado = ft.Text(
         ui["status_ready"],
@@ -4749,6 +5066,24 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         texto_resumen.value = f"{resumen_prefijo}: " + (" | ".join(partes) if partes else resumen_vacio)
 
+        consulta_resultado = " | ".join(partes)
+        if not consulta_resultado and dd_comportamiento.value != "Ninguno":
+            consulta_resultado = mapa_situaciones_comportamiento.get(dd_comportamiento.value, "")
+        if not consulta_resultado and dd_incredulo.value != "Ninguno":
+            consulta_resultado = mapa_preguntas_incredulo.get(dd_incredulo.value, "")
+        if not consulta_resultado and dd_cristianos.value != "Ninguno":
+            consulta_resultado = mapa_preguntas_cristianos.get(dd_cristianos.value, "")
+        texto_consulta_resultado.value = consulta_resultado
+        texto_consulta_resultado.visible = bool(consulta_resultado)
+
+        tipo_contexto, valor_contexto = obtener_contexto_activo_destacado()
+        if tipo_contexto and valor_contexto:
+            texto_contexto_activo_valor.value = f"{tipo_contexto}: {valor_contexto}"
+            contenedor_contexto_activo.visible = True
+        else:
+            texto_contexto_activo_valor.value = ""
+            contenedor_contexto_activo.visible = False
+
     def manejar_bloqueos(e=None):
         activo = next((d for d in especiales if d.value != no_selection), None)
         tema_activo = dd_tema_sugerido.value != "Ninguno"
@@ -4781,6 +5116,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             [
                 ft.dropdown.Option(key="Reflexion biblica", text=ui["biblical_reflection"]),
                 ft.dropdown.Option(key="Aplicacion practica", text=ui["practical_application"]),
+                ft.dropdown.Option(key="Bosquejo para predicar", text=ui["sermon_outline"]),
                 ft.dropdown.Option(key="Devocional breve", text=ui["brief_devotional"]),
             ]
         )
@@ -5039,6 +5375,170 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return
         await clipboard_service.set(result_md.value)
         mostrar_mensaje(page, ui["msg_copied"])
+
+    def obtener_directorio_pdf() -> Path:
+        candidatos = [
+            Path("/storage/emulated/0/Download"),
+            Path("/storage/emulated/0/Downloads"),
+            Path("/sdcard/Download"),
+            Path("/sdcard/Downloads"),
+            Path.home() / "Downloads",
+            Path.home() / "Descargas",
+            Path.home() / "OneDrive" / "Downloads",
+            Path.home() / "OneDrive" / "Descargas",
+            Path.cwd(),
+        ]
+        for candidato in candidatos:
+            if candidato.exists() and candidato.is_dir():
+                return candidato
+
+        for candidato in candidatos[:-1]:
+            try:
+                candidato.mkdir(parents=True, exist_ok=True)
+                if candidato.exists() and candidato.is_dir():
+                    return candidato
+            except Exception:
+                continue
+
+        return Path.cwd()
+
+    async def abrir_pdf_generado_async(ruta_pdf: Path):
+        try:
+            if os.name == "nt" and hasattr(os, "startfile"):
+                os.startfile(str(ruta_pdf))
+                return
+        except Exception:
+            pass
+
+        try:
+            await share_service.share_files(
+                [ft.ShareFile.from_path(str(ruta_pdf), name=ruta_pdf.name)],
+                title=ui["pdf_saved_title"],
+                text=ui["msg_pdf_created"].format(path=str(ruta_pdf)),
+            )
+            return
+        except Exception:
+            pass
+
+        try:
+            await page.launch_url(ruta_pdf.resolve().as_uri())
+            return
+        except Exception:
+            pass
+
+        try:
+            await page.launch_url(str(ruta_pdf))
+        except Exception:
+            pass
+
+    async def abrir_destino_pdf_async(carpeta_destino: Path, ruta_pdf: Path):
+        try:
+            if os.name == "nt":
+                subprocess.Popen(["explorer", "/select,", str(ruta_pdf)])
+                return
+        except Exception:
+            pass
+
+        try:
+            if hasattr(os, "startfile"):
+                os.startfile(str(carpeta_destino))
+                return
+        except Exception:
+            pass
+
+        try:
+            await page.launch_url(carpeta_destino.resolve().as_uri())
+            return
+        except Exception:
+            pass
+
+        await abrir_pdf_generado_async(ruta_pdf)
+
+    async def copiar_ruta_pdf_async(ruta_pdf: Path):
+        await clipboard_service.set(str(ruta_pdf))
+        mostrar_mensaje(page, ui["msg_path_copied"])
+
+    def mostrar_dialogo_pdf_generado(carpeta_destino: Path, ruta_pdf: Path):
+        dialogo = ft.AlertDialog(
+            modal=False,
+            title=ft.Text(ui["pdf_saved_title"]),
+            content=ft.Column(
+                [
+                    ft.Text(ui["pdf_saved_help"]),
+                    ft.TextField(
+                        value=str(ruta_pdf),
+                        read_only=True,
+                        multiline=True,
+                        min_lines=2,
+                        max_lines=3,
+                        bgcolor=theme["accent"],
+                        border_color=theme["field_border"],
+                    ),
+                ],
+                tight=True,
+                spacing=10,
+            ),
+            actions=[
+                ft.TextButton(ui["copy_path"], on_click=lambda e: page.run_task(copiar_ruta_pdf_async, ruta_pdf)),
+                ft.TextButton(ui["open_pdf"], on_click=lambda e: page.run_task(abrir_pdf_generado_async, ruta_pdf)),
+                ft.TextButton(ui["open_folder"], on_click=lambda e: page.run_task(abrir_destino_pdf_async, carpeta_destino, ruta_pdf)),
+                ft.TextButton(ui["close"], on_click=lambda e: cerrar_dialogo_pdf(dialogo)),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        page.dialog = dialogo
+        dialogo.open = True
+        page.update()
+
+    def cerrar_dialogo_pdf(dialogo: ft.AlertDialog):
+        dialogo.open = False
+        page.update()
+
+    async def generar_pdf_resultado_async():
+        if not result_md.value.strip():
+            mostrar_mensaje(page, ui["msg_no_content"])
+            return
+
+        try:
+            actualizar_boton_pdf(True)
+            page.update()
+            await asyncio.sleep(0.05)
+            momento = datetime.now().strftime("%Y%m%d_%H%M%S")
+            carpeta_destino = obtener_directorio_pdf()
+            tipo_contexto, valor_contexto = obtener_contexto_activo_destacado()
+            partes_nombre = ["biblia_ia"]
+            tipo_estudio = localize_study_type(dd_tipo.value)
+            if tipo_estudio:
+                partes_nombre.append(_slug_para_nombre_archivo(tipo_estudio, 32))
+            if valor_contexto:
+                partes_nombre.append(_slug_para_nombre_archivo(valor_contexto, 40))
+            elif tipo_contexto:
+                partes_nombre.append(_slug_para_nombre_archivo(tipo_contexto, 24))
+            partes_nombre.append(momento)
+            nombre_pdf = "_".join(parte for parte in partes_nombre if parte)
+            ruta_pdf = carpeta_destino / f"{nombre_pdf}.pdf"
+            cabecera = [
+                ui["title"],
+                datetime.now().strftime("%d/%m/%Y %H:%M"),
+                texto_resumen.value,
+                "",
+                ui["result"],
+                "",
+            ]
+            contenido_plano = _quitar_markdown_para_pdf(result_md.value)
+            lineas = []
+            for linea in cabecera + contenido_plano.splitlines():
+                lineas.extend(_envolver_linea_pdf(linea))
+            _crear_pdf_basico(ruta_pdf, lineas)
+            await clipboard_service.set(str(ruta_pdf))
+            await abrir_destino_pdf_async(carpeta_destino, ruta_pdf)
+            mostrar_dialogo_pdf_generado(carpeta_destino, ruta_pdf)
+            mostrar_mensaje(page, ui["msg_pdf_created"].format(path=str(ruta_pdf)))
+        except Exception as exc:
+            mostrar_mensaje(page, ui["msg_pdf_error"].format(error=exc))
+        finally:
+            actualizar_boton_pdf(False)
+            page.update()
 
     def poblar_dropdown(control, items, default_key, default_text, formatter=None):
         valor_actual = control.value
@@ -5646,6 +6146,56 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                         "Inclue des étapes ou des idées claires pour vivre cette vérité. "
                         if lang_code == "fr" else
                         "Write a teaching focused on the believer's daily life. Draw concrete, practical, actionable principles that remain faithful to the biblical text. Include clear steps or ideas for living out that truth. "
+                    )
+                )
+            ),
+            "Bosquejo para predicar": (
+                (
+                    "Redacta un bosquejo para predicar claro, bíblico, ordenado y útil para exponer en público. "
+                    "Organízalo exactamente en estos cuatro grandes apartados con títulos visibles en Markdown: "
+                    "'1. Título y texto base', '2. Introducción', '3. Cuerpo', y '4. Conclusión'. "
+                    "En '1. Título y texto base', propone un título sugerente, fiel al tema, y señala el pasaje bíblico base; si el usuario ya seleccionó un pasaje concreto, úsalo como texto base. "
+                    "En '2. Introducción', incluye un gancho inicial de no más de dos minutos con una ilustración, una pregunta o una situación real, y termina con una proposición que resuma el mensaje. "
+                    "En '3. Cuerpo', desarrolla de dos a tres puntos principales. En cada punto incluye siempre estas tres partes: explicación del texto, ilustración sencilla de la vida cotidiana y aplicación práctica para hoy. "
+                    "En '4. Conclusión', no hagas un cierre aburrido: crea un clímax pastoral con recapitulación breve, llamado a la acción concreto para la congregación y una oración final corta. "
+                    "Haz que el esquema sea predicable, fácil de seguir, memorable y fiel a la Escritura. "
+                    "Puedes usar numeración tipo I, II y III dentro del cuerpo si ayuda a la claridad. "
+                    "No conviertas el bosquejo en un ensayo largo: prioriza estructura, claridad y fuerza pastoral. "
+                ) if lang_code == "es" else
+                (
+                    "Redacta un esquema per predicar clar, bíblic, ordenat i útil per exposar en públic. "
+                    "Organitza'l exactament en aquests quatre grans apartats amb títols visibles en Markdown: "
+                    "'1. Títol i text base', '2. Introducció', '3. Cos', i '4. Conclusió'. "
+                    "A '1. Títol i text base', proposa un títol suggerent, fidel al tema, i indica el passatge bíblic base; si l'usuari ja ha seleccionat un passatge concret, fes-lo servir com a text base. "
+                    "A '2. Introducció', inclou un ganxo inicial de no més de dos minuts amb una il·lustració, una pregunta o una situació real, i acaba amb una proposició que resumeixi el missatge. "
+                    "A '3. Cos', desenvolupa de dos a tres punts principals. A cada punt inclou sempre aquestes tres parts: explicació del text, il·lustració senzilla de la vida quotidiana i aplicació pràctica per a avui. "
+                    "A '4. Conclusió', no facis un tancament avorrit: crea un clímax pastoral amb recapitulació breu, crida a l'acció concreta per a la congregació i una oració final curta. "
+                    "Fes que l'esquema sigui predicable, fàcil de seguir, memorable i fidel a l'Escriptura. "
+                    "Pots fer servir numeració tipus I, II i III dins del cos si ajuda a la claredat. "
+                    "No converteixis l'esquema en un assaig llarg: prioritza estructura, claredat i força pastoral. "
+                    if lang_code == "ca" else
+                    (
+                        "Rédige un plan de prédication clair, biblique, ordonné et réellement utile pour prêcher en public. "
+                        "Organise-le exactement en quatre grandes sections avec des titres visibles en Markdown : "
+                        "'1. Titre et texte de base', '2. Introduction', '3. Corps', et '4. Conclusion'. "
+                        "Dans '1. Titre et texte de base', propose un titre accrocheur mais fidèle au thème, puis indique le passage biblique de base ; si l'utilisateur a déjà choisi un passage précis, utilise-le comme texte de base. "
+                        "Dans '2. Introduction', inclus une accroche initiale de moins de deux minutes avec une illustration, une question ou une situation réelle, puis termine par une proposition qui résume le message. "
+                        "Dans '3. Corps', développe de deux à trois points principaux. Pour chaque point, inclus toujours ces trois éléments : explication du texte, illustration simple de la vie quotidienne et application pratique pour aujourd'hui. "
+                        "Dans '4. Conclusion', ne fais pas une fin plate : crée un point culminant pastoral avec une brève récapitulation, un appel concret à l'action pour l'assemblée et une courte prière finale. "
+                        "Fais en sorte que le plan soit prêchable, facile à suivre, mémorable et fidèle à l'Écriture. "
+                        "Tu peux utiliser une numérotation de type I, II et III dans le corps si cela améliore la clarté. "
+                        "Ne transforme pas le plan en long essai : privilégie la structure, la clarté et la force pastorale. "
+                        if lang_code == "fr" else
+                        "Write a preaching outline that is clear, biblical, well ordered, and genuinely useful for public preaching. "
+                        "Organize it exactly into these four major sections with visible Markdown headings: "
+                        "'1. Title and base text', '2. Introduction', '3. Body', and '4. Conclusion'. "
+                        "In '1. Title and base text', propose an engaging title that stays faithful to the theme and state the main biblical passage; if the user already selected a specific passage, use that as the base text. "
+                        "In '2. Introduction', include an opening hook of no more than about two minutes with an illustration, question, or real-life situation, and end with a proposition that summarizes the message. "
+                        "In '3. Body', develop two to three main points. In every point always include these three parts: explanation of the text, a simple everyday illustration, and practical application for today. "
+                        "In '4. Conclusion', do not give a flat ending: build to a pastoral climax with a brief recap, a concrete call to action for the congregation, and a short closing prayer. "
+                        "Make the outline preachable, easy to follow, memorable, and faithful to Scripture. "
+                        "You may use I, II, and III numbering inside the body if that improves clarity. "
+                        "Do not turn the outline into a long essay: prioritize structure, clarity, and pastoral force. "
                     )
                 )
             ),
@@ -6438,6 +6988,17 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             spacing=10,
         )
 
+    def contenido_boton_pdf(en_proceso=False):
+        return contenido_boton_generar(
+            ui["generating_pdf"] if en_proceso else ui["generate_pdf"],
+            ft.Icons.HOURGLASS_EMPTY if en_proceso else ft.Icons.PICTURE_AS_PDF,
+            theme["secondary_text"],
+        )
+
+    def actualizar_boton_pdf(en_proceso=False):
+        btn_generar_pdf.content = contenido_boton_pdf(en_proceso)
+        btn_generar_pdf.disabled = en_proceso
+
     btn_generar = ft.ElevatedButton(
         content=contenido_boton_generar(ui["generate"], ft.Icons.AUTO_AWESOME, color_boton_generar_resultado),
         on_click=ejecutar_consulta,
@@ -6478,6 +7039,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         icon=ft.Icons.CONTENT_COPY,
         on_click=copiar_resultado,
         style=estilo_boton_rojo,
+        height=56,
+        expand=True,
+    )
+    btn_generar_pdf = ft.ElevatedButton(
+        content=contenido_boton_pdf(False),
+        on_click=lambda e: page.run_task(generar_pdf_resultado_async),
+        style=estilo_boton_amarillo,
         height=56,
         expand=True,
     )
@@ -6682,10 +7250,21 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         )
 
         cabecera_resultado.content = (
-            ft.Column([titulo_resultado], spacing=10)
+            ft.Column(
+                [titulo_resultado, texto_consulta_resultado],
+                spacing=6,
+                horizontal_alignment=ft.CrossAxisAlignment.START,
+            )
             if estrecha
             else ft.Row(
-                [titulo_resultado],
+                [
+                    titulo_resultado,
+                    ft.Container(
+                        content=texto_consulta_resultado,
+                        expand=True,
+                        alignment=ft.Alignment(1, 0),
+                    ),
+                ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             )
@@ -6718,7 +7297,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         fila_acciones_resultado.content = (
             ft.Container(
                 content=ft.Column(
-                    [btn_copiar_resultado, btn_limpiar, btn_volver_inicio_resultado],
+                    [btn_copiar_resultado, btn_generar_pdf, btn_limpiar, btn_volver_inicio_resultado],
                     spacing=10,
                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
                 ),
@@ -6726,7 +7305,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             )
             if estrecha
             else ft.Row(
-                [btn_copiar_resultado, btn_limpiar, btn_volver_inicio_resultado],
+                [btn_copiar_resultado, btn_generar_pdf, btn_limpiar, btn_volver_inicio_resultado],
                 spacing=10,
                 alignment=ft.MainAxisAlignment.CENTER,
             )
@@ -6741,6 +7320,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         btn_generar_cristianos.disabled = en_proceso
         btn_preguntar.disabled = en_proceso
         btn_copiar_resultado.disabled = en_proceso
+        btn_generar_pdf.disabled = en_proceso
         btn_limpiar.disabled = en_proceso
         btn_volver_inicio_resultado.disabled = en_proceso
         btn_generar.content = contenido_boton_generar(
@@ -6891,6 +7471,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         key="panel_generacion",
         content=ft.Column(
             [
+                contenedor_contexto_activo,
                 ft.Text(f"{ui['study_type']} / {ui['words']}", weight="bold", size=18, color=theme["primary"]),
                 contenedor_tipo_tamano,
                 ft.Row([btn_generar]),
