@@ -3,7 +3,6 @@ import asyncio
 import json
 import random
 import re
-import ssl
 import sys
 import textwrap
 import unicodedata
@@ -11,6 +10,11 @@ import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+
+try:
+    import ssl
+except Exception:
+    ssl = None
 
 try:
     import subprocess
@@ -23,6 +27,15 @@ from biblia_app.idiomas import get_language_config, get_language_theme
 from biblia_app.versiculos import VERSICULOS_POR_CAPITULO
 
 ES_WEB_ASSEMBLY = sys.platform == "emscripten"
+
+
+def argumentos_urlopen_seguro() -> dict[str, object]:
+    if ssl is None:
+        return {}
+    try:
+        return {"context": ssl.create_default_context()}
+    except Exception:
+        return {}
 
 
 def cargar_env_local() -> None:
@@ -116,7 +129,7 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
             method="GET",
         )
         try:
-            with urllib.request.urlopen(req_models, timeout=20, context=ssl.create_default_context()) as response:
+            with urllib.request.urlopen(req_models, timeout=20, **argumentos_urlopen_seguro()) as response:
                 body = response.read().decode("utf-8", errors="replace")
             data = json.loads(body)
             modelos = []
@@ -167,7 +180,7 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
         )
 
         try:
-            with urllib.request.urlopen(req, timeout=35, context=ssl.create_default_context()) as response:
+            with urllib.request.urlopen(req, timeout=35, **argumentos_urlopen_seguro()) as response:
                 body = response.read().decode("utf-8")
             data = json.loads(body)
             return data["choices"][0]["message"]["content"]

@@ -2,12 +2,16 @@ import asyncio
 import json
 import os
 from pathlib import Path
-import ssl
 import sys
 import traceback
 import unicodedata
 import urllib.error
 import urllib.request
+
+try:
+    import ssl
+except Exception:
+    ssl = None
 
 try:
     import socket
@@ -96,6 +100,15 @@ def cabeceras_groq(api_key: str) -> dict[str, str]:
     return headers
 
 
+def argumentos_urlopen_seguro() -> dict[str, object]:
+    if ssl is None:
+        return {}
+    try:
+        return {"context": ssl.create_default_context()}
+    except Exception:
+        return {}
+
+
 def payload_validacion_groq() -> dict[str, object]:
     modelo = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant").strip() or "llama-3.1-8b-instant"
     return {
@@ -119,7 +132,7 @@ def ejecutar_prueba_groq(api_key: str) -> tuple[int, str, str]:
         },
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=20, context=ssl.create_default_context()) as response:
+    with urllib.request.urlopen(req, timeout=20, **argumentos_urlopen_seguro()) as response:
         body = response.read().decode("utf-8", errors="replace")
         content_type = response.headers.get("Content-Type", "")
         return response.status, content_type, body
