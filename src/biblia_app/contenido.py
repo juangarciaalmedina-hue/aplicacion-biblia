@@ -4,7 +4,7 @@ import json
 import random
 import re
 import ssl
-import subprocess
+import sys
 import textwrap
 import unicodedata
 import urllib.error
@@ -12,13 +12,22 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
+try:
+    import subprocess
+except Exception:
+    subprocess = None
+
 import flet as ft
 
 from biblia_app.idiomas import get_language_config, get_language_theme
 from biblia_app.versiculos import VERSICULOS_POR_CAPITULO
 
+ES_WEB_ASSEMBLY = sys.platform == "emscripten"
+
 
 def cargar_env_local() -> None:
+    if ES_WEB_ASSEMBLY:
+        return
     ruta_env = Path.cwd() / ".env"
     if not ruta_env.exists():
         return
@@ -6127,6 +6136,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     async def abrir_destino_pdf_async(carpeta_destino: Path, ruta_pdf: Path):
         try:
             if os.name == "nt":
+                if subprocess is None:
+                    raise RuntimeError("subprocess no disponible")
                 subprocess.Popen(["explorer", "/select,", str(ruta_pdf)])
                 return
         except Exception:
@@ -6190,6 +6201,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     async def generar_pdf_resultado_async():
         if not result_md.value.strip():
             mostrar_mensaje(page, ui["msg_no_content"])
+            return
+
+        if page.web:
+            mensaje_web = {
+                "es": "La exportacion a PDF no esta disponible en la version web de Netlify.",
+                "ca": "L'exportacio a PDF no esta disponible a la versio web de Netlify.",
+                "fr": "L'export PDF n'est pas disponible dans la version web de Netlify.",
+                "en": "PDF export is not available in the Netlify web version.",
+            }.get(lang_code, "La exportacion a PDF no esta disponible en la version web.")
+            mostrar_mensaje(page, mensaje_web)
             return
 
         try:
@@ -7911,7 +7932,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         async def tarea():
             nonlocal vista_resultado_completa
             try:
-                respuesta = await asyncio.to_thread(consultar_ia, prompt, lang_code, "question")
+                if getattr(page, "pyodide", False):
+                    respuesta = consultar_ia(prompt, lang_code, "question")
+                else:
+                    respuesta = await asyncio.to_thread(consultar_ia, prompt, lang_code, "question")
                 respuesta = limpiar_cierre_oracion_chat_consejero(respuesta, mensaje)
                 detener_animacion_espera_chat()
                 sincronizar_chat_consejero_visual()
@@ -7933,6 +7957,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 page.update()
 
         page.run_task(tarea)
+
+    def ejecutar_trabajo_en_segundo_plano(trabajo_sync):
+        if getattr(page, "pyodide", False):
+            async def tarea_async():
+                await asyncio.sleep(0)
+                trabajo_sync()
+
+            page.run_task(tarea_async)
+            return
+        page.run_thread(trabajo_sync)
 
     def lanzar_pregunta_rapida_chat(texto: str):
         tf_chat_consejero.value = texto
@@ -7982,7 +8016,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 actualizar_disposicion()
                 page.update()
 
-        page.run_thread(tarea)
+        ejecutar_trabajo_en_segundo_plano(tarea)
 
     def ejecutar_consulta_comportamiento(e):
         nonlocal vista_resultado_completa, ultimo_prompt_estudio
@@ -8022,7 +8056,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 actualizar_disposicion()
                 page.update()
 
-        page.run_thread(tarea)
+        ejecutar_trabajo_en_segundo_plano(tarea)
 
     def ejecutar_consulta_cristianos(e):
         nonlocal vista_resultado_completa, ultimo_prompt_estudio
@@ -8062,7 +8096,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 actualizar_disposicion()
                 page.update()
 
-        page.run_thread(tarea)
+        ejecutar_trabajo_en_segundo_plano(tarea)
 
     def ejecutar_consulta_incredulo(e):
         nonlocal vista_resultado_completa, ultimo_prompt_estudio
@@ -8102,7 +8136,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 actualizar_disposicion()
                 page.update()
 
-        page.run_thread(tarea)
+        ejecutar_trabajo_en_segundo_plano(tarea)
 
     def repetir_ultima_consulta(e):
         if not ultimo_prompt_estudio:
@@ -8133,7 +8167,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 actualizar_disposicion()
                 page.update()
 
-        page.run_thread(tarea)
+        ejecutar_trabajo_en_segundo_plano(tarea)
 
     def preguntar_ia(e):
         pregunta = tf_pregunta.value.strip()
@@ -8232,7 +8266,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 actualizar_disposicion()
                 page.update()
 
-        page.run_thread(tarea)
+        ejecutar_trabajo_en_segundo_plano(tarea)
 
     def mostrar_resultado(e=None):
         nonlocal vista_resultado_completa
@@ -8587,6 +8621,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         style=estilo_boton_amarillo,
         height=56,
         expand=True,
+        visible=not page.web,
     )
     btn_limpiar = ft.ElevatedButton(
         ui["clear_result"],

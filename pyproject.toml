@@ -46,6 +46,12 @@ exclude = [
 [tool.flet.android]
 split_per_abi = true
 
+[tool.flet.web]
+route_url_strategy = "hash"
+base_url = "/"
+renderer = "auto"
+wasm = true
+
 [tool.briefcase]
 project_name = "Biblia App"
 bundle = "com.jmgalmedina"

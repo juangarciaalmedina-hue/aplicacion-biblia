@@ -47,4 +47,28 @@ Este repositorio ya esta preparado para subirse sin incluir archivos locales o s
 
 ## Siguiente paso: Netlify
 
-La app esta hecha con Flet, asi que para Netlify lo normal sera publicar una version web generada a partir del proyecto, no subir el codigo Python tal cual como si fuera un sitio estatico simple. Cuando quieras, preparo ese flujo contigo.
+La app esta preparada para publicarse en Netlify como sitio estatico generado por Flet.
+
+### Archivos ya preparados
+
+- `netlify.toml`: define el comando de build y la carpeta publicada.
+- `pyproject.toml`: fuerza `route_url_strategy = "hash"` para que la navegacion funcione bien en hosting estatico.
+
+### Como desplegar en Netlify
+
+1. Importa este repositorio en Netlify.
+2. Deja que Netlify use la configuracion del archivo `netlify.toml`.
+3. Lanza el deploy.
+
+Netlify ejecutara este flujo:
+
+```bash
+pip install -r requirements.txt
+flet publish . --distpath dist --route-url-strategy hash
+```
+
+### Limitaciones de la version web
+
+- La `GROQ_API_KEY` no se guarda en `.env` en web. Se guarda en el navegador del usuario.
+- La exportacion a PDF y la apertura de carpetas locales no estan disponibles en Netlify.
+- Si quieres que la IA funcione en la version web, el usuario tendra que pegar su propia `GROQ_API_KEY` dentro de la app.

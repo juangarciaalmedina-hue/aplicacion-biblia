@@ -2,14 +2,22 @@ import asyncio
 import json
 import os
 from pathlib import Path
-import socket
 import ssl
-import subprocess
 import sys
 import traceback
 import unicodedata
 import urllib.error
 import urllib.request
+
+try:
+    import socket
+except Exception:
+    socket = None
+
+try:
+    import subprocess
+except Exception:
+    subprocess = None
 
 if __package__ in (None, ""):
     ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +41,49 @@ from biblia_app.idiomas import get_language_theme
 
 ANULAR_SEGUNDA_PAGINA_SALUDOS = False
 ANULAR_PAGINA_CONFIG_KEY = False
+WEB_API_KEY_STORAGE_KEY = "com.jmgalmedina.biblia_app.groq_api_key"
+
+
+async def _resolver_resultado_async(resultado):
+    if hasattr(resultado, "__await__"):
+        return await resultado
+    return resultado
+
+
+def _obtener_servicio_almacenamiento(page: ft.Page):
+    for atributo in ("shared_preferences", "client_storage"):
+        servicio = getattr(page, atributo, None)
+        if servicio is not None:
+            return servicio
+    return None
+
+
+async def leer_api_key_guardada(page: ft.Page) -> str:
+    servicio = _obtener_servicio_almacenamiento(page)
+    if servicio is None:
+        return ""
+    getter = getattr(servicio, "get", None)
+    if getter is None:
+        return ""
+    try:
+        valor = await _resolver_resultado_async(getter(WEB_API_KEY_STORAGE_KEY))
+    except Exception:
+        return ""
+    return valor.strip() if isinstance(valor, str) else ""
+
+
+async def guardar_api_key_navegador(page: ft.Page, api_key: str) -> bool:
+    servicio = _obtener_servicio_almacenamiento(page)
+    if servicio is None:
+        return False
+    setter = getattr(servicio, "set", None)
+    if setter is None:
+        return False
+    try:
+        await _resolver_resultado_async(setter(WEB_API_KEY_STORAGE_KEY, api_key))
+        return True
+    except Exception:
+        return False
 
 
 def cabeceras_groq(api_key: str) -> dict[str, str]:
@@ -788,8 +839,10 @@ def main(page: ft.Page):
                     "back": "Volver",
                     "get_key": "Conseguir key gratuita",
                     "saved": "API key guardada en .env",
+                    "saved_web": "API key guardada en este navegador",
                     "required": "Debes escribir una API key.",
                     "testing": "Probando conexion...",
+                    "diagnostic_web": "El diagnostico avanzado no esta disponible en la version web. Usa 'Probar conexion'.",
                     "open_key_error": "No se pudo abrir el navegador. URL copiada al portapapeles.",
                     "open_key_ok": "Abriendo pagina de claves de Groq...",
                     "support_title": "Soporte local sin internet",
@@ -823,8 +876,10 @@ def main(page: ft.Page):
                     "back": "Tornar",
                     "get_key": "Aconseguir key gratuita",
                     "saved": "API key desada a .env",
+                    "saved_web": "API key desada en aquest navegador",
                     "required": "Has d'escriure una API key.",
                     "testing": "Provant connexio...",
+                    "diagnostic_web": "El diagnostic avancat no esta disponible a la versio web. Fes servir 'Provar connexio'.",
                     "open_key_error": "No s'ha pogut obrir el navegador. URL copiada al porta-retalls.",
                     "open_key_ok": "Obrint la pagina de claus de Groq...",
                     "support_title": "Suport local sense internet",
@@ -858,8 +913,10 @@ def main(page: ft.Page):
                     "back": "Retour",
                     "get_key": "Obtenir une cle gratuite",
                     "saved": "Cle API enregistree dans .env",
+                    "saved_web": "Cle API enregistree dans ce navigateur",
                     "required": "Tu dois saisir une cle API.",
                     "testing": "Test de connexion...",
+                    "diagnostic_web": "Le diagnostic avance n'est pas disponible dans la version web. Utilise 'Tester la connexion'.",
                     "open_key_error": "Impossible d'ouvrir le navigateur. URL copiee dans le presse-papiers.",
                     "open_key_ok": "Ouverture de la page des cles Groq...",
                     "support_title": "Support local sans internet",
@@ -893,8 +950,10 @@ def main(page: ft.Page):
                     "back": "Back",
                     "get_key": "Get free key",
                     "saved": "API key saved in .env",
+                    "saved_web": "API key saved in this browser",
                     "required": "You must enter an API key.",
                     "testing": "Testing connection...",
+                    "diagnostic_web": "Advanced diagnostics are not available in the web version. Use 'Test connection'.",
                     "open_key_error": "Could not open browser. URL copied to clipboard.",
                     "open_key_ok": "Opening Groq keys page...",
                     "support_title": "Offline local support",
@@ -1097,9 +1156,13 @@ def main(page: ft.Page):
                     estado.color = ft.Colors.RED_400
                     page.update()
                     return
-                guardar_variable_env("GROQ_API_KEY", key)
                 os.environ["GROQ_API_KEY"] = key
-                estado.value = ui["saved"]
+                if page.web:
+                    page.run_task(guardar_api_key_navegador, page, key)
+                    estado.value = ui["saved_web"]
+                else:
+                    guardar_variable_env("GROQ_API_KEY", key)
+                    estado.value = ui["saved"]
                 estado.color = ft.Colors.GREEN_400
                 page.update()
 
@@ -1120,11 +1183,18 @@ def main(page: ft.Page):
                 page.update()
 
             def diagnostico(_=None):
+                if page.web:
+                    estado.value = ui["diagnostic_web"]
+                    estado.color = theme["text"]
+                    page.update()
+                    return
                 host = "api.groq.com"
                 key = (input_key.value or "").strip() or os.getenv("GROQ_API_KEY", "")
                 partes = []
 
                 try:
+                    if socket is None:
+                        raise RuntimeError("socket no disponible")
                     socket.gethostbyname(host)
                     partes.append("DNS: OK")
                 except Exception as exc:
@@ -1156,6 +1226,8 @@ def main(page: ft.Page):
                 except Exception:
                     try:
                         # Fallback para escritorio Windows cuando launch_url falla.
+                        if subprocess is None:
+                            raise RuntimeError("subprocess no disponible")
                         subprocess.Popen(["cmd", "/c", "start", "", url], shell=False)
                         estado.value = ui["open_key_ok"]
                         estado.color = theme["text"]
@@ -1172,6 +1244,17 @@ def main(page: ft.Page):
                 if (input_key.value or "").strip():
                     guardar_key()
                 mostrar_saludos(idioma)
+
+            async def hidratar_api_key_navegador_async():
+                if not page.web:
+                    return
+                api_key_guardada = await leer_api_key_guardada(page)
+                if not api_key_guardada:
+                    return
+                os.environ["GROQ_API_KEY"] = api_key_guardada
+                if not (input_key.value or "").strip():
+                    input_key.value = api_key_guardada
+                    page.update()
 
             panel_soporte_local = ft.Container(
                 key="panel_soporte_local",
@@ -1469,6 +1552,7 @@ def main(page: ft.Page):
                 )
             )
             input_soporte.on_submit = lambda _: preguntar_soporte_local()
+            page.run_task(hidratar_api_key_navegador_async)
             page.update()
         except Exception as exc:
             mostrar_error(page, titulo_error("welcome"), detalle_error(exc))
