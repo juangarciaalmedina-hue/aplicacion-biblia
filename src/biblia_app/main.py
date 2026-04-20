@@ -1002,7 +1002,7 @@ def main(page: ft.Page):
             padding_panel = 14 if es_movil else 20
             padding_soporte = 12 if es_movil else 16
 
-            valor_inicial = os.getenv("GROQ_API_KEY", "").strip()
+            valor_inicial = ""
             estado = ft.Text("", color=theme["text"], size=13)
             estado_soporte = ft.Text("", color=theme["muted"], size=12)
             input_key = ft.TextField(
@@ -1270,9 +1270,6 @@ def main(page: ft.Page):
                 if not api_key_guardada:
                     return
                 os.environ["GROQ_API_KEY"] = api_key_guardada
-                if not (input_key.value or "").strip():
-                    input_key.value = api_key_guardada
-                    page.update()
 
             panel_soporte_local = ft.Container(
                 key="panel_soporte_local",
