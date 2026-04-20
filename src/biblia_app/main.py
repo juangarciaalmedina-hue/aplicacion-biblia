@@ -989,13 +989,17 @@ def main(page: ft.Page):
                 },
             }
             ui = textos.get(idioma, textos["es"])
-            page_padding = page.padding if isinstance(page.padding, (int, float)) else 20
             ancho_pagina = page.width or 420
-            ancho_disponible = max(280, int(ancho_pagina - (page_padding * 2) - 12))
+            es_movil = ancho_pagina < 430
+            page_padding = page.padding if isinstance(page.padding, (int, float)) else (12 if es_movil else 20)
+            ancho_disponible = max(260, int(ancho_pagina - (page_padding * 2) - (8 if es_movil else 12)))
             ancho_panel = min(840, ancho_disponible)
-            ancho_contenido = max(240, ancho_panel - 40)
-            ancho_burbuja_soporte = max(180, ancho_contenido - 28)
+            ancho_contenido = max(220 if es_movil else 240, ancho_panel - (28 if es_movil else 40))
+            ancho_burbuja_soporte = max(150, min(420, ancho_contenido - (88 if es_movil else 28)))
             ancho_boton_key = min(360, ancho_contenido)
+            alto_historial_soporte = 190 if es_movil else 220
+            padding_panel = 14 if es_movil else 20
+            padding_soporte = 12 if es_movil else 16
 
             valor_inicial = os.getenv("GROQ_API_KEY", "").strip()
             estado = ft.Text("", color=theme["text"], size=13)
@@ -1013,7 +1017,7 @@ def main(page: ft.Page):
                 controls=[],
                 spacing=8,
                 auto_scroll=True,
-                height=220,
+                height=alto_historial_soporte,
             )
             input_soporte = ft.TextField(
                 hint_text=ui["support_placeholder"],
@@ -1272,7 +1276,7 @@ def main(page: ft.Page):
             panel_soporte_local = ft.Container(
                 key="panel_soporte_local",
                 width=ancho_contenido,
-                padding=16,
+                padding=padding_soporte,
                 bgcolor=theme["accent"],
                 border=ft.border.all(4, theme["field_border"]),
                 border_radius=16,
@@ -1298,11 +1302,12 @@ def main(page: ft.Page):
                         ft.Container(
                             key="panel_soporte_historial",
                             content=historial_soporte,
-                            height=220,
-                            padding=10,
+                            height=alto_historial_soporte,
+                            padding=8 if es_movil else 10,
                             bgcolor=theme["panel_bg"],
                             border=ft.border.all(2, theme["field_border"]),
                             border_radius=14,
+                            clip_behavior=ft.ClipBehavior.HARD_EDGE,
                         ),
                         estado_soporte,
                         ft.Row(
@@ -1422,7 +1427,7 @@ def main(page: ft.Page):
                     expand=True,
                     content=ft.Container(
                         width=ancho_panel,
-                        padding=20,
+                        padding=padding_panel,
                         bgcolor=theme["panel_bg"],
                         border=ft.border.all(5, theme["panel_border"]),
                         border_radius=20,
