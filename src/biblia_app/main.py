@@ -46,6 +46,7 @@ from biblia_app.idiomas import get_language_theme
 ANULAR_SEGUNDA_PAGINA_SALUDOS = False
 ANULAR_PAGINA_CONFIG_KEY = False
 WEB_API_KEY_STORAGE_KEY = "com.jmgalmedina.biblia_app.groq_api_key"
+GROQ_KEYS_URL = "https://console.groq.com/keys"
 
 
 async def _resolver_resultado_async(resultado):
@@ -1235,7 +1236,7 @@ def main(page: ft.Page):
                 page.update()
 
             def abrir_web_groq(_=None):
-                url = "https://console.groq.com/keys"
+                url = GROQ_KEYS_URL
                 try:
                     page.launch_url(url, web_window_name="_blank")
                     estado.value = ui["open_key_ok"]
@@ -1472,7 +1473,8 @@ def main(page: ft.Page):
                                     content=ft.OutlinedButton(
                                         ui["get_key"],
                                         icon=ft.Icons.OPEN_IN_NEW,
-                                        on_click=abrir_web_groq,
+                                        on_click=None if page.web else abrir_web_groq,
+                                        url=GROQ_KEYS_URL if page.web else None,
                                         width=ancho_boton_key,
                                         style=ft.ButtonStyle(
                                             color=theme["text"],
