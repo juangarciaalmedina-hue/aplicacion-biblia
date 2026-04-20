@@ -49,6 +49,10 @@ async def _resolver_resultado_async(resultado):
     return resultado
 
 
+def _api_key_configurada() -> str:
+    return os.getenv("GROQ_API_KEY", "").strip()
+
+
 def _obtener_servicio_almacenamiento(page: ft.Page):
     for atributo in ("shared_preferences", "client_storage"):
         servicio = getattr(page, atributo, None)
@@ -83,6 +87,18 @@ async def guardar_api_key_navegador(page: ft.Page, api_key: str) -> bool:
         return True
     except Exception:
         return False
+
+
+async def obtener_api_key_disponible(page: ft.Page) -> str:
+    api_key = _api_key_configurada()
+    if api_key:
+        return api_key
+    if not page.web:
+        return ""
+    api_key = await leer_api_key_guardada(page)
+    if api_key:
+        os.environ["GROQ_API_KEY"] = api_key
+    return api_key
 
 
 def cabeceras_groq(api_key: str) -> dict[str, str]:
@@ -796,13 +812,22 @@ def main(page: ft.Page):
         await asyncio.sleep(0.01)
         precalentar_contenido(idioma)
 
+    async def continuar_desde_selector_idioma_async(idioma: str):
+        if await obtener_api_key_disponible(page):
+            mostrar_saludos(idioma)
+            return
+        mostrar_config_ia(idioma)
+
+    def continuar_desde_selector_idioma(idioma: str):
+        page.run_task(continuar_desde_selector_idioma_async, idioma)
+
     def mostrar_selector_idioma():
         try:
             page.clean()
             page.vertical_alignment = ft.MainAxisAlignment.CENTER
             page.add(
                 ft.Container(
-                    content=pantalla_selector_idioma(page, mostrar_config_ia),
+                    content=pantalla_selector_idioma(page, continuar_desde_selector_idioma),
                     expand=True,
                     alignment=ft.Alignment(0, 0),
                 )
@@ -992,7 +1017,7 @@ def main(page: ft.Page):
             padding_panel = 14 if es_movil else 20
             padding_soporte = 12 if es_movil else 16
 
-            valor_inicial = ""
+            valor_inicial = _api_key_configurada()
             estado = ft.Text("", color=theme["text"], size=13)
             estado_soporte = ft.Text("", color=theme["muted"], size=12)
             input_key = ft.TextField(
