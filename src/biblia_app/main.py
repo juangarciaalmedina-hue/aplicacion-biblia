@@ -5,13 +5,6 @@ from pathlib import Path
 import sys
 import traceback
 import unicodedata
-import urllib.error
-import urllib.request
-
-try:
-    import ssl
-except Exception:
-    ssl = None
 
 try:
     import socket
@@ -41,6 +34,7 @@ from biblia_app.bienvenida import (
     pantalla_selector_preguntas,
 )
 from biblia_app.contenido import pantalla_principal, precalentar_contenido
+from biblia_app.http_client import HttpRequestError, http_request
 from biblia_app.idiomas import get_language_theme
 
 ANULAR_SEGUNDA_PAGINA_SALUDOS = False
@@ -101,15 +95,6 @@ def cabeceras_groq(api_key: str) -> dict[str, str]:
     return headers
 
 
-def argumentos_urlopen_seguro() -> dict[str, object]:
-    if ssl is None:
-        return {}
-    try:
-        return {"context": ssl.create_default_context()}
-    except Exception:
-        return {}
-
-
 def payload_validacion_groq() -> dict[str, object]:
     modelo = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant").strip() or "llama-3.1-8b-instant"
     return {
@@ -124,19 +109,16 @@ def payload_validacion_groq() -> dict[str, object]:
 
 
 def ejecutar_prueba_groq(api_key: str) -> tuple[int, str, str]:
-    req = urllib.request.Request(
+    return http_request(
+        "POST",
         "https://api.groq.com/openai/v1/chat/completions",
-        data=json.dumps(payload_validacion_groq()).encode("utf-8"),
+        data=json.dumps(payload_validacion_groq()),
         headers={
             **cabeceras_groq(api_key),
             "Content-Type": "application/json",
         },
-        method="POST",
+        timeout=20,
     )
-    with urllib.request.urlopen(req, timeout=20, **argumentos_urlopen_seguro()) as response:
-        body = response.read().decode("utf-8", errors="replace")
-        content_type = response.headers.get("Content-Type", "")
-        return response.status, content_type, body
 
 
 def guardar_variable_env(clave: str, valor: str, ruta: str = ".env") -> None:
@@ -231,13 +213,15 @@ def validar_api_key_groq(api_key: str, lang_code: str = "es") -> tuple[bool, str
         if 200 <= status < 300:
             return False, t["empty_response"]
         return False, t["http"].format(code=status, msg=body[:180])
-    except urllib.error.HTTPError as exc:
+    except HttpRequestError as exc:
+        if exc.kind == "network":
+            return False, t["network"].format(reason=exc.reason or str(exc))
+        detalle = exc.body or exc.reason or str(exc)
         try:
-            detalle = exc.read().decode("utf-8", errors="replace")
             data = json.loads(detalle)
             mensaje = data.get("error", {}).get("message") or data.get("message") or detalle
         except Exception:
-            mensaje = str(exc)
+            mensaje = detalle
         if exc.code == 401:
             return False, t["unauthorized"]
         if exc.code == 403:
@@ -245,9 +229,7 @@ def validar_api_key_groq(api_key: str, lang_code: str = "es") -> tuple[bool, str
             if "browser_signature_banned" in detalle_lower or "error 1010" in detalle_lower:
                 return False, t["browser_blocked"]
             return False, t["forbidden"]
-        return False, t["http"].format(code=exc.code, msg=mensaje)
-    except urllib.error.URLError as exc:
-        return False, t["network"].format(reason=exc.reason)
+        return False, t["http"].format(code=exc.code or "?", msg=mensaje)
     except Exception as exc:
         return False, t["unexpected"].format(error=exc)
 
@@ -1224,10 +1206,11 @@ def main(page: ft.Page):
                     partes.append(f"JSON: OK ({'application/json' in content_type.lower()})")
                     data = json.loads(body)
                     partes.append(f"CHOICES: {len(data.get('choices', []))}")
-                except urllib.error.HTTPError as exc:
-                    partes.append(f"CHAT: ERROR ({exc.code})")
-                except urllib.error.URLError as exc:
-                    partes.append(f"RED: ERROR ({exc.reason})")
+                except HttpRequestError as exc:
+                    if exc.kind == "http":
+                        partes.append(f"CHAT: ERROR ({exc.code})")
+                    else:
+                        partes.append(f"RED: ERROR ({exc.reason})")
                 except Exception as exc:
                     partes.append(f"GENERAL: ERROR ({exc})")
 

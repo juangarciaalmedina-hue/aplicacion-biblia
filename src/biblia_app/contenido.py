@@ -6,15 +6,8 @@ import re
 import sys
 import textwrap
 import unicodedata
-import urllib.error
-import urllib.request
 from datetime import datetime
 from pathlib import Path
-
-try:
-    import ssl
-except Exception:
-    ssl = None
 
 try:
     import subprocess
@@ -23,20 +16,9 @@ except Exception:
 
 import flet as ft
 
+from biblia_app.http_client import HttpRequestError, http_request, ES_WEB_ASSEMBLY
 from biblia_app.idiomas import get_language_config, get_language_theme
 from biblia_app.versiculos import VERSICULOS_POR_CAPITULO
-
-ES_WEB_ASSEMBLY = sys.platform == "emscripten"
-
-
-def argumentos_urlopen_seguro() -> dict[str, object]:
-    if ssl is None:
-        return {}
-    try:
-        return {"context": ssl.create_default_context()}
-    except Exception:
-        return {}
-
 
 def cargar_env_local() -> None:
     if ES_WEB_ASSEMBLY:
@@ -119,18 +101,17 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
         return mensaje_configuracion_ia(lang_code)
 
     def modelos_disponibles_cuenta() -> list[str]:
-        req_models = urllib.request.Request(
-            "https://api.groq.com/openai/v1/models",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Accept": "application/json",
-                "User-Agent": "BibliaIA/1.0",
-            },
-            method="GET",
-        )
         try:
-            with urllib.request.urlopen(req_models, timeout=20, **argumentos_urlopen_seguro()) as response:
-                body = response.read().decode("utf-8", errors="replace")
+            _, _, body = http_request(
+                "GET",
+                "https://api.groq.com/openai/v1/models",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Accept": "application/json",
+                    "User-Agent": "BibliaIA/1.0",
+                },
+                timeout=20,
+            )
             data = json.loads(body)
             modelos = []
             for item in data.get("data", []):
@@ -167,37 +148,34 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
             ],
         }
 
-        req = urllib.request.Request(
-            GROQ_URL,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "User-Agent": "BibliaIA/1.0",
-            },
-            method="POST",
-        )
-
         try:
-            with urllib.request.urlopen(req, timeout=35, **argumentos_urlopen_seguro()) as response:
-                body = response.read().decode("utf-8")
+            _, _, body = http_request(
+                "POST",
+                GROQ_URL,
+                data=json.dumps(payload),
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "User-Agent": "BibliaIA/1.0",
+                },
+                timeout=35,
+            )
             data = json.loads(body)
             return data["choices"][0]["message"]["content"]
-        except urllib.error.HTTPError as exc:
-            try:
-                detalle = exc.read().decode("utf-8", errors="replace")
-                data = json.loads(detalle)
-                mensaje = data.get("error", {}).get("message") or data.get("message") or detalle
-            except Exception:
-                mensaje = str(exc)
-            ultimo_error = f"Error de IA (HTTP {exc.code}): {mensaje}"
-            # Si el problema es de modelo/no disponible, prueba el siguiente.
-            if exc.code in (400, 403, 404):
-                continue
-            return ultimo_error
-        except urllib.error.URLError as exc:
-            return f"Error de conexion con IA: {exc.reason}"
+        except HttpRequestError as exc:
+            detalle = exc.body or exc.reason or str(exc)
+            if exc.kind == "http":
+                try:
+                    data = json.loads(detalle)
+                    mensaje = data.get("error", {}).get("message") or data.get("message") or detalle
+                except Exception:
+                    mensaje = detalle
+                ultimo_error = f"Error de IA (HTTP {exc.code}): {mensaje}"
+                if exc.code in (400, 403, 404):
+                    continue
+                return ultimo_error
+            return f"Error de conexion con IA: {exc.reason or detalle}"
         except Exception as exc:
             return f"Error inesperado de IA: {exc}"
 
