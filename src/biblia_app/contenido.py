@@ -5923,8 +5923,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ancho = page.width or getattr(getattr(page, "window", None), "width", 0) or 0
         if ancho <= 0:
             return 620
+        if ancho < 430:
+            return max(150, ancho - 140)
         if ancho < 560:
-            return max(220, ancho - 96)
+            return max(190, ancho - 118)
         if ancho < 950:
             return min(430, ancho * 0.78)
         return min(620, ancho * 0.52)
@@ -8613,6 +8615,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             padding=14,
         ),
     )
+    icono_barra_chat = ft.Icon(ft.Icons.SENTIMENT_SATISFIED_ALT_OUTLINED, color=theme["muted"], size=24)
     btn_preguntar = ft.ElevatedButton(
         ui["ask"],
         on_click=preguntar_ia,
@@ -8756,8 +8759,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ancho = page.width or getattr(getattr(page, "window", None), "width", 0) or 0
         return ancho == 0 or ancho < 950
 
+    def pantalla_movil_actual():
+        ancho = page.width or getattr(getattr(page, "window", None), "width", 0) or 0
+        return ancho == 0 or ancho < 520
+
     def actualizar_layout_responsive():
         estrecha = pantalla_estrecha_actual()
+        movil = pantalla_movil_actual()
 
         contenedor_pasaje.content = (
             ft.Column([dd_cap, dd_ini, dd_fin], spacing=8)
@@ -8872,7 +8880,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                         [
                             ft.Text(
                                 textos_chat_activo["assistant"],
-                                size=22 if not estrecha else 19,
+                                size=22 if not estrecha else (17 if movil else 19),
                                 weight=ft.FontWeight.W_700,
                                 color=theme["primary_text"],
                             ),
@@ -8888,13 +8896,29 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                         expand=True,
                     ),
                 ],
-                spacing=12,
+                spacing=8 if movil else 12,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.padding.symmetric(horizontal=12, vertical=10),
+            padding=ft.padding.symmetric(horizontal=10 if movil else 12, vertical=10),
             bgcolor=theme["primary"],
             border_radius=ft.border_radius.only(top_left=18, top_right=18, bottom_left=12, bottom_right=12),
             border=ft.border.all(3, theme["border"]),
+        )
+        avatar_chat_consejero.width = 42 if movil else 48
+        avatar_chat_consejero.height = 42 if movil else 48
+        avatar_chat_consejero.border_radius = 21 if movil else 24
+        icono_barra_chat.visible = not movil
+        tf_chat_consejero.content_padding = ft.padding.symmetric(horizontal=12 if movil else 16, vertical=12 if movil else 14)
+        btn_enviar_chat_consejero.style = ft.ButtonStyle(
+            shape=ft.CircleBorder(),
+            padding=10 if movil else 14,
+        )
+        caja_chat_consejero.padding = ft.padding.symmetric(horizontal=8 if movil else 12, vertical=10 if movil else 14)
+        barra_chat_consejero.padding = ft.padding.symmetric(horizontal=8 if movil else 10, vertical=8)
+        barra_chat_consejero.content = ft.Row(
+            [icono_barra_chat, tf_chat_consejero, btn_enviar_chat_consejero],
+            spacing=8 if movil else 10,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
         cabecera_resultado.content = (
@@ -9115,12 +9139,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         bgcolor=theme["accent"],
         border_radius=0,
         border=ft.border.all(0, "transparent"),
+        clip_behavior=ft.ClipBehavior.HARD_EDGE,
         expand=True,
     )
     barra_chat_consejero = ft.Container(
         content=ft.Row(
             [
-                ft.Icon(ft.Icons.SENTIMENT_SATISFIED_ALT_OUTLINED, color=theme["muted"], size=24),
+                icono_barra_chat,
                 tf_chat_consejero,
                 btn_enviar_chat_consejero,
             ],
