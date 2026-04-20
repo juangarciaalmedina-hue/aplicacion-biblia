@@ -33,7 +33,6 @@ exclude = [
     ".gradle-user-home",
     ".dart_tool",
     "netlify",
-    "assets",
     "tests",
     "*.jks",
     "*.bat",

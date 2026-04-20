@@ -1,5 +1,5 @@
 [build]
-  command = "pip install -r requirements.txt && flet publish . --distpath dist --route-url-strategy hash"
+  command = "pip install -r requirements.txt && flet publish . --distpath dist --route-url-strategy hash --app-name \"Biblia IA\" --app-short-name \"Biblia IA\" --app-description \"Aplicacion biblica con lectura guiada y ayuda de IA\" --pwa-background-color \"#F7F1E3\" --pwa-theme-color \"#C8102E\" -a assets"
   publish = "dist"
 
 [build.environment]
