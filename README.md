@@ -72,3 +72,23 @@ flet publish . --distpath dist --route-url-strategy hash
 - La `GROQ_API_KEY` no se guarda en `.env` en web. Se guarda en el navegador del usuario.
 - La exportacion a PDF y la apertura de carpetas locales no estan disponibles en Netlify.
 - Si quieres que la IA funcione en la version web, el usuario tendra que pegar su propia `GROQ_API_KEY` dentro de la app.
+
+## GitHub Pages
+
+La app tambien queda preparada para publicarse en GitHub Pages mediante GitHub Actions.
+
+### Archivo preparado
+
+- `.github/workflows/github-pages.yml`: construye la web con `flet build web` y la despliega en Pages.
+
+### Como activarlo
+
+1. Sube este repositorio a GitHub.
+2. En GitHub, abre `Settings > Pages`.
+3. En `Build and deployment`, selecciona `GitHub Actions`.
+4. Haz push a `main` o lanza el workflow desde la pestana `Actions`.
+
+### URL base
+
+- Si el repo es de proyecto, por ejemplo `usuario/aplicacion-biblia`, el workflow publica bajo `/aplicacion-biblia/`.
+- Si el repo se llama `usuario.github.io`, el workflow usa `/`.

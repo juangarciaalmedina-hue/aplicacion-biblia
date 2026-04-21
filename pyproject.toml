@@ -44,6 +44,25 @@ exclude = [
 
 [tool.flet.android]
 split_per_abi = true
+target_arch = ["arm64"]
+
+[tool.flet.android.cleanup]
+app = true
+app_files = [
+    "README.md",
+    "pyproject.toml",
+    "requirements.txt",
+    ".env.example",
+    ".gitignore",
+    "netlify.toml",
+    "assets",
+]
+
+[tool.flet.android.flutter]
+build_args = [
+    "--tree-shake-icons",
+    "--split-debug-info=../android-debug-symbols",
+]
 
 [tool.flet.web]
 route_url_strategy = "hash"

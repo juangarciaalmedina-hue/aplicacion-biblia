@@ -1,0 +1,83 @@
+name: Web Build + Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  UV_PYTHON: "3.12"
+  FLET_CLI_NO_RICH_OUTPUT: "1"
+
+jobs:
+  build:
+    name: Build web app
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install Python dependencies
+        run: uv pip install --system -r requirements.txt
+
+      - name: Resolve base URL
+        id: base_url
+        shell: bash
+        run: |
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          OWNER_NAME="${GITHUB_REPOSITORY%/*}"
+          if [ "$REPO_NAME" = "${OWNER_NAME}.github.io" ]; then
+            echo "value=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=/$REPO_NAME/" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build app
+        shell: bash
+        run: |
+          uv run --with flet flet build web \
+            --yes \
+            --verbose \
+            --base-url "${{ steps.base_url.outputs.value }}" \
+            --route-url-strategy hash
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+          name: web-build-artifact
+          retention-days: 20
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: web-build-artifact
