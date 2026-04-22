@@ -49,6 +49,22 @@ GROQ_TEMPERATURE = float(os.getenv("GROQ_TEMPERATURE", "0.2"))
 GROQ_TOP_P = float(os.getenv("GROQ_TOP_P", "0.9"))
 
 
+def _leer_entero_env(clave: str, por_defecto: int, minimo: int) -> int:
+    try:
+        return max(minimo, int(str(os.getenv(clave, por_defecto)).strip()))
+    except Exception:
+        return por_defecto
+
+
+QUESTION_PROMPT_MAX_CHARS = _leer_entero_env("GROQ_QUESTION_PROMPT_MAX_CHARS", 9000, 2000)
+QUESTION_PROMPT_RETRY_CHARS = _leer_entero_env("GROQ_QUESTION_PROMPT_RETRY_CHARS", 5500, 1500)
+CHAT_HISTORY_TURNS = _leer_entero_env("GROQ_CHAT_HISTORY_TURNS", 8, 2)
+CHAT_MESSAGE_MAX_CHARS = _leer_entero_env("GROQ_CHAT_MESSAGE_MAX_CHARS", 280, 80)
+CHAT_HISTORY_TOTAL_CHARS = _leer_entero_env("GROQ_CHAT_HISTORY_TOTAL_CHARS", 1800, 300)
+CHAT_SUMMARY_MESSAGE_MAX_CHARS = _leer_entero_env("GROQ_CHAT_SUMMARY_MESSAGE_MAX_CHARS", 160, 50)
+CHAT_SUMMARY_TOTAL_CHARS = _leer_entero_env("GROQ_CHAT_SUMMARY_TOTAL_CHARS", 1200, 200)
+
+
 def construir_system_prompt(lang_code: str, mode: str = "study") -> str:
     language_names = {
         "es": "espanol de Espana",
@@ -95,10 +111,67 @@ def mensaje_configuracion_ia(lang_code: str) -> str:
         return "AI is not configured. Save your key in the setup screen (GROQ_API_KEY)."
     return "Falta configurar la IA. Guarda tu clave en la pantalla de configuracion (GROQ_API_KEY)."
 
+
+def mensaje_prompt_demasiado_grande(lang_code: str) -> str:
+    if lang_code == "ca":
+        return "Error de IA: la conversa enviada era massa llarga. He retallat el context, pero encara no ha cabut. Esborra una part del xat o torna-ho a provar."
+    if lang_code == "fr":
+        return "Erreur IA : la conversation envoyee etait trop longue. J'ai reduit le contexte, mais cela ne tient toujours pas. Efface une partie du chat ou reessaie."
+    if lang_code == "en":
+        return "AI error: the submitted conversation was too long. I trimmed the context, but it still did not fit. Clear part of the chat or try again."
+    return "Error de IA: la conversacion enviada era demasiado larga. He recortado el contexto, pero aun asi no ha cabido. Borra parte del chat o vuelve a intentarlo."
+
+
+def truncar_texto_centro(texto: str, max_chars: int, marcador: str = " [...] ") -> str:
+    texto = str(texto or "").strip()
+    if len(texto) <= max_chars:
+        return texto
+    if max_chars <= len(marcador) + 10:
+        return texto[:max_chars].rstrip()
+    chars_disponibles = max_chars - len(marcador)
+    chars_inicio = chars_disponibles // 2
+    chars_fin = chars_disponibles - chars_inicio
+    return f"{texto[:chars_inicio].rstrip()}{marcador}{texto[-chars_fin:].lstrip()}"
+
+
+def compactar_prompt_para_groq(prompt: str, max_chars: int) -> str:
+    prompt = str(prompt or "").strip()
+    if len(prompt) <= max_chars:
+        return prompt
+
+    marcadores_historial = (
+        "Historial del chat:\n",
+        "Historial del xat:\n",
+        "Historique du chat:\n",
+        "Historique du chat :\n",
+        "Chat history:\n",
+    )
+    for marcador in marcadores_historial:
+        indice = prompt.find(marcador)
+        if indice == -1:
+            continue
+        cabecera = prompt[: indice + len(marcador)].rstrip()
+        historial = prompt[indice + len(marcador):].strip()
+        espacio_historial = max_chars - len(cabecera) - len("\n[...]\n")
+        if espacio_historial <= 80:
+            return truncar_texto_centro(prompt, max_chars)
+        if len(historial) <= espacio_historial:
+            return f"{cabecera}\n{historial}".strip()
+        return f"{cabecera}\n[...]\n{historial[-espacio_historial:].lstrip()}".strip()
+
+    return truncar_texto_centro(prompt, max_chars)
+
 def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str:
     api_key = os.getenv("GROQ_API_KEY", GROQ_API_KEY).strip()
     if not api_key:
         return mensaje_configuracion_ia(lang_code)
+
+    prompt_original = str(prompt or "").strip()
+    prompt_preparado = (
+        compactar_prompt_para_groq(prompt_original, QUESTION_PROMPT_MAX_CHARS)
+        if mode == "question"
+        else prompt_original
+    )
 
     def modelos_disponibles_cuenta() -> list[str]:
         try:
@@ -138,46 +211,59 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
 
     ultimo_error = "No se pudo completar la consulta."
     for modelo in modelos_candidatos:
-        payload = {
-            "model": modelo,
-            "temperature": float(os.getenv("GROQ_TEMPERATURE", str(GROQ_TEMPERATURE))),
-            "top_p": float(os.getenv("GROQ_TOP_P", str(GROQ_TOP_P))),
-            "messages": [
-                {"role": "system", "content": construir_system_prompt(lang_code, mode)},
-                {"role": "user", "content": prompt},
-            ],
-        }
+        prompt_actual = prompt_preparado
+        reintentos_tamano = 0
+        while True:
+            payload = {
+                "model": modelo,
+                "temperature": float(os.getenv("GROQ_TEMPERATURE", str(GROQ_TEMPERATURE))),
+                "top_p": float(os.getenv("GROQ_TOP_P", str(GROQ_TOP_P))),
+                "messages": [
+                    {"role": "system", "content": construir_system_prompt(lang_code, mode)},
+                    {"role": "user", "content": prompt_actual},
+                ],
+            }
 
-        try:
-            _, _, body = http_request(
-                "POST",
-                GROQ_URL,
-                data=json.dumps(payload),
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "User-Agent": "BibliaIA/1.0",
-                },
-                timeout=35,
-            )
-            data = json.loads(body)
-            return data["choices"][0]["message"]["content"]
-        except HttpRequestError as exc:
-            detalle = exc.body or exc.reason or str(exc)
-            if exc.kind == "http":
-                try:
-                    data = json.loads(detalle)
-                    mensaje = data.get("error", {}).get("message") or data.get("message") or detalle
-                except Exception:
-                    mensaje = detalle
-                ultimo_error = f"Error de IA (HTTP {exc.code}): {mensaje}"
-                if exc.code in (400, 403, 404):
-                    continue
-                return ultimo_error
-            return f"Error de conexion con IA: {exc.reason or detalle}"
-        except Exception as exc:
-            return f"Error inesperado de IA: {exc}"
+            try:
+                _, _, body = http_request(
+                    "POST",
+                    GROQ_URL,
+                    data=json.dumps(payload),
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "User-Agent": "BibliaIA/1.0",
+                    },
+                    timeout=35,
+                )
+                data = json.loads(body)
+                return data["choices"][0]["message"]["content"]
+            except HttpRequestError as exc:
+                detalle = exc.body or exc.reason or str(exc)
+                if exc.kind == "http":
+                    try:
+                        data = json.loads(detalle)
+                        mensaje = data.get("error", {}).get("message") or data.get("message") or detalle
+                    except Exception:
+                        mensaje = detalle
+                    mensaje_normalizado = str(mensaje).lower()
+                    if exc.code == 413 or "request entity too large" in mensaje_normalizado or "payload too large" in mensaje_normalizado:
+                        if mode == "question" and reintentos_tamano < 2:
+                            reintentos_tamano += 1
+                            limite = QUESTION_PROMPT_RETRY_CHARS if reintentos_tamano == 1 else max(1500, QUESTION_PROMPT_RETRY_CHARS // 2)
+                            nuevo_prompt = compactar_prompt_para_groq(prompt_original, limite)
+                            if nuevo_prompt != prompt_actual:
+                                prompt_actual = nuevo_prompt
+                                continue
+                        return mensaje_prompt_demasiado_grande(lang_code)
+                    ultimo_error = f"Error de IA (HTTP {exc.code}): {mensaje}"
+                    if exc.code in (400, 403, 404):
+                        break
+                    return ultimo_error
+                return f"Error de conexion con IA: {exc.reason or detalle}"
+            except Exception as exc:
+                return f"Error inesperado de IA: {exc}"
 
     return ultimo_error
 
@@ -4972,6 +5058,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     vista_resultado_completa = False
     ultimo_prompt_estudio = ""
     historial_chat_consejero: list[tuple[str, str, str]] = []
+    memoria_chat_consejero = ""
     saludo_inicial_chat_en_proceso = False
     espera_chat_activa = False
     animacion_espera_chat_id = 0
@@ -5801,6 +5888,39 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return 0.12
         return 0.045
 
+    async def desplazar_chat_al_final() -> None:
+        await asyncio.sleep(0)
+        try:
+            chat_conversacion.scroll_to(offset=-1, duration=140)
+        except Exception:
+            pass
+        try:
+            page.scroll_to(scroll_key="barra_chat_consejero", duration=180)
+        except Exception:
+            pass
+
+    def actualizar_memoria_chat_consejero() -> None:
+        nonlocal memoria_chat_consejero
+        if len(historial_chat_consejero) <= CHAT_HISTORY_TURNS:
+            memoria_chat_consejero = ""
+            return
+
+        antiguos = historial_chat_consejero[:-CHAT_HISTORY_TURNS]
+        lineas = []
+        total_chars = 0
+        for rol, mensaje, _ in reversed(antiguos):
+            prefijo = textos_chat_activo["you"] if rol == "user" else textos_chat_activo["assistant"]
+            texto = re.sub(r"\s+", " ", limpiar_respuesta_chat_visible(mensaje)).strip()
+            if not texto:
+                continue
+            linea = f"{prefijo}: {truncar_texto_centro(texto, CHAT_SUMMARY_MESSAGE_MAX_CHARS)}"
+            incremento = len(linea) + 1
+            if lineas and total_chars + incremento > CHAT_SUMMARY_TOTAL_CHARS:
+                break
+            lineas.append(linea)
+            total_chars += incremento
+        memoria_chat_consejero = "\n".join(reversed(lineas)).strip()
+
     async def animar_respuesta_chat_consejero(texto: str) -> None:
         respuesta_final = limpiar_respuesta_chat_visible(texto)
         if not respuesta_final.strip():
@@ -5832,6 +5952,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         actualizar_resumen()
         actualizar_disposicion()
         page.update()
+        await desplazar_chat_al_final()
         await asyncio.sleep(0.22)
 
         for fragmento in fragmentos_respuesta_chat(respuesta_final):
@@ -5842,14 +5963,18 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             texto_animado.value = f"{parcial}{cursor_chat}"
             result_md.value = renderizar_historial_chat_consejero()
             page.update()
+            if fragmento in {"\n", ".", "?", "!"} or len(parcial) % 24 == 0:
+                await desplazar_chat_al_final()
             await asyncio.sleep(pausa_fragmento_chat(fragmento))
 
         if indice_mensaje >= len(historial_chat_consejero):
             return
         historial_chat_consejero[indice_mensaje] = ("assistant", respuesta_final, hora_respuesta)
+        actualizar_memoria_chat_consejero()
         texto_animado.value = respuesta_final
         result_md.value = renderizar_historial_chat_consejero()
         page.update()
+        await desplazar_chat_al_final()
 
     def detener_animacion_espera_chat() -> None:
         nonlocal espera_chat_activa, animacion_espera_chat_id
@@ -5887,6 +6012,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         actualizar_resumen()
         actualizar_disposicion()
         page.update()
+        await desplazar_chat_al_final()
 
         indice = 0
         while espera_chat_activa and identificador == animacion_espera_chat_id:
@@ -7329,13 +7455,43 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             bloques.append(f"### {textos_chat_activo['assistant']}\n\n{textos_chat_activo['typing']}")
         return "\n\n".join(bloques).strip()
 
-    def construir_prompt_chat_consejero() -> str:
-        historial = historial_chat_consejero[-12:]
+    def construir_historial_chat_para_prompt(nombre_usuario: str, nombre_asistente: str) -> str:
+        actualizar_memoria_chat_consejero()
         lineas_historial = []
-        for rol, mensaje, _ in historial:
-            prefijo = textos_chat_consejero["you"] if rol == "user" else textos_chat_consejero["assistant"]
-            lineas_historial.append(f"{prefijo}: {limpiar_respuesta_chat_visible(mensaje)}")
-        historial_texto = "\n".join(lineas_historial).strip()
+        total_chars = 0
+        for rol, mensaje, _ in reversed(historial_chat_consejero[-CHAT_HISTORY_TURNS:]):
+            prefijo = nombre_usuario if rol == "user" else nombre_asistente
+            texto = re.sub(r"\s+", " ", limpiar_respuesta_chat_visible(mensaje)).strip()
+            if not texto:
+                continue
+            linea = f"{prefijo}: {truncar_texto_centro(texto, CHAT_MESSAGE_MAX_CHARS)}"
+            incremento = len(linea) + 1
+            if lineas_historial and total_chars + incremento > CHAT_HISTORY_TOTAL_CHARS:
+                break
+            lineas_historial.append(linea)
+            total_chars += incremento
+        historial_reciente = "\n".join(reversed(lineas_historial)).strip()
+
+        etiquetas_memoria = {
+            "es": ("Memoria acumulada del chat:", "Historial reciente:"),
+            "ca": ("Memoria acumulada del xat:", "Historial recent:"),
+            "fr": ("Memoire accumulee du chat :", "Historique recent :"),
+            "en": ("Accumulated chat memory:", "Recent history:"),
+        }
+        etiqueta_memoria, etiqueta_reciente = etiquetas_memoria.get(lang_code, etiquetas_memoria["es"])
+
+        partes = []
+        if memoria_chat_consejero:
+            partes.append(f"{etiqueta_memoria}\n{memoria_chat_consejero}")
+        if historial_reciente:
+            partes.append(f"{etiqueta_reciente}\n{historial_reciente}" if memoria_chat_consejero else historial_reciente)
+        return "\n\n".join(partes).strip()
+
+    def construir_prompt_chat_consejero() -> str:
+        historial_texto = construir_historial_chat_para_prompt(
+            textos_chat_consejero["you"],
+            textos_chat_consejero["assistant"],
+        )
         prompts = {
             "es": (
                 "Actua como un consejero cristiano evangelico de excelencia, compasivo, prudente y fiel a la Biblia. "
@@ -7690,12 +7846,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         )
 
     def construir_prompt_chat_soporte() -> str:
-        historial = historial_chat_consejero[-12:]
-        lineas_historial = []
-        for rol, mensaje, _ in historial:
-            prefijo = textos_chat_soporte["you"] if rol == "user" else textos_chat_soporte["assistant"]
-            lineas_historial.append(f"{prefijo}: {limpiar_respuesta_chat_visible(mensaje)}")
-        historial_texto = "\n".join(lineas_historial).strip()
+        historial_texto = construir_historial_chat_para_prompt(
+            textos_chat_soporte["you"],
+            textos_chat_soporte["assistant"],
+        )
 
         prompts = {
             "es": (
@@ -7905,6 +8059,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return
 
         historial_chat_consejero.append(("user", mensaje, hora_chat_actual()))
+        actualizar_memoria_chat_consejero()
         tf_chat_consejero.value = ""
         pr.visible = False
         pr_comportamiento.visible = False
@@ -7919,6 +8074,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         actualizar_resumen()
         actualizar_disposicion()
         page.update()
+        page.run_task(desplazar_chat_al_final)
 
         prompt = construir_prompt_chat_activo()
 
@@ -7933,6 +8089,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 detener_animacion_espera_chat()
                 sincronizar_chat_consejero_visual()
                 page.update()
+                await desplazar_chat_al_final()
                 await asyncio.sleep(0.05)
                 await animar_respuesta_chat_consejero(respuesta)
             finally:
@@ -8307,10 +8464,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             volver_a_pasaje(e)
 
     def limpiar_seleccion(e):
-        nonlocal vista_resultado_completa
+        nonlocal vista_resultado_completa, memoria_chat_consejero
         if es_modo_chat:
             tf_chat_consejero.value = ""
             historial_chat_consejero.clear()
+            memoria_chat_consejero = ""
             result_md.value = ""
             asegurar_saludo_inicial_chat()
             pr.visible = False
@@ -8352,6 +8510,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         tf_pregunta.value = ""
         tf_chat_consejero.value = ""
         historial_chat_consejero.clear()
+        memoria_chat_consejero = ""
         result_md.value = ""
         asegurar_saludo_inicial_chat()
         pr.visible = False
@@ -8369,6 +8528,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         page.update()
 
     def limpiar_filtros(e):
+        nonlocal memoria_chat_consejero
         reiniciar_pasos()
         dd_biblia.value = "Ninguna"
         dd_orden_libros.value = "Orden biblico"
@@ -8394,6 +8554,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         dd_tamano_cristianos.value = "Ninguno"
         tf_chat_consejero.value = ""
         historial_chat_consejero.clear()
+        memoria_chat_consejero = ""
         asegurar_saludo_inicial_chat()
         pr_comportamiento.visible = False
         pr_incredulo.visible = False
@@ -8744,6 +8905,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     def actualizar_layout_responsive():
         estrecha = pantalla_estrecha_actual()
         movil = pantalla_movil_actual()
+        page.padding = 8 if movil else (12 if estrecha else 18)
+        contenido_pantalla.padding = 10 if movil else (12 if estrecha else 14)
+        contenido_pantalla.border_radius = 12 if movil else 16
+        marco_principal.padding = 3 if movil else 6
+        marco_principal.border = ft.border.all(6 if movil else 7, theme["primary"])
+        marco_principal.border_radius = 18 if movil else 26
 
         contenedor_pasaje.content = (
             ft.Column([dd_cap, dd_ini, dd_fin], spacing=8)
@@ -9121,6 +9288,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         expand=True,
     )
     barra_chat_consejero = ft.Container(
+        key="barra_chat_consejero",
         content=ft.Row(
             [
                 icono_barra_chat,
@@ -9419,6 +9587,28 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ft.Text(ui["title"], size=24, weight="bold", color=theme["primary"]),
         ]
     )
+    contenido_pantalla = ft.Container(
+        content=ft.Column(
+            [
+                ft.Row(encabezado_controles, alignment=ft.MainAxisAlignment.CENTER),
+                contenedor_cuerpo,
+            ],
+            spacing=18,
+            expand=True,
+        ),
+        padding=12,
+        border_radius=16,
+        bgcolor=theme["panel_bg"],
+        expand=True,
+    )
+    marco_principal = ft.Container(
+        content=contenido_pantalla,
+        padding=6,
+        border=ft.border.all(7, theme["primary"]),
+        border_radius=26,
+        bgcolor=theme["page_bg"],
+        expand=True,
+    )
 
     def refrescar_layout(e=None):
         actualizar_layout_responsive()
@@ -9429,31 +9619,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     page.on_resized = refrescar_layout
     actualizar_layout_responsive()
     actualizar_disposicion()
-    page.add(
-        ft.SafeArea(
-            ft.Container(
-                content=ft.Container(
-                    content=ft.Column(
-                        [
-                            ft.Row(encabezado_controles, alignment=ft.MainAxisAlignment.CENTER),
-                            contenedor_cuerpo,
-                        ],
-                        spacing=18,
-                        expand=True,
-                    ),
-                    padding=8,
-                    border_radius=8,
-                    bgcolor=theme["panel_bg"],
-                    expand=True,
-                ),
-                padding=1,
-                border=ft.border.all(8, theme["primary"]),
-                border_radius=26,
-                bgcolor=theme["page_bg"],
-                expand=True,
-            )
-        )
-    )
+    page.add(ft.SafeArea(marco_principal))
     controles_montados = True
     if inicio_preferido == "filtros":
         page.scroll_to(scroll_key="panel_filtros", duration=300)
