@@ -2788,6 +2788,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "status_generating": "Estado: respondiendo en el chat...",
             "status_ready": "Estado: respuesta lista",
             "intro": "Habla con naturalidad. Recibirás acompañamiento bíblico, pastoral y práctico.",
+            "greetings": [
+                "Hola, soy tu consejero cristiano. Estoy aquí para escucharte con calma y acompañarte a la luz de la Palabra de Dios. ¿Qué te está pesando ahora mismo?",
+                "Hola, puedes hablarme con libertad. Quiero entender bien lo que estás viviendo y caminar contigo con una mirada bíblica y pastoral. ¿Qué tienes hoy en el corazón?",
+                "Bienvenido. Estoy aquí para escucharte sin prisa, con cercanía y con base en la Palabra de Dios. ¿Qué situación te está costando más en este momento?",
+                "Hola, gracias por estar aquí. Si quieres, cuéntame con calma lo que te preocupa y vamos a mirarlo juntos delante de Dios. ¿Qué te está removiendo por dentro?",
+            ],
             "greeting": "Hola, soy tu consejero cristiano. Estoy aquí para escucharte con calma y acompañarte a la luz de la Palabra de Dios. ¿Qué te está pesando ahora mismo?",
             "warning": "Si hay peligro inmediato, abuso, autolesión o ideas suicidas, busca ayuda urgente en tu zona y contacta también con un pastor o una persona de confianza.",
             "you": "Tú",
@@ -2814,6 +2820,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "status_generating": "Estat: responent al xat...",
             "status_ready": "Estat: resposta llesta",
             "intro": "Parla amb naturalitat. Rebràs una resposta bíblica, pastoral i pràctica.",
+            "greetings": [
+                "Hola, soc el teu conseller cristià. Pots parlar-me amb calma; vull entendre bé el que estàs vivint i acompanyar-te a la llum de la Paraula de Déu. Què està passant?",
+                "Hola, pots obrir el teu cor amb llibertat. Soc aquí per escoltar-te sense pressa i orientar-te amb una mirada bíblica i pastoral. Què et pesa més avui?",
+                "Benvingut. Vull escoltar amb calma allò que estàs passant i caminar amb tu davant de Déu. Quina situació t'està costant més ara mateix?",
+                "Hola, gràcies per escriure. Si vols, explica'm a poc a poc el que portes dins i ho mirarem junts a la llum de la Paraula. Què et preocupa per dins?",
+            ],
             "greeting": "Hola, soc el teu conseller cristià. Pots parlar-me amb calma; vull entendre bé el que estàs vivint i acompanyar-te a la llum de la Paraula de Déu. Què està passant?",
             "warning": "Si hi ha perill immediat, abús, autolesió o idees suïcides, busca ajuda urgent a la teva zona i contacta també amb un pastor o una persona de confiança.",
             "you": "Tu",
@@ -2840,6 +2852,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "status_generating": "Etat : réponse en cours dans le chat...",
             "status_ready": "Etat : réponse prête",
             "intro": "Parle naturellement. Tu recevras une réponse biblique, pastorale et pratique.",
+            "greetings": [
+                "Bonjour, je suis ton conseiller chrétien. Tu peux me parler calmement ; je veux bien comprendre ce que tu vis et t'accompagner à la lumière de la Parole de Dieu. Que se passe-t-il ?",
+                "Bonjour, tu peux parler librement ici. Je veux t'écouter avec douceur et t'accompagner avec une perspective biblique et pastorale. Qu'est-ce qui pèse le plus sur ton coeur aujourd'hui ?",
+                "Bienvenue. Je suis là pour t'écouter sans te presser et regarder avec toi ta situation devant Dieu. Qu'est-ce qui te fait le plus souffrir en ce moment ?",
+                "Bonjour, merci d'être là. Si tu veux, raconte-moi tranquillement ce que tu traverses et nous le regarderons ensemble à la lumière de la Parole. Qu'est-ce qui t'inquiète le plus ?",
+            ],
             "greeting": "Bonjour, je suis ton conseiller chrétien. Tu peux me parler calmement ; je veux bien comprendre ce que tu vis et t'accompagner à la lumière de la Parole de Dieu. Que se passe-t-il ?",
             "warning": "S'il y a un danger immédiat, un abus, une automutilation ou des idées suicidaires, cherche une aide urgente dans ta région et contacte aussi un pasteur ou une personne de confiance.",
             "you": "Toi",
@@ -2866,6 +2884,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "status_generating": "Status: replying in chat...",
             "status_ready": "Status: response ready",
             "intro": "Speak naturally. You will receive a biblical, pastoral, and practical response.",
+            "greetings": [
+                "Hello, I am your Christian counselor. You can speak freely; I want to understand well what you are going through, put myself in your place, and walk with you in the light of God's Word. What is happening?",
+                "Hello, you can speak openly here. I am here to listen with care and walk with you with a biblical and pastoral perspective. What is weighing on your heart today?",
+                "Welcome. I am here to listen without rushing you and to look at your situation with you before God. What feels hardest for you right now?",
+                "Hello, thank you for being here. If you want, tell me calmly what you are carrying, and we will look at it together in the light of God's Word. What is troubling you most inside?",
+            ],
             "greeting": "Hello, I am your Christian counselor. You can speak freely; I want to understand well what you are going through, put myself in your place, and walk with you in the light of God's Word. What is happening?",
             "warning": "If there is immediate danger, abuse, self-harm, or suicidal thoughts, seek urgent local help and also contact a pastor or a trusted person.",
             "you": "You",
@@ -5059,6 +5083,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     ultimo_prompt_estudio = ""
     historial_chat_consejero: list[tuple[str, str, str]] = []
     memoria_chat_consejero = ""
+    ultimo_saludo_chat = ""
+    tipos_intervencion_chat_consejero = (
+        "empatia",
+        "animo_versiculo",
+        "paso_practico",
+        "verdad_biblica",
+    )
+    indice_intervencion_chat_consejero = 0
+    respuestas_desde_intervencion_chat = 0
+    objetivo_intervencion_chat = random.randint(4, 5)
     saludo_inicial_chat_en_proceso = False
     espera_chat_activa = False
     animacion_espera_chat_id = 0
@@ -5857,6 +5891,161 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     def hora_chat_actual() -> str:
         return datetime.now().strftime("%H:%M")
 
+    def obtener_saludo_inicial_chat() -> str:
+        nonlocal ultimo_saludo_chat
+        saludos = textos_chat_activo.get("greetings")
+        if isinstance(saludos, list):
+            saludos_validos = [saludo.strip() for saludo in saludos if isinstance(saludo, str) and saludo.strip()]
+            if saludos_validos:
+                candidatos = [saludo for saludo in saludos_validos if saludo != ultimo_saludo_chat]
+                saludo = random.choice(candidatos or saludos_validos)
+                ultimo_saludo_chat = saludo
+                return saludo
+
+        saludo = (textos_chat_activo.get("greeting") or "").strip()
+        if saludo:
+            ultimo_saludo_chat = saludo
+        return saludo
+
+    def reiniciar_ritmo_chat_consejero() -> None:
+        nonlocal indice_intervencion_chat_consejero, respuestas_desde_intervencion_chat, objetivo_intervencion_chat
+        indice_intervencion_chat_consejero = 0
+        respuestas_desde_intervencion_chat = 0
+        objetivo_intervencion_chat = random.randint(4, 5)
+
+    def obtener_ultimo_mensaje_usuario_chat_consejero() -> str:
+        return next(
+            (
+                mensaje
+                for rol, mensaje, _ in reversed(historial_chat_consejero)
+                if rol == "user" and (mensaje or "").strip()
+            ),
+            "",
+        )
+
+    def aplazar_intervencion_ritmica_chat_consejero() -> bool:
+        ultimo_mensaje = normalizar_texto_chat_consejero(obtener_ultimo_mensaje_usuario_chat_consejero())
+        if not ultimo_mensaje:
+            return False
+
+        pistas_oracion = [
+            "ora por mi",
+            "ora por mí",
+            "puedes orar",
+            "podrias orar",
+            "podrías orar",
+            "haz una oracion",
+            "haz una oración",
+            "necesito oracion",
+            "necesito oración",
+            "oremos",
+            "pray for me",
+            "i need prayer",
+            "can you pray",
+            "prie pour moi",
+            "j ai besoin de priere",
+            "j'ai besoin de priere",
+            "necessito pregaria",
+            "pots pregar",
+        ]
+        if any(pista in ultimo_mensaje for pista in pistas_oracion):
+            return True
+
+        pistas_riesgo = [
+            "suicid",
+            "quitarme la vida",
+            "quitar la vida",
+            "hacerme dano",
+            "hacerme daño",
+            "autoles",
+            "me quiero morir",
+            "abuso",
+            "violacion",
+            "violación",
+            "kill myself",
+            "end my life",
+            "hurt myself",
+            "self harm",
+            "abuse",
+            "suicide",
+            "me faire du mal",
+            "mettre fin a ma vie",
+            "mettre fin à ma vie",
+            "abus",
+            "fer-me mal",
+            "treure m la vida",
+            "treure'm la vida",
+        ]
+        return any(pista in ultimo_mensaje for pista in pistas_riesgo)
+
+    def construir_instruccion_ritmica_chat_consejero() -> tuple[str, str]:
+        if es_modo_chat_soporte:
+            return "", "none"
+        if respuestas_desde_intervencion_chat + 1 < objetivo_intervencion_chat:
+            return "", "none"
+        if aplazar_intervencion_ritmica_chat_consejero():
+            return "", "defer"
+
+        tipo = tipos_intervencion_chat_consejero[
+            indice_intervencion_chat_consejero % len(tipos_intervencion_chat_consejero)
+        ]
+        instrucciones = {
+            "es": {
+                "empatia": "En este turno, sin decir que sigues un patron, incluye de forma natural una breve intervencion de empatia: nombra con ternura la carga que percibes, valida el dolor sin dramatizar y deja espacio para que siga hablando. No cites versiculos en esta intervencion salvo que sea imprescindible.",
+                "animo_versiculo": "En este turno, sin sonar mecanico, incluye de forma natural una breve intervencion de animo con un solo versiculo o una sola referencia biblica breve que de verdad encaje. No repitas un versiculo o pasaje ya citado en este chat y no conviertas el mensaje en un mini sermon.",
+                "verdad_biblica": "En este turno, introduce de forma natural una verdad biblica breve que reoriente el corazon con gracia y verdad. Habla de Cristo, del caracter de Dios o de una promesa biblica de forma sencilla, cercana y nada fria.",
+                "paso_practico": "En este turno, incluye de forma natural una sola orientacion pastoral pequena y muy concreta para hoy o para esta semana. Debe nacer de lo que la persona ha contado y no sonar como una lista de tareas.",
+            },
+            "ca": {
+                "empatia": "En aquest torn, sense dir que segueixes cap patro, inclou de manera natural una breu intervencio d'empatia: posa nom amb tendresa a la carrega que perceps, valida el dolor sense dramatitzar-lo i deixa espai perque la persona continue parlant. No cites versicles en aquesta intervencio tret que siga imprescindible.",
+                "animo_versiculo": "En aquest torn, sense sonar mecanic, inclou de manera natural una breu intervencio d'anim amb un sol versicle o una sola referencia biblica breu que realment encaixe. No repetisques cap versicle o passatge ja citat en aquest xat i no ho convertisques en un mini sermo.",
+                "verdad_biblica": "En aquest torn, introdueix de manera natural una veritat biblica breu que reoriente el cor amb gracia i veritat. Parla de Crist, del caracter de Deu o d'una promesa biblica de forma senzilla, propera i gens freda.",
+                "paso_practico": "En aquest torn, inclou de manera natural una sola orientacio pastoral xicoteta i molt concreta per a hui o per a aquesta setmana. Ha de naixer del que la persona ha compartit i no sonar com una llista de tasques.",
+            },
+            "fr": {
+                "empatia": "Dans ce tour, sans dire que tu suis un schema, ajoute de facon naturelle une breve intervention d'empathie: nomme avec douceur le poids que tu percois, valide la douleur sans dramatiser et laisse de la place pour que la personne continue a parler. Ne cite pas de verset dans cette intervention sauf si c'est vraiment indispensable.",
+                "animo_versiculo": "Dans ce tour, sans paraitre mecanique, ajoute de facon naturelle une breve intervention d'encouragement avec un seul verset ou une seule reference biblique breve qui convienne vraiment. Ne repete pas un verset ou un passage deja cite dans ce chat et ne transforme pas le message en mini sermon.",
+                "verdad_biblica": "Dans ce tour, introduis de facon naturelle une courte verite biblique qui reoriente le coeur avec grace et verite. Parle du Christ, du caractere de Dieu ou d'une promesse biblique avec simplicite, proximite et chaleur.",
+                "paso_practico": "Dans ce tour, ajoute de facon naturelle une seule orientation pastorale petite et tres concrete pour aujourd'hui ou pour cette semaine. Elle doit naitre de ce que la personne a partage et ne pas ressembler a une liste de taches.",
+            },
+            "en": {
+                "empatia": "In this turn, without saying you are following a pattern, include a brief empathic intervention naturally: gently name the burden you perceive, validate the pain without dramatizing it, and leave room for the person to keep talking. Do not quote a verse in this intervention unless it is truly necessary.",
+                "animo_versiculo": "In this turn, without sounding mechanical, include a brief encouragement naturally with one short verse or one brief biblical reference that truly fits. Do not repeat a verse or passage already used in this chat, and do not turn the message into a mini sermon.",
+                "verdad_biblica": "In this turn, naturally introduce one brief biblical truth that reorients the heart with grace and truth. Speak about Christ, God's character, or a biblical promise in a simple, warm, and close way.",
+                "paso_practico": "In this turn, naturally include one small and very concrete pastoral step for today or this week. It should arise from what the person has shared and must not sound like a task list.",
+            },
+        }
+        instruccion = instrucciones.get(lang_code, instrucciones["es"]).get(tipo, "")
+        return instruccion, ("apply" if instruccion else "none")
+
+    def registrar_ritmo_chat_consejero(resultado_ritmo: str) -> None:
+        nonlocal indice_intervencion_chat_consejero, respuestas_desde_intervencion_chat, objetivo_intervencion_chat
+        if es_modo_chat_soporte:
+            return
+        if resultado_ritmo == "apply":
+            indice_intervencion_chat_consejero = (
+                indice_intervencion_chat_consejero + 1
+            ) % len(tipos_intervencion_chat_consejero)
+            respuestas_desde_intervencion_chat = 0
+            objetivo_intervencion_chat = random.randint(4, 5)
+            return
+        if resultado_ritmo == "defer":
+            return
+        respuestas_desde_intervencion_chat += 1
+
+    def agregar_instruccion_turno_chat(prompt: str, instruccion_turno: str) -> str:
+        instruccion = (instruccion_turno or "").strip()
+        if not instruccion:
+            return prompt
+        encabezados = {
+            "es": "Indicacion adicional para este turno:",
+            "ca": "Indicacio addicional per a aquest torn:",
+            "fr": "Indication supplementaire pour ce tour :",
+            "en": "Additional guidance for this turn:",
+        }
+        encabezado = encabezados.get(lang_code, encabezados["es"])
+        return f"{prompt}\n\n{encabezado}\n{instruccion}"
+
     def asegurar_saludo_inicial_chat(actualizar: bool = False) -> None:
         nonlocal saludo_inicial_chat_en_proceso
         if historial_chat_consejero or saludo_inicial_chat_en_proceso:
@@ -5866,7 +6055,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         async def tarea_saludo_inicial():
             nonlocal saludo_inicial_chat_en_proceso
             try:
-                await animar_respuesta_chat_consejero(textos_chat_activo["greeting"])
+                await animar_respuesta_chat_consejero(obtener_saludo_inicial_chat())
             finally:
                 saludo_inicial_chat_en_proceso = False
                 if actualizar:
@@ -7487,7 +7676,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             partes.append(f"{etiqueta_reciente}\n{historial_reciente}" if memoria_chat_consejero else historial_reciente)
         return "\n\n".join(partes).strip()
 
-    def construir_prompt_chat_consejero() -> str:
+    def construir_prompt_chat_consejero(instruccion_turno: str = "") -> str:
         historial_texto = construir_historial_chat_para_prompt(
             textos_chat_consejero["you"],
             textos_chat_consejero["assistant"],
@@ -7659,10 +7848,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ),
         }
         if lang_code in prompts:
-            return prompts[lang_code].format(historial=historial_texto)
+            return agregar_instruccion_turno_chat(
+                prompts[lang_code].format(historial=historial_texto),
+                instruccion_turno,
+            )
 
         if lang_code == "es":
-            return (
+            return agregar_instruccion_turno_chat((
                 "Actua como un consejero cristiano evangelico, compasivo, prudente y fiel a la Biblia. "
                 "Basa tus respuestas exclusivamente en la Biblia y, cuando ayude, en comentarios evangelicos reconocidos como Matthew Henry, MacArthur, Wiersbe, Spurgeon, McGee, Sproul, la Biblia de Estudio Holman y la Biblia de Estudio MacArthur. "
                 "Responde en espanol de Espana, con tono pastoral, amable, cercano, esperanzador y practico. "
@@ -7695,9 +7887,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Solo termina con una oracion breve si encaja de manera muy natural. "
                 "Si haces una oracion real y completa, termina exactamente con esta frase final: En el nombre de Jesus. Amen. "
                 f"Historial del chat:\n{historial_texto}"
-            )
+            ), instruccion_turno)
         if lang_code == "ca":
-            return (
+            return agregar_instruccion_turno_chat((
                 "Actua com un conseller cristià evangelic, compassiu, prudent i fidel a la Biblia. "
                 "Base les teves respostes exclusivament en la Biblia i, quan ajudi, en comentaris evangelics reconeguts com Matthew Henry, MacArthur, Wiersbe, Spurgeon, McGee, Sproul, la Biblia d'Estudi Holman i la Biblia d'Estudi MacArthur. "
                 "Respon en catala, amb un to pastoral, amable, proper, esperancador i practic. "
@@ -7726,9 +7918,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Nomes acaba amb una pregaria breu si encaixa de manera molt natural. "
                 "Si fas una pregaria real i completa, acaba exactament amb aquesta frase final: En el nom de Jesus. Amen. "
                 f"Historial del xat:\n{historial_texto}"
-            )
+            ), instruccion_turno)
         if lang_code == "fr":
-            return (
+            return agregar_instruccion_turno_chat((
                 "Agis comme un conseiller chretien evangelique, compatissant, prudent et fidele a la Bible. "
                 "Base tes reponses exclusivement sur la Bible et, si utile, sur des commentaires evangeliques reconnus comme Matthew Henry, MacArthur, Wiersbe, Spurgeon, McGee, Sproul, la Bible d'etude Holman et la Bible d'etude MacArthur. "
                 "Reponds en francais, avec un ton pastoral, bienveillant, proche, encourageant et pratique. "
@@ -7757,8 +7949,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Ne termine par une courte priere que si cela convient tres naturellement. "
                 "Si tu fais une vraie priere complete, termine exactement par cette phrase finale : Au nom de Jesus. Amen. "
                 f"Historique du chat :\n{historial_texto}"
-            )
-        return (
+            ), instruccion_turno)
+        return agregar_instruccion_turno_chat((
             "Act as an evangelical Christian counselor who is compassionate, prudent, and faithful to Scripture. "
             "Base your responses exclusively on the Bible and, when helpful, on recognized evangelical commentaries such as Matthew Henry, MacArthur, Wiersbe, Spurgeon, McGee, Sproul, the Holman Study Bible, and the MacArthur Study Bible. "
             "Reply in English with a pastoral, kind, warm, hopeful, and practical tone. "
@@ -7791,7 +7983,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Only end with a short prayer if it fits very naturally. "
             "If you include a real and complete prayer, end exactly with this final sentence: In the name of Jesus. Amen. "
             f"Chat history:\n{historial_texto}"
-        )
+        ), instruccion_turno)
 
         if lang_code == "es":
             return (
@@ -7921,8 +8113,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         }
         return prompts.get(lang_code, prompts["en"]).format(historial=historial_texto)
 
-    def construir_prompt_chat_activo() -> str:
-        return construir_prompt_chat_soporte() if es_modo_chat_soporte else construir_prompt_chat_consejero()
+    def construir_prompt_chat_activo(instruccion_turno: str = "") -> str:
+        return construir_prompt_chat_soporte() if es_modo_chat_soporte else construir_prompt_chat_consejero(instruccion_turno)
 
     def es_respuesta_oracion_chat_consejero(texto: str, mensaje_usuario: str) -> bool:
         respuesta = (texto or "").strip().lower()
@@ -8076,7 +8268,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         page.update()
         page.run_task(desplazar_chat_al_final)
 
-        prompt = construir_prompt_chat_activo()
+        instruccion_turno_chat, resultado_ritmo_chat = construir_instruccion_ritmica_chat_consejero()
+        prompt = construir_prompt_chat_activo(instruccion_turno_chat)
 
         async def tarea():
             nonlocal vista_resultado_completa
@@ -8086,6 +8279,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 else:
                     respuesta = await asyncio.to_thread(consultar_ia, prompt, lang_code, "question")
                 respuesta = limpiar_cierre_oracion_chat_consejero(respuesta, mensaje)
+                registrar_ritmo_chat_consejero(resultado_ritmo_chat)
                 detener_animacion_espera_chat()
                 sincronizar_chat_consejero_visual()
                 page.update()
@@ -8469,6 +8663,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             tf_chat_consejero.value = ""
             historial_chat_consejero.clear()
             memoria_chat_consejero = ""
+            reiniciar_ritmo_chat_consejero()
             result_md.value = ""
             asegurar_saludo_inicial_chat()
             pr.visible = False
@@ -8511,6 +8706,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         tf_chat_consejero.value = ""
         historial_chat_consejero.clear()
         memoria_chat_consejero = ""
+        reiniciar_ritmo_chat_consejero()
         result_md.value = ""
         asegurar_saludo_inicial_chat()
         pr.visible = False
@@ -8555,6 +8751,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         tf_chat_consejero.value = ""
         historial_chat_consejero.clear()
         memoria_chat_consejero = ""
+        reiniciar_ritmo_chat_consejero()
         asegurar_saludo_inicial_chat()
         pr_comportamiento.visible = False
         pr_incredulo.visible = False
