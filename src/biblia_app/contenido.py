@@ -2789,12 +2789,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "status_ready": "Estado: respuesta lista",
             "intro": "Habla con naturalidad. Recibirás acompañamiento bíblico, pastoral y práctico.",
             "greetings": [
-                "Hola, soy tu consejero cristiano. Estoy aquí para escucharte con calma y acompañarte a la luz de la Palabra de Dios. ¿Qué te está pesando ahora mismo?",
-                "Hola, puedes hablarme con libertad. Quiero entender bien lo que estás viviendo y caminar contigo con una mirada bíblica y pastoral. ¿Qué tienes hoy en el corazón?",
-                "Bienvenido. Estoy aquí para escucharte sin prisa, con cercanía y con base en la Palabra de Dios. ¿Qué situación te está costando más en este momento?",
-                "Hola, gracias por estar aquí. Si quieres, cuéntame con calma lo que te preocupa y vamos a mirarlo juntos delante de Dios. ¿Qué te está removiendo por dentro?",
+                "Hola, soy tu consejero cristiano. Antes de nada, ¿cómo te llamas? Y si quieres, cuéntame qué te pasa o cómo te puedo ayudar.",
+                "Hola, puedes hablarme con libertad. ¿Cómo te llamas? Después, si quieres, dime qué estás viviendo o en qué te gustaría que te acompañara.",
+                "Bienvenido. Me gustaría saber cómo te llamas, y luego puedes contarme con calma qué situación estás pasando o cómo te puedo ayudar.",
+                "Hola, gracias por estar aquí. ¿Cómo te llamas? Si te parece, después me cuentas qué te preocupa o qué está pasando ahora mismo.",
             ],
-            "greeting": "Hola, soy tu consejero cristiano. Estoy aquí para escucharte con calma y acompañarte a la luz de la Palabra de Dios. ¿Qué te está pesando ahora mismo?",
+            "greeting": "Hola, soy tu consejero cristiano. Antes de nada, ¿cómo te llamas? Y si quieres, cuéntame qué te pasa o cómo te puedo ayudar.",
             "warning": "Si hay peligro inmediato, abuso, autolesión o ideas suicidas, busca ayuda urgente en tu zona y contacta también con un pastor o una persona de confianza.",
             "you": "Tú",
             "assistant": "Consejero cristiano",
@@ -5093,6 +5093,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     indice_intervencion_chat_consejero = 0
     respuestas_desde_intervencion_chat = 0
     objetivo_intervencion_chat = random.randint(4, 5)
+    objetivo_exploracion_inicial_chat = random.randint(5, 6)
+    objetivo_total_chat_consejero = random.randint(14, 16)
+    indice_apertura_primer_turno_chat = 0
+    cierre_acompanamiento_chat_realizado = False
     saludo_inicial_chat_en_proceso = False
     espera_chat_activa = False
     animacion_espera_chat_id = 0
@@ -5881,7 +5885,23 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         texto_limpio = re.sub(r"(?is)<thinking>.*$", " ", texto_limpio)
         texto_limpio = re.sub(r"(?im)^\s*</?think>\s*$", " ", texto_limpio)
         texto_limpio = re.sub(r"(?im)^\s*</?thinking>\s*$", " ", texto_limpio)
+        texto_limpio = re.sub(
+            r"(?im)^\s*(consejero cristiano|consejero|assistant|chat consejero cristiano)\s*:\s*",
+            "",
+            texto_limpio,
+        )
+        texto_limpio = re.sub(
+            r"(?i)(?:[¡!]*\s*am(?:e|é)n[¡!]*){3,}",
+            "Amén.",
+            texto_limpio,
+        )
+        texto_limpio = re.sub(
+            r"(?i)(am(?:e|é)n[.!?]?\s+){3,}",
+            "Amén. ",
+            texto_limpio,
+        )
         texto_limpio = re.sub(r"\n{3,}", "\n\n", texto_limpio)
+        texto_limpio = re.sub(r"\s{2,}", " ", texto_limpio)
         return texto_limpio.strip()
 
     async def copiar_mensaje_chat_async(texto: str) -> None:
@@ -5908,10 +5928,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         return saludo
 
     def reiniciar_ritmo_chat_consejero() -> None:
-        nonlocal indice_intervencion_chat_consejero, respuestas_desde_intervencion_chat, objetivo_intervencion_chat
+        nonlocal indice_intervencion_chat_consejero, respuestas_desde_intervencion_chat, objetivo_intervencion_chat, objetivo_exploracion_inicial_chat, objetivo_total_chat_consejero, indice_apertura_primer_turno_chat, cierre_acompanamiento_chat_realizado
         indice_intervencion_chat_consejero = 0
         respuestas_desde_intervencion_chat = 0
         objetivo_intervencion_chat = random.randint(4, 5)
+        objetivo_exploracion_inicial_chat = random.randint(5, 6)
+        objetivo_total_chat_consejero = random.randint(14, 16)
+        indice_apertura_primer_turno_chat = random.randint(0, 3)
+        cierre_acompanamiento_chat_realizado = False
 
     def obtener_ultimo_mensaje_usuario_chat_consejero() -> str:
         return next(
@@ -6019,8 +6043,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         return instruccion, ("apply" if instruccion else "none")
 
     def registrar_ritmo_chat_consejero(resultado_ritmo: str) -> None:
-        nonlocal indice_intervencion_chat_consejero, respuestas_desde_intervencion_chat, objetivo_intervencion_chat
+        nonlocal indice_intervencion_chat_consejero, respuestas_desde_intervencion_chat, objetivo_intervencion_chat, cierre_acompanamiento_chat_realizado
         if es_modo_chat_soporte:
+            return
+        if resultado_ritmo == "close":
+            cierre_acompanamiento_chat_realizado = True
+            respuestas_desde_intervencion_chat = 0
             return
         if resultado_ritmo == "apply":
             indice_intervencion_chat_consejero = (
@@ -6077,16 +6105,19 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return 0.12
         return 0.045
 
-    async def desplazar_chat_al_final() -> None:
-        await asyncio.sleep(0)
-        try:
-            chat_conversacion.scroll_to(offset=-1, duration=140)
-        except Exception:
-            pass
-        try:
-            page.scroll_to(scroll_key="barra_chat_consejero", duration=180)
-        except Exception:
-            pass
+    async def desplazar_chat_al_final(inmediato: bool = False) -> None:
+        duracion_lista = 0 if inmediato else 140
+        duracion_pagina = 0 if inmediato else 180
+        for _ in range(2):
+            await asyncio.sleep(0)
+            try:
+                chat_conversacion.scroll_to(offset=-1, duration=duracion_lista)
+            except Exception:
+                pass
+            try:
+                page.scroll_to(scroll_key="barra_chat_consejero", duration=duracion_pagina)
+            except Exception:
+                pass
 
     def actualizar_memoria_chat_consejero() -> None:
         nonlocal memoria_chat_consejero
@@ -6110,8 +6141,43 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             total_chars += incremento
         memoria_chat_consejero = "\n".join(reversed(lineas)).strip()
 
+    def compactar_respuesta_chat_consejero(texto: str) -> str:
+        respuesta = limpiar_respuesta_chat_visible(texto)
+        if not respuesta:
+            return respuesta
+
+        respuesta = re.sub(r"`{1,3}", "", respuesta)
+        respuesta = re.sub(r"[*_#]+", "", respuesta)
+        respuesta = re.sub(r"(?m)^\s*\d+\.\s*", "", respuesta)
+        respuesta = re.sub(r"(?m)^\s*[-•]\s*", "", respuesta)
+        respuesta = re.sub(r"\n{2,}", "\n\n", respuesta).strip()
+
+        if es_respuesta_oracion_chat_consejero(respuesta, ""):
+            if len(respuesta) > 420:
+                respuesta = respuesta[:417].rstrip(" ,;:") + "..."
+            return respuesta
+
+        respuesta_plana = re.sub(r"\s*\n+\s*", " ", respuesta).strip()
+        partes = re.split(r"(?<=[.!?])\s+", respuesta_plana)
+        frases = []
+        total = 0
+        for parte in partes:
+            parte_limpia = parte.strip()
+            if not parte_limpia:
+                continue
+            incremento = len(parte_limpia) + (1 if frases else 0)
+            if frases and (len(frases) >= 3 or total + incremento > 360):
+                break
+            frases.append(parte_limpia)
+            total += incremento
+
+        respuesta_compacta = " ".join(frases).strip() or respuesta_plana
+        if len(respuesta_compacta) > 360:
+            respuesta_compacta = respuesta_compacta[:357].rstrip(" ,;:") + "..."
+        return respuesta_compacta
+
     async def animar_respuesta_chat_consejero(texto: str) -> None:
-        respuesta_final = limpiar_respuesta_chat_visible(texto)
+        respuesta_final = compactar_respuesta_chat_consejero(texto)
         if not respuesta_final.strip():
             respuesta_final = textos_chat_activo["fallback_response"]
         if not respuesta_final:
@@ -6141,7 +6207,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         actualizar_resumen()
         actualizar_disposicion()
         page.update()
-        await desplazar_chat_al_final()
+        await desplazar_chat_al_final(inmediato=True)
         await asyncio.sleep(0.22)
 
         for fragmento in fragmentos_respuesta_chat(respuesta_final):
@@ -6152,8 +6218,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             texto_animado.value = f"{parcial}{cursor_chat}"
             result_md.value = renderizar_historial_chat_consejero()
             page.update()
-            if fragmento in {"\n", ".", "?", "!"} or len(parcial) % 24 == 0:
-                await desplazar_chat_al_final()
+            if fragmento in {" ", "\n", ".", ",", "?", "!"} or len(parcial) % 8 == 0:
+                await desplazar_chat_al_final(inmediato=True)
             await asyncio.sleep(pausa_fragmento_chat(fragmento))
 
         if indice_mensaje >= len(historial_chat_consejero):
@@ -6163,7 +6229,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         texto_animado.value = respuesta_final
         result_md.value = renderizar_historial_chat_consejero()
         page.update()
-        await desplazar_chat_al_final()
+        await desplazar_chat_al_final(inmediato=True)
 
     def detener_animacion_espera_chat() -> None:
         nonlocal espera_chat_activa, animacion_espera_chat_id
@@ -6201,7 +6267,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         actualizar_resumen()
         actualizar_disposicion()
         page.update()
-        await desplazar_chat_al_final()
+        await desplazar_chat_al_final(inmediato=True)
 
         indice = 0
         while espera_chat_activa and identificador == animacion_espera_chat_id:
@@ -7697,16 +7763,23 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Si detectas peligro inmediato, abuso, autolesion, ideas suicidas o riesgo serio, dilo con claridad y anima a buscar ayuda urgente local y a contactar con un pastor o una persona de confianza. "
                 "En situaciones de peligro, abuso, autolesion o ideas suicidas, no respondas como si fuera una consulta normal: prioriza la urgencia, habla claro y deja el resto en segundo plano. "
                 "Responde como en un chat real, con frases cortas y naturales, como un pastor que escucha de verdad. "
+                "Evita empezar siempre con la palabra 'entiendo'; alterna de forma natural expresiones como 'comprendo', 'veo', 'percibo' o 'me doy cuenta'. "
+                "Si conoces el nombre de la persona, usalo solo de vez en cuando y con naturalidad; no lo repitas en casi cada mensaje. "
                 "Nunca muestres pensamientos internos, razonamientos ocultos, notas de proceso ni etiquetas como <think>. "
                 "Ponte en el lugar de la persona y responde con compasion real, como alguien humano y debil tambien, no como alguien que habla desde arriba. "
                 "Antes de aconsejar, explora y escucha. Crea un espacio seguro donde la persona pueda expresar miedos, dolor, confusion e incluso pecado sin temor a ser rechazada, sin llamar bueno a lo malo ni minimizar la gravedad del pecado. "
                 "En los primeros intercambios, prioriza escuchar, acompanar, reflejar lo que la persona esta viviendo y transmitir interes genuino. "
-                "En la primera respuesta, casi siempre limita tu ayuda a escuchar, reflejar el dolor o la lucha y hacer una sola pregunta pastoral sencilla. "
+                "Durante las primeras 5 o 6 intervenciones, prioriza casi por completo la empatia, la escucha activa y preguntas breves para descubrir que esta pasando realmente antes de aconsejar. Si la persona no tiene claro que le ocurre, ayudala con suavidad a poner nombre al problema, al dolor o a la confusion. "
+                "No cierres la conversacion demasiado pronto; normalmente sostenla alrededor de unas 15 intervenciones antes del cierre final, salvo que el usuario quiera terminar antes o la situacion pida otra cosa. "
+                "En la primera respuesta despues de que la persona cuente su problema, limita tu ayuda a escuchar, reflejar el dolor o la lucha e invitar con suavidad a orar primero para pedir la direccion de Dios, sin hacer todavia una pregunta de exploracion. "
+                "En la intervencion siguiente, despues de esa invitacion a orar, formula ya la primera pregunta pastoral breve para empezar a profundizar. "
+                "Cuando ya este bastante claro cual es el problema principal, pasa a una respuesta de acompanamiento mas completa: ofrece palabras de animo con su versiculo, da un consejo pastoral concreto con su versiculo, y cierra con una oracion breve preguntando despues si puedes ayudar en alguna cosa mas. "
                 "Profundiza primero con preguntas sencillas y pastorales para entender que esta pasando, desde cuando, que le pesa mas, como lo vive por dentro y que deseos o apegos del corazon pueden estar gobernando la situacion. "
                 "Si encaja, ayuda a detectar con suavidad posibles idolos del corazon como control, aprobacion, comodidad, dinero o poder, pero no lo hagas de forma brusca ni acusatoria. "
                 "Sosten siempre juntos los dos pilares: gracia y verdad. "
                 "Gracia: consuela, alivia culpa y verguenza, y recuerda que la aceptacion de Dios descansa en la obra de Cristo y no en el rendimiento de la persona. "
                 "Verdad: confronta con amor las mentiras que la persona cree sobre si misma, sobre Dios o sobre otros, usando la Biblia como brujula y no como arma. "
+                "Si en algun momento se ve con claridad que la persona esta practicando algo que no es propio de un cristiano, no lo afirmes ni lo normalices: haz una confrontacion amorosa, humilde y pastoral, apoyada en uno o dos versiculos breves de la Palabra de Dios, llamando al arrepentimiento y a volver a Cristo sin dureza ni desprecio. "
                 "Ayuda a la renovacion de la mente: identifica la mentira, sustituyela con verdad biblica y, si es oportuno, propone una sola accion practica concreta para esta semana, como orar, leer un salmo, poner un limite sano, pedir perdon, buscar reconciliacion o servir a alguien. "
                 "Da orientacion para el corazon, la mente, la oracion y los siguientes pasos concretos. "
                 "Cuando convenga, distingue entre lo que la Biblia ensena claramente y lo que requiere sabiduria pastoral. "
@@ -7725,6 +7798,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "No hagas introducciones largas ni mini sermones. "
                 "Solo termina con una oracion breve si encaja de manera muy natural o si el usuario la pide de forma directa. "
                 "Nunca cierres un mensaje normal con 'En el nombre de Jesus. Amen.' si no has hecho una oracion real. "
+                "Si en un mismo mensaje haces una oracion y despues anades una pregunta o una frase final, deja 'En el nombre de Jesus. Amen.' solo al final de la oracion y no lo repitas en la pregunta. "
+                "Si el usuario acepta orar o te pide una oracion, haz una oracion breve, reverente y pastoral, y termina exactamente con esta frase final: En el nombre de Jesus. Amen. "
                 "Si haces una oracion real y completa, termina exactamente con esta frase final: En el nombre de Jesus. Amen. "
                 "Historial del chat:\n{historial}"
             ),
@@ -7867,10 +7942,18 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Si la consulta se sale del cristianismo, responde con respeto y redirige hacia la verdad biblica, Cristo y la obediencia a la Palabra de Dios. "
                 "Si detectas peligro inmediato, abuso, autolesion, ideas suicidas o riesgo serio, dilo con claridad y anima a buscar ayuda urgente local y a contactar con un pastor o una persona de confianza. "
                 "Responde como en un chat real, con frases cortas y naturales, como un pastor que escucha de verdad. "
+                "Evita empezar siempre con la palabra 'entiendo'; alterna de forma natural expresiones como 'comprendo', 'veo', 'percibo' o 'me doy cuenta'. "
+                "Si conoces el nombre de la persona, usalo solo de vez en cuando y con naturalidad; no lo repitas en casi cada mensaje. "
                 "Nunca muestres pensamientos internos, razonamientos ocultos, notas de proceso ni etiquetas como <think>. "
                 "Ponte en el lugar de la persona y responde con compasion real, como alguien humano y debil tambien, no como alguien que habla desde arriba ni como un superhumano. "
                 "Habla con cercania como si conocieras ese dolor desde dentro, pero no inventes testimonios personales concretos ni afirmes haber vivido hechos especificos si no constan en la conversacion. "
                 "Antes de aconsejar, procura comprender bien a la persona, su dolor, su confusion o su lucha. "
+                "Durante las primeras 5 o 6 intervenciones, prioriza casi por completo la empatia, la escucha activa y preguntas breves para descubrir que esta pasando realmente antes de aconsejar. Si la persona no tiene claro que le ocurre, ayudala con suavidad a poner nombre al problema, al dolor o a la confusion. "
+                "No cierres la conversacion demasiado pronto; normalmente sostenla alrededor de unas 15 intervenciones antes del cierre final, salvo que el usuario quiera terminar antes o la situacion pida otra cosa. "
+                "Despues del saludo inicial, cuando la persona explique por primera vez su problema, normalmente proponle con suavidad si quereis orar primero para pedir la direccion de Dios, sin hacer todavia una pregunta de exploracion. "
+                "En la intervencion siguiente a esa invitacion a orar, formula ya la primera pregunta pastoral breve para empezar a profundizar. "
+                "Cuando ya este bastante claro cual es el problema principal, pasa a una respuesta de acompanamiento mas completa: ofrece palabras de animo con su versiculo, da un consejo pastoral concreto con su versiculo, y cierra con una oracion breve preguntando despues si puedes ayudar en alguna cosa mas. "
+                "Si en algun momento se ve con claridad que la persona esta practicando algo que no es propio de un cristiano, no lo afirmes ni lo normalices: haz una confrontacion amorosa, humilde y pastoral, apoyada en uno o dos versiculos breves de la Palabra de Dios, llamando al arrepentimiento y a volver a Cristo sin dureza ni desprecio. "
                 "Profundiza primero en el problema con preguntas sencillas y pastorales, para entender mejor que esta pasando, desde cuando, que le pesa mas y como lo esta viviendo por dentro. "
                 "No des consejo rapido en cada mensaje. Muchas veces es mejor primero mostrar comprension, hacer una observacion amable y formular una pregunta sencilla para que la persona siga abriendose. "
                 "Da una sola idea principal por mensaje. "
@@ -7884,6 +7967,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Deja espacio para que la otra persona siga hablando y, cuando encaje, termina con una pregunta corta y pastoral. "
                 "No hagas introducciones largas ni mini sermones. "
                 "Solo cita un pasaje biblico si de verdad ayuda y hazlo de forma breve. "
+                "Si en un mismo mensaje haces una oracion y despues anades una pregunta o una frase final, deja 'En el nombre de Jesus. Amen.' solo al final de la oracion y no lo repitas en la pregunta. "
+                "Si el usuario acepta orar o te pide una oracion, haz una oracion breve, reverente y pastoral, y termina exactamente con esta frase final: En el nombre de Jesus. Amen. "
                 "Solo termina con una oracion breve si encaja de manera muy natural. "
                 "Si haces una oracion real y completa, termina exactamente con esta frase final: En el nombre de Jesus. Amen. "
                 f"Historial del chat:\n{historial_texto}"
@@ -8116,6 +8201,416 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     def construir_prompt_chat_activo(instruccion_turno: str = "") -> str:
         return construir_prompt_chat_soporte() if es_modo_chat_soporte else construir_prompt_chat_consejero(instruccion_turno)
 
+    def detectar_aceptacion_oracion_chat_consejero() -> bool:
+        if es_modo_chat_soporte or not historial_chat_consejero:
+            return False
+
+        ultimo_usuario = next(
+            (
+                mensaje
+                for rol, mensaje, _ in reversed(historial_chat_consejero)
+                if rol == "user" and (mensaje or "").strip()
+            ),
+            "",
+        )
+        ultimo_asistente = next(
+            (
+                mensaje
+                for rol, mensaje, _ in reversed(historial_chat_consejero[:-1])
+                if rol == "assistant" and (mensaje or "").strip()
+            ),
+            "",
+        )
+        if not ultimo_usuario or not ultimo_asistente:
+            return False
+
+        respuesta_usuario = normalizar_texto_chat_consejero(ultimo_usuario)
+        invitacion_orar = normalizar_texto_chat_consejero(ultimo_asistente)
+        confirmaciones = {
+            "si",
+            "si por favor",
+            "claro",
+            "claro que si",
+            "vale",
+            "de acuerdo",
+            "por favor",
+            "ok",
+            "okay",
+            "yes",
+            "yes please",
+            "sure",
+            "oui",
+            "d accord",
+            "dacord",
+            "oremos",
+            "vamos a orar",
+            "vamos a orar juntos",
+            "si oremos",
+            "si, oremos",
+            "claro oremos",
+            "claro, oremos",
+        }
+        patrones_confirmacion = (
+            r"\bsi\b",
+            r"\bclaro\b",
+            r"\bvale\b",
+            r"\bde acuerdo\b",
+            r"\bpor favor\b",
+            r"\bok(?:ay)?\b",
+            r"\byes\b",
+            r"\bsure\b",
+            r"\boui\b",
+            r"\bd ?accord\b",
+            r"\boremos\b",
+            r"\bvamos a orar\b",
+            r"\bpodemos orar\b",
+            r"\bquiero orar\b",
+            r"\bme gustaria orar\b",
+        )
+        pistas_oracion = (
+            "orar",
+            "oremos",
+            "orar juntos",
+            "orar primero",
+            "pregaria",
+            "prier",
+            "pray",
+        )
+        contiene_confirmacion = any(
+            re.search(patron, respuesta_usuario) for patron in patrones_confirmacion
+        )
+        acepta_oracion = (
+            respuesta_usuario in confirmaciones
+            or (contiene_confirmacion and len(respuesta_usuario) <= 40)
+            or (
+                contiene_confirmacion
+                and any(pista in respuesta_usuario for pista in pistas_oracion)
+            )
+        )
+        if not acepta_oracion:
+            return False
+        if not any(pista in invitacion_orar for pista in pistas_oracion):
+            return False
+        return True
+
+    def construir_instruccion_aceptacion_oracion_chat_consejero() -> str:
+        if not detectar_aceptacion_oracion_chat_consejero():
+            return ""
+
+        instrucciones = {
+            "es": (
+                "La persona acaba de aceptar tu invitacion a orar. "
+                "En este turno no hagas todavia la pregunta de exploracion. "
+                "Haz ahora una oracion breve, calida, reverente y pastoral pidiendo la direccion de Dios para la conversacion y por la persona. "
+                "No anadas consejo ni preguntas en este mismo mensaje. "
+                "Termina exactamente con esta frase final: En el nombre de Jesus. Amen."
+            ),
+            "ca": (
+                "La persona acaba d'acceptar la teua invitacio a pregar. "
+                "En aquest torn no faces encara la pregunta d'exploracio. "
+                "Fes ara una pregaria breu, calida, reverent i pastoral demanant la direccio de Deu per a la conversa i per la persona. "
+                "No afegeixques consell ni preguntes en aquest mateix missatge. "
+                "Acaba exactament amb aquesta frase final: En el nom de Jesus. Amen."
+            ),
+            "fr": (
+                "La personne vient d'accepter ton invitation a prier. "
+                "Dans ce tour, ne pose pas encore la question d'exploration. "
+                "Fais maintenant une priere breve, chaleureuse, reverente et pastorale en demandant la direction de Dieu pour la conversation et pour la personne. "
+                "N'ajoute ni conseil ni question dans ce meme message. "
+                "Termine exactement par cette phrase finale : Au nom de Jesus. Amen."
+            ),
+            "en": (
+                "The person has just accepted your invitation to pray. "
+                "In this turn, do not ask the exploration question yet. "
+                "Now give a brief, warm, reverent, pastoral prayer asking for God's direction for the conversation and for the person. "
+                "Do not add counsel or questions in this same message. "
+                "End exactly with this final sentence: In the name of Jesus. Amen."
+            ),
+        }
+        return instrucciones.get(lang_code, instrucciones["es"])
+
+    def construir_respuesta_aceptacion_oracion_chat_consejero() -> str:
+        if not detectar_aceptacion_oracion_chat_consejero():
+            return ""
+
+        respuestas = {
+            "es": [
+                (
+                    "Padre celestial, te pedimos que nos guies en esta conversacion y nos "
+                    "des paz, claridad y sabiduria para este tiempo. En el nombre de Jesus. Amen."
+                ),
+                (
+                    "Senor Dios, ponemos esta conversacion en tus manos y te pedimos tu "
+                    "direccion, tu paz y tu luz para hablar con verdad y amor. En el nombre de Jesus. Amen."
+                ),
+                (
+                    "Padre bueno, venimos a ti para pedirte que tomes el control de esta "
+                    "conversacion y nos concedas tu direccion, consuelo y sabiduria. En el nombre de Jesus. Amen."
+                ),
+                (
+                    "Dios de amor, te rogamos que guies este momento, traigas serenidad al "
+                    "corazon y nos ayudes a caminar esta conversacion bajo tu direccion. En el nombre de Jesus. Amen."
+                ),
+            ],
+            "ca": [
+                (
+                    "Pare celestial, et demanem que ens guies en aquesta conversa i ens "
+                    "dones pau, claredat i saviesa per a aquest temps. En el nom de Jesus. Amen."
+                ),
+                (
+                    "Senyor Deu, posem aquesta conversa en les teues mans i et demanem la "
+                    "teva direccio, la teva pau i la teva llum per parlar amb veritat i amor. En el nom de Jesus. Amen."
+                ),
+                (
+                    "Pare bo, venim a tu per demanar-te que prengues el control d'aquesta "
+                    "conversa i ens concedisques direccio, consol i saviesa. En el nom de Jesus. Amen."
+                ),
+                (
+                    "Deu d'amor, et preguem que guies aquest moment, portes serenor al cor "
+                    "i ens ajudes a viure aquesta conversa sota la teua direccio. En el nom de Jesus. Amen."
+                ),
+            ],
+            "fr": [
+                (
+                    "Pere celeste, nous te demandons de guider cette conversation et de "
+                    "nous donner paix, clarte et sagesse pour ce moment. Au nom de Jesus. Amen."
+                ),
+                (
+                    "Seigneur Dieu, nous remettons cette conversation entre tes mains et "
+                    "nous te demandons ta direction, ta paix et ta lumiere pour parler avec verite et amour. Au nom de Jesus. Amen."
+                ),
+                (
+                    "Pere bon, nous venons a toi pour te demander de prendre le controle "
+                    "de cette conversation et de nous accorder direction, consolation et sagesse. Au nom de Jesus. Amen."
+                ),
+                (
+                    "Dieu d'amour, nous te prions de guider ce moment, d'apporter de la "
+                    "serenite au coeur et de nous aider a vivre cette conversation sous ta direction. Au nom de Jesus. Amen."
+                ),
+            ],
+            "en": [
+                (
+                    "Heavenly Father, we ask you to guide this conversation and give us "
+                    "peace, clarity, and wisdom for this moment. In the name of Jesus. Amen."
+                ),
+                (
+                    "Lord God, we place this conversation in your hands and ask for your "
+                    "direction, your peace, and your light so we may speak with truth and love. In the name of Jesus. Amen."
+                ),
+                (
+                    "Good Father, we come to you asking that you take control of this "
+                    "conversation and grant us direction, comfort, and wisdom. In the name of Jesus. Amen."
+                ),
+                (
+                    "God of love, please guide this moment, bring calm to the heart, and "
+                    "help us walk through this conversation under your direction. In the name of Jesus. Amen."
+                ),
+            ],
+        }
+        opciones = respuestas.get(lang_code, respuestas["es"])
+        return random.choice(opciones)
+
+    def construir_instruccion_despues_de_amen_chat_consejero() -> str:
+        if es_modo_chat_soporte or len(historial_chat_consejero) < 2:
+            return ""
+
+        ultimo_usuario = next(
+            (
+                mensaje
+                for rol, mensaje, _ in reversed(historial_chat_consejero)
+                if rol == "user" and (mensaje or "").strip()
+            ),
+            "",
+        )
+        ultimo_asistente = next(
+            (
+                mensaje
+                for rol, mensaje, _ in reversed(historial_chat_consejero[:-1])
+                if rol == "assistant" and (mensaje or "").strip()
+            ),
+            "",
+        )
+        if not ultimo_usuario or not ultimo_asistente:
+            return ""
+
+        respuesta_usuario = normalizar_texto_chat_consejero(ultimo_usuario)
+        if respuesta_usuario not in {"amen", "amén"}:
+            return ""
+        if not es_respuesta_oracion_chat_consejero(ultimo_asistente, ""):
+            return ""
+
+        instrucciones = {
+            "es": (
+                "La persona acaba de responder 'Amen' despues de una oracion real. "
+                "No vuelvas a saludar ni reinicies la conversacion. "
+                "Haz ahora una transicion breve y natural desde la oracion hacia el acompanamiento, "
+                "con una sola pregunta pastoral corta para empezar a entender que le pesa. "
+                "No termines con 'Amen' ni con otra oracion en este turno."
+            ),
+            "ca": (
+                "La persona acaba de respondre 'Amen' despres d'una pregaria real. "
+                "No tornes a saludar ni reinicies la conversa. "
+                "Fes ara una transicio breu i natural des de la pregaria cap a l'acompanyament, "
+                "amb una sola pregunta pastoral curta per comencar a entendre que li pesa. "
+                "No acabes amb 'Amen' ni amb una altra pregaria en aquest torn."
+            ),
+            "fr": (
+                "La personne vient de repondre 'Amen' apres une vraie priere. "
+                "Ne salue pas de nouveau et ne relance pas la conversation depuis le debut. "
+                "Fais maintenant une transition breve et naturelle de la priere vers l'accompagnement, "
+                "avec une seule courte question pastorale pour commencer a comprendre ce qui lui pese. "
+                "Ne termine pas par 'Amen' ni par une autre priere dans ce tour."
+            ),
+            "en": (
+                "The person has just replied 'Amen' after a real prayer. "
+                "Do not greet again or restart the conversation. "
+                "Now make a brief, natural transition from the prayer into care, "
+                "with one short pastoral question to begin understanding what is weighing on them. "
+                "Do not end with 'Amen' or another prayer in this turn."
+            ),
+        }
+        return instrucciones.get(lang_code, instrucciones["es"])
+
+    def construir_instruccion_primer_problema_chat_consejero() -> str:
+        if es_modo_chat_soporte:
+            return ""
+
+        mensajes_usuario = sum(
+            1 for rol, _, _ in historial_chat_consejero if rol == "user"
+        )
+        mensajes_asistente = sum(
+            1 for rol, _, _ in historial_chat_consejero if rol == "assistant"
+        )
+        respuestas_consejero = max(0, mensajes_asistente - 1)
+        if mensajes_usuario < 1 or respuestas_consejero >= objetivo_exploracion_inicial_chat:
+            return ""
+
+        turno_actual = respuestas_consejero + 1
+        apertura_es = (
+            "Acoge con calma lo que la persona acaba de abrirte y responde con cercania serena. ",
+            "Muestra desde el principio una cercania calida y una escucha muy humana, sin sonar mecanico. ",
+            "Empieza de forma breve, cercana y pastoral, dejando claro que quieres acompanarle con calma. ",
+            "Haz que este primer turno suene acogedor y natural, como alguien que se sienta a escuchar de verdad. ",
+        )[indice_apertura_primer_turno_chat % 4]
+
+        instrucciones = {
+            "es_primero": (
+                f"Estas en la fase inicial de exploracion {turno_actual} de {objetivo_exploracion_inicial_chat}. "
+                f"{apertura_es}"
+                "Prioriza empatia, escucha activa e invitacion a orar antes de empezar con preguntas. "
+                "Como es el primer mensaje despues de que la persona haya contado su problema, invitalo con suavidad a orar primero para pedir la direccion de Dios. "
+                "No hagas aun la oracion salvo que la persona la acepte o la pida de forma explicita. "
+                "En este turno no hagas todavia la pregunta de exploracion. "
+                "Si ya aparece claramente una conducta contraria a la vida cristiana, confrontala con amor y con un versiculo breve, sin dureza. "
+                "No des todavia soluciones, listas de pasos ni una explicacion larga."
+            ),
+            "es_resto": (
+                f"Sigues en la fase inicial de exploracion {turno_actual} de {objetivo_exploracion_inicial_chat}. "
+                "Durante esta fase prioriza casi por completo la empatia, la escucha activa y una sola pregunta breve que ayude a detectar que hay realmente debajo del dolor, la confusion o el bloqueo. "
+                "Si este es el turno inmediatamente siguiente a la invitacion a orar, formula ahora la primera pregunta pastoral breve de exploracion. "
+                "No des todavia soluciones, listas de pasos, mini sermones ni confrontaciones fuertes. Si aparece claramente una conducta contraria a la vida cristiana, si puedes hacer una confrontacion amorosa y breve apoyada en un versiculo. "
+                "Si la persona no tiene claro lo que le pasa, ayudala con suavidad a descubrirlo: refleja lo que observas y ofrece una o dos posibilidades concretas para que diga si alguna encaja, sin imponer etiquetas."
+            ),
+            "ca_primero": (
+                f"Ets en la fase inicial d'exploracio {turno_actual} de {objetivo_exploracion_inicial_chat}. "
+                "Prioritza empatia, escolta activa i una sola pregunta breu per entendre millor el problema. "
+                "Com que es el primer missatge despres que la persona ha explicat el seu problema, pregunta-li amb suavitat si voleu orar primer per demanar la direccio de Deu. "
+                "No faces encara la pregaria llevat que la persona l'accepte o la demane de manera explicita. "
+                "No dones encara solucions, llistes de passos ni una explicacio llarga."
+            ),
+            "ca_resto": (
+                f"Continues en la fase inicial d'exploracio {turno_actual} de {objetivo_exploracion_inicial_chat}. "
+                "Durant aquesta fase prioritza quasi del tot l'empatia, l'escolta activa i una sola pregunta breu que ajude a detectar que hi ha realment davall del dolor, la confusio o el bloqueig. "
+                "No dones encara solucions, llistes de passos, mini sermons ni confrontacions fortes. "
+                "Si la persona no te clar que li passa, ajuda-la amb suavitat a descobrir-ho: reflecteix el que observes i ofereix una o dues possibilitats concretes perque diga si alguna encaixa, sense imposar etiquetes."
+            ),
+            "fr_primero": (
+                f"Tu es dans la phase initiale d'exploration {turno_actual} sur {objetivo_exploracion_inicial_chat}. "
+                "Priorise l'empathie, l'ecoute active et une seule question breve pour mieux comprendre le probleme. "
+                "Comme c'est le premier message apres que la personne a explique son probleme, demande avec douceur si vous pouvez d'abord prier pour demander la direction de Dieu. "
+                "Ne fais pas encore la priere sauf si la personne l'accepte ou la demande clairement. "
+                "Ne donne pas encore de solutions, de liste d'etapes ni de longue explication."
+            ),
+            "fr_resto": (
+                f"Tu es encore dans la phase initiale d'exploration {turno_actual} sur {objetivo_exploracion_inicial_chat}. "
+                "Pendant cette phase, privilegie presque entierement l'empathie, l'ecoute active et une seule question breve qui aide a discerner ce qu'il y a reellement sous la douleur, la confusion ou le blocage. "
+                "Ne donne pas encore de solutions, de listes d'etapes, de mini sermons ni de confrontation forte. "
+                "Si la personne ne comprend pas bien ce qui lui arrive, aide-la doucement a le decouvrir : reflEte ce que tu observes et propose une ou deux possibilites concretes pour voir si l'une correspond, sans imposer d'etiquettes."
+            ),
+            "en_primero": (
+                f"You are in the initial exploration phase, turn {turno_actual} of {objetivo_exploracion_inicial_chat}. "
+                "Prioritize empathy, active listening, and one brief question to understand the problem better. "
+                "Because this is the first message after the person has shared their problem, gently ask whether they would like to pray first and ask for God's direction. "
+                "Do not pray yet unless the person clearly accepts or asks for it. "
+                "Do not give solutions, action lists, or a long explanation yet."
+            ),
+            "en_resto": (
+                f"You are still in the initial exploration phase, turn {turno_actual} of {objetivo_exploracion_inicial_chat}. "
+                "During this phase, focus almost entirely on empathy, active listening, and one brief question that helps uncover what is really beneath the pain, confusion, or blockage. "
+                "Do not give solutions, action lists, mini sermons, or strong confrontation yet. "
+                "If the person is not clear about what is happening to them, gently help them discover it: reflect what you observe and offer one or two concrete possibilities so they can say whether any fits, without imposing labels."
+            ),
+        }
+        clave = "primero" if turno_actual == 1 else "resto"
+        return instrucciones.get(f"{lang_code}_{clave}", instrucciones[f"es_{clave}"])
+
+    def construir_instruccion_cierre_acompanamiento_chat_consejero() -> tuple[str, str]:
+        if es_modo_chat_soporte or cierre_acompanamiento_chat_realizado:
+            return "", "none"
+
+        mensajes_asistente = sum(
+            1 for rol, _, _ in historial_chat_consejero if rol == "assistant"
+        )
+        respuestas_consejero = max(0, mensajes_asistente - 1)
+        if respuestas_consejero < objetivo_total_chat_consejero:
+            return "", "none"
+        if aplazar_intervencion_ritmica_chat_consejero():
+            return "", "defer"
+
+        instrucciones = {
+            "es": (
+                f"El problema principal ya deberia estar bastante claro y la conversacion ya va por unas {objetivo_total_chat_consejero} intervenciones aproximadamente. "
+                "En este turno haz una respuesta de acompanamiento mas completa y calida: "
+                "1) resume en una frase breve el problema que has detectado; "
+                "2) da palabras de animo con un versiculo breve que encaje de verdad; "
+                "3) ofrece un consejo pastoral concreto con otro versiculo breve si ayuda; "
+                "4) termina con una oracion breve y real; "
+                "5) cierra preguntando si puedes ayudar en alguna cosa mas. "
+                "Hazlo con lenguaje sencillo, cercano y sin sonar como esquema."
+            ),
+            "ca": (
+                f"El problema principal ja hauria d'estar prou clar i la conversa ja va per unes {objetivo_total_chat_consejero} intervencions aproximadament. "
+                "En aquest torn fes una resposta d'acompanyament mes completa i calida: "
+                "1) resumeix en una frase breu el problema que has detectat; "
+                "2) dona paraules d'anim amb un versicle breu que encaixe de veritat; "
+                "3) ofereix un consell pastoral concret amb un altre versicle breu si ajuda; "
+                "4) acaba amb una pregaria breu i real; "
+                "5) tanca preguntant si pots ajudar en alguna cosa mes. "
+                "Fes-ho amb llenguatge senzill, proper i sense sonar com un esquema."
+            ),
+            "fr": (
+                f"Le probleme principal devrait deja etre assez clair et la conversation en est deja a environ {objetivo_total_chat_consejero} interventions. "
+                "Dans ce tour, fais une reponse d'accompagnement plus complete et chaleureuse : "
+                "1) resume en une phrase breve le probleme que tu as percu; "
+                "2) donne des paroles d'encouragement avec un verset bref qui convient vraiment; "
+                "3) offre un conseil pastoral concret avec un autre verset bref si cela aide; "
+                "4) termine par une priere breve et reelle; "
+                "5) finis en demandant si tu peux aider en quelque chose d'autre. "
+                "Fais-le avec un langage simple, proche et naturel."
+            ),
+            "en": (
+                f"The main problem should now be fairly clear and the conversation is already around {objetivo_total_chat_consejero} turns. "
+                "In this turn, give a warmer and more complete care response: "
+                "1) briefly summarize the main problem you have identified; "
+                "2) offer words of encouragement with a short fitting verse; "
+                "3) give one concrete pastoral counsel with another short verse if helpful; "
+                "4) end with a brief real prayer; "
+                "5) close by asking whether you can help with anything else. "
+                "Do this in simple, close, natural language rather than sounding like a template."
+            ),
+        }
+        return instrucciones.get(lang_code, instrucciones["es"]), "close"
+
     def es_respuesta_oracion_chat_consejero(texto: str, mensaje_usuario: str) -> bool:
         respuesta = (texto or "").strip().lower()
         consulta = (mensaje_usuario or "").strip().lower()
@@ -8152,6 +8647,22 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         )
         return respuesta_simple.startswith(inicios_oracion)
 
+    def asegurar_cierre_oracion_chat_consejero(texto: str, mensaje_usuario: str) -> str:
+        respuesta = (texto or "").strip()
+        if not respuesta or es_modo_chat_soporte:
+            return respuesta
+        if not es_respuesta_oracion_chat_consejero(respuesta, mensaje_usuario):
+            return respuesta
+
+        respuesta = recortar_solo_oracion_chat_consejero(respuesta)
+
+        respuesta = re.sub(
+            r"(?i)[,;:\-]?\s*en el nombre de jes(?:u|Ãº|ú)s\.?\s*am(?:e|Ã©|é)n\.?\s*$",
+            "",
+            respuesta,
+        ).strip()
+        return f"{respuesta} En el nombre de Jesus. Amen.".strip()
+
     def limpiar_cierre_oracion_chat_consejero(texto: str, mensaje_usuario: str) -> str:
         respuesta = (texto or "").strip()
         if not respuesta or es_modo_chat_soporte:
@@ -8167,6 +8678,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ]
         for cierre in cierres:
             respuesta = respuesta.replace(cierre, "").strip()
+        respuesta = re.sub(r"(?i)[,;:\-]?\s*am(?:e|Ã©|é)n\.?$", "", respuesta).strip()
+        respuesta = re.sub(r"(?i)[,;:\-]?\s*am(?:e|Ã©|é)n\.?$", "", respuesta).strip()
         respuesta = re.sub(r"\s{2,}", " ", respuesta).strip()
         return respuesta
 
@@ -8174,6 +8687,127 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         base = unicodedata.normalize("NFKD", texto or "")
         sin_acentos = "".join(car for car in base if not unicodedata.combining(car))
         return re.sub(r"\s+", " ", sin_acentos).strip().lower()
+
+    def variar_inicio_entiendo_chat_consejero(texto: str) -> str:
+        respuesta = (texto or "").strip()
+        if not respuesta or es_modo_chat_soporte:
+            return respuesta
+
+        match = re.match(
+            r"^(?P<prefijo>[\s\"'¿¡\(\[\*_#>\-]*)(?P<lemma>entiendo)(?P<cola>\s+que\b)?",
+            respuesta,
+            re.IGNORECASE,
+        )
+        if not match:
+            return respuesta
+
+        indice_respuesta = sum(
+            1 for rol, _, _ in historial_chat_consejero if rol == "assistant"
+        )
+        aperturas_con_que = (
+            "Entiendo que",
+            "Lamento que",
+            "Comprendo que",
+            "Veo que",
+        )
+        aperturas_simples = (
+            "Entiendo",
+            "Lamento",
+            "Comprendo",
+            "Veo",
+        )
+        reemplazo = (
+            aperturas_con_que if match.group("cola") else aperturas_simples
+        )[indice_respuesta % 4]
+        if match.group("lemma").islower():
+            reemplazo = reemplazo.lower()
+        return f"{match.group('prefijo')}{reemplazo}{respuesta[match.end():]}"
+
+    def obtener_nombre_usuario_chat_consejero() -> str:
+        patrones = (
+            r"\bme llamo\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'\-]{1,30})\b",
+            r"\bsoy\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'\-]{1,30})\b",
+            r"\bmi nombre es\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'\-]{1,30})\b",
+        )
+        for rol, mensaje, _ in reversed(historial_chat_consejero):
+            if rol != "user":
+                continue
+            texto = (mensaje or "").strip()
+            if not texto:
+                continue
+            for patron in patrones:
+                match = re.search(patron, texto, re.IGNORECASE)
+                if match:
+                    nombre = match.group(1).strip()
+                    return nombre[:1].upper() + nombre[1:].lower()
+        return ""
+
+    def suavizar_uso_nombre_chat_consejero(texto: str) -> str:
+        respuesta = (texto or "").strip()
+        if not respuesta or es_modo_chat_soporte:
+            return respuesta
+
+        nombre = obtener_nombre_usuario_chat_consejero()
+        if not nombre:
+            return respuesta
+
+        patron = re.compile(
+            rf"\b{re.escape(nombre)}\b(?!\s*\d)(?:\s*,)?",
+            re.IGNORECASE,
+        )
+        coincidencias = list(patron.finditer(respuesta))
+        if len(coincidencias) <= 1:
+            return respuesta
+
+        primera = coincidencias[0]
+        prefijo = respuesta[:primera.end()]
+        resto = respuesta[primera.end():]
+        resto = patron.sub("", resto)
+        respuesta = f"{prefijo}{resto}"
+        respuesta = re.sub(r"\s{2,}", " ", respuesta).strip()
+        respuesta = re.sub(r"\s+([,;:.!?])", r"\1", respuesta)
+        respuesta = re.sub(r"([,;:]){2,}", r"\1", respuesta)
+        respuesta = re.sub(r",\s*,", ", ", respuesta)
+        return respuesta.strip()
+
+    def limpiar_repeticiones_chat_consejero(texto: str) -> str:
+        respuesta = (texto or "").strip()
+        if not respuesta or es_modo_chat_soporte:
+            return respuesta
+
+        respuesta = re.sub(
+            r"(?i)\bayudarte en este chat\b",
+            "ayudarte ahora",
+            respuesta,
+        )
+        respuesta = re.sub(
+            r"(?i),?\s*si no puede ayudarte ahora,?\s*",
+            " ",
+            respuesta,
+        )
+        respuesta = re.sub(r"\s{2,}", " ", respuesta).strip()
+
+        fragmentos = re.split(r"(?<=[.!?])\s+", respuesta)
+        vistos = []
+        filtrados = []
+        for fragmento in fragmentos:
+            fragmento_limpio = fragmento.strip()
+            if not fragmento_limpio:
+                continue
+            clave = re.sub(
+                r"[^a-z0-9]+",
+                " ",
+                normalizar_texto_chat_consejero(fragmento_limpio),
+            ).strip()
+            if len(clave) >= 18 and clave in vistos[-3:]:
+                continue
+            vistos.append(clave)
+            filtrados.append(fragmento_limpio)
+
+        respuesta = " ".join(filtrados).strip() or respuesta
+        respuesta = re.sub(r"\s{2,}", " ", respuesta).strip()
+        respuesta = re.sub(r"\s+([,;:.!?])", r"\1", respuesta)
+        return respuesta.strip()
 
     def es_respuesta_oracion_chat_consejero(texto: str, mensaje_usuario: str) -> bool:
         del mensaje_usuario
@@ -8217,6 +8851,87 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ]
         coincidencias = sum(1 for marcador in marcadores_oracion if marcador in primeras_lineas)
         return coincidencias >= 2
+
+    def separar_primer_bloque_oracion_chat_consejero(texto: str) -> tuple[str, str]:
+        respuesta = limpiar_respuesta_chat_visible(texto or "").strip()
+        if not respuesta:
+            return "", ""
+
+        bloques = [
+            bloque.strip()
+            for bloque in re.split(r"\n\s*\n", respuesta)
+            if bloque.strip()
+        ]
+        if len(bloques) < 2:
+            return "", respuesta
+
+        primer_bloque = bloques[0]
+        if not es_respuesta_oracion_chat_consejero(primer_bloque, ""):
+            return "", respuesta
+
+        resto = "\n\n".join(bloques[1:]).strip()
+        return primer_bloque, resto
+
+    def recortar_solo_oracion_chat_consejero(texto: str) -> str:
+        respuesta = limpiar_respuesta_chat_visible(texto or "").strip()
+        if not respuesta:
+            return ""
+
+        indice_pregunta = None
+        for patron in (
+            r"(?i)\s+[Aa]hora\b",
+            r"(?i)\s+[Dd]ime\b",
+            r"(?i)\s+[Cc]uentame\b",
+            r"(?i)\s+[Pp]odrias\b",
+            r"(?i)\s+[Qq]ue aspecto\b",
+            r"(?i)\s+[Qq]ue es lo que\b",
+            r"(?i)\s+[Ee]n que\b",
+            "\u00BF",
+            r"\?",
+        ):
+            coincidencia = re.search(patron, respuesta)
+            if not coincidencia:
+                continue
+            inicio = coincidencia.start()
+            if inicio <= 0:
+                continue
+            if indice_pregunta is None or inicio < indice_pregunta:
+                indice_pregunta = inicio
+
+        patron_cierre = re.search(
+            r"(?i)\ben el nombre de jes(?:u|Ãº)s\.?\s*am(?:e|Ã©)n\.?",
+            respuesta,
+        )
+        if indice_pregunta is not None and (
+            patron_cierre is None or indice_pregunta < patron_cierre.start()
+        ):
+            return respuesta[:indice_pregunta].rstrip(" ,;:-").strip()
+        if patron_cierre:
+            return respuesta[:patron_cierre.end()].strip()
+
+        indice_corte = None
+        for patron in (
+            r"(?i)\s+[Aa]hora\b",
+            r"(?i)\s+[Dd]ime\b",
+            r"(?i)\s+[Cc]uentame\b",
+            r"(?i)\s+[Pp]odrias\b",
+            r"(?i)\s+[Qq]ue es lo que\b",
+            r"(?i)\s+[Ee]n que\b",
+            r"(?i)\s*¿",
+            r"\?",
+        ):
+            coincidencia = re.search(patron, respuesta)
+            if not coincidencia:
+                continue
+            inicio = coincidencia.start()
+            if inicio <= 0:
+                continue
+            if indice_corte is None or inicio < indice_corte:
+                indice_corte = inicio
+
+        if indice_corte is None:
+            return respuesta
+        return respuesta[:indice_corte].rstrip(" ,;:-").strip()
 
     def limpiar_cierre_oracion_chat_consejero(texto: str, mensaje_usuario: str) -> str:
         respuesta = (texto or "").strip()
@@ -8268,17 +8983,35 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         page.update()
         page.run_task(desplazar_chat_al_final)
 
-        instruccion_turno_chat, resultado_ritmo_chat = construir_instruccion_ritmica_chat_consejero()
+        instruccion_turno_chat = construir_instruccion_aceptacion_oracion_chat_consejero()
+        resultado_ritmo_chat = "defer" if instruccion_turno_chat else "none"
+        if not instruccion_turno_chat:
+            instruccion_turno_chat = construir_instruccion_despues_de_amen_chat_consejero()
+            resultado_ritmo_chat = "defer" if instruccion_turno_chat else "none"
+        if not instruccion_turno_chat:
+            instruccion_turno_chat = construir_instruccion_primer_problema_chat_consejero()
+            resultado_ritmo_chat = "defer" if instruccion_turno_chat else "none"
+        if not instruccion_turno_chat:
+            instruccion_turno_chat, resultado_ritmo_chat = construir_instruccion_cierre_acompanamiento_chat_consejero()
+        if not instruccion_turno_chat:
+            instruccion_turno_chat, resultado_ritmo_chat = construir_instruccion_ritmica_chat_consejero()
+        respuesta_directa_chat = construir_respuesta_aceptacion_oracion_chat_consejero()
         prompt = construir_prompt_chat_activo(instruccion_turno_chat)
 
         async def tarea():
             nonlocal vista_resultado_completa
             try:
-                if getattr(page, "pyodide", False):
+                if respuesta_directa_chat:
+                    respuesta = respuesta_directa_chat
+                elif getattr(page, "pyodide", False):
                     respuesta = consultar_ia(prompt, lang_code, "question")
                 else:
                     respuesta = await asyncio.to_thread(consultar_ia, prompt, lang_code, "question")
+                respuesta = asegurar_cierre_oracion_chat_consejero(respuesta, mensaje)
                 respuesta = limpiar_cierre_oracion_chat_consejero(respuesta, mensaje)
+                respuesta = variar_inicio_entiendo_chat_consejero(respuesta)
+                respuesta = suavizar_uso_nombre_chat_consejero(respuesta)
+                respuesta = limpiar_repeticiones_chat_consejero(respuesta)
                 registrar_ritmo_chat_consejero(resultado_ritmo_chat)
                 detener_animacion_espera_chat()
                 sincronizar_chat_consejero_visual()
