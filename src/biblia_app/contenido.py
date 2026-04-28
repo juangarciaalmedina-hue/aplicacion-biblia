@@ -6076,6 +6076,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     def asegurar_saludo_inicial_chat(actualizar: bool = False) -> None:
         nonlocal saludo_inicial_chat_en_proceso
+        if not es_modo_chat:
+            return
         if historial_chat_consejero or saludo_inicial_chat_en_proceso:
             return
         saludo_inicial_chat_en_proceso = True
@@ -9573,7 +9575,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     tf_chat_consejero.on_submit = ejecutar_chat_consejero
     actualizar_opciones_libros()
     manejar_bloqueos()
-    asegurar_saludo_inicial_chat()
+    if es_modo_chat:
+        asegurar_saludo_inicial_chat()
 
     estilo_boton_rojo = ft.ButtonStyle(
         color=theme["primary_text"],

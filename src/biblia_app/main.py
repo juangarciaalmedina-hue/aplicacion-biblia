@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import traceback
 import unicodedata
+from urllib.parse import quote
 
 try:
     import socket
@@ -41,6 +42,8 @@ ANULAR_SEGUNDA_PAGINA_SALUDOS = False
 ANULAR_PAGINA_CONFIG_KEY = False
 WEB_API_KEY_STORAGE_KEY = "com.jmgalmedina.biblia_app.groq_api_key"
 GROQ_KEYS_URL = "https://console.groq.com/keys"
+WHATSAPP_SUPPORT_CONTACT = os.getenv("WHATSAPP_SUPPORT_CONTACT", "").strip()
+WHATSAPP_SUPPORT_MESSAGE = os.getenv("WHATSAPP_SUPPORT_MESSAGE", "").strip()
 
 
 async def _resolver_resultado_async(resultado):
@@ -51,6 +54,33 @@ async def _resolver_resultado_async(resultado):
 
 def _api_key_configurada() -> str:
     return os.getenv("GROQ_API_KEY", "").strip()
+
+
+def _mensaje_whatsapp_soporte(lang_code: str = "es") -> str:
+    return {
+        "es": "Hola, necesito ayuda con la configuracion de Biblia IA.",
+        "ca": "Hola, necessito ajuda amb la configuracio de Biblia IA.",
+        "fr": "Bonjour, j'ai besoin d'aide avec la configuration de Biblia IA.",
+        "en": "Hello, I need help with the Biblia IA setup.",
+    }.get(lang_code, "Hola, necesito ayuda con la configuracion de Biblia IA.")
+
+
+def obtener_url_whatsapp_soporte(lang_code: str = "es") -> str:
+    contacto = WHATSAPP_SUPPORT_CONTACT
+    if not contacto:
+        return ""
+    if contacto.startswith(("http://", "https://", "whatsapp://")):
+        return contacto
+
+    telefono = "".join(caracter for caracter in contacto if caracter.isdigit())
+    if not telefono:
+        return ""
+
+    mensaje = WHATSAPP_SUPPORT_MESSAGE or _mensaje_whatsapp_soporte(lang_code)
+    url = f"https://wa.me/{telefono}"
+    if mensaje:
+        url = f"{url}?text={quote(mensaje)}"
+    return url
 
 
 def _obtener_servicio_almacenamiento(page: ft.Page):
@@ -876,6 +906,11 @@ def main(page: ft.Page):
                     "support_welcome": "Hola. Estoy para ayudarte paso a paso. Puedes preguntarme como conseguir la key, donde pegarla o que hacer si sale un error.",
                     "support_typing": "La ayuda local esta escribiendo...",
                     "support_suggestions": "Sugerencias para seguir",
+                    "whatsapp_title": "Ayuda por WhatsApp",
+                    "whatsapp_desc": "Si prefieres hablar con una persona, abre aqui el chat de soporte de WhatsApp.",
+                    "whatsapp_button": "Abrir WhatsApp",
+                    "open_whatsapp_ok": "Abriendo chat de WhatsApp...",
+                    "open_whatsapp_error": "No se pudo abrir WhatsApp. Enlace copiado al portapapeles.",
                     "faq_key": "Como consigo la key",
                     "faq_429": "Error 429",
                     "faq_test": "Como pruebo la conexion",
@@ -915,6 +950,11 @@ def main(page: ft.Page):
                     "support_welcome": "Hola. Soc l'ajuda local de configuracio. Et puc orientar amb la API key, la prova de connexio, errors 401/403/429, .env, navegador o el pas seguent.",
                     "support_typing": "El suport local esta escrivint...",
                     "support_suggestions": "Suggeriments per continuar",
+                    "whatsapp_title": "Ajuda per WhatsApp",
+                    "whatsapp_desc": "Si prefereixes parlar amb una persona, obre aqui el xat de suport de WhatsApp.",
+                    "whatsapp_button": "Obrir WhatsApp",
+                    "open_whatsapp_ok": "Obrint xat de WhatsApp...",
+                    "open_whatsapp_error": "No s'ha pogut obrir WhatsApp. Enllac copiat al porta-retalls.",
                     "faq_key": "Com aconseguir la key",
                     "faq_429": "Error 429",
                     "faq_test": "Com provar la connexio",
@@ -954,6 +994,11 @@ def main(page: ft.Page):
                     "support_welcome": "Bonjour. Je suis l'aide locale de configuration. Je peux t'aider avec la cle API, le test, les erreurs 401/403/429, .env, le navigateur ou l'etape suivante.",
                     "support_typing": "Le support local ecrit...",
                     "support_suggestions": "Suggestions pour continuer",
+                    "whatsapp_title": "Aide par WhatsApp",
+                    "whatsapp_desc": "Si tu preferes parler avec une personne, ouvre ici le chat de support WhatsApp.",
+                    "whatsapp_button": "Ouvrir WhatsApp",
+                    "open_whatsapp_ok": "Ouverture du chat WhatsApp...",
+                    "open_whatsapp_error": "Impossible d'ouvrir WhatsApp. Lien copie dans le presse-papiers.",
                     "faq_key": "Comment obtenir la cle",
                     "faq_429": "Erreur 429",
                     "faq_test": "Comment tester",
@@ -993,6 +1038,11 @@ def main(page: ft.Page):
                     "support_welcome": "Hello. I am the local setup help. I can guide you with the API key, connection test, errors 401/403/429, .env, browser issues, or the next step.",
                     "support_typing": "Local help is typing...",
                     "support_suggestions": "Suggested next help",
+                    "whatsapp_title": "WhatsApp help",
+                    "whatsapp_desc": "If you prefer talking to a person, open the WhatsApp support chat here.",
+                    "whatsapp_button": "Open WhatsApp",
+                    "open_whatsapp_ok": "Opening WhatsApp chat...",
+                    "open_whatsapp_error": "Could not open WhatsApp. Link copied to clipboard.",
                     "faq_key": "How to get the key",
                     "faq_429": "Error 429",
                     "faq_test": "How to test",
@@ -1016,6 +1066,7 @@ def main(page: ft.Page):
             alto_historial_soporte = 190 if es_movil else 220
             padding_panel = 14 if es_movil else 20
             padding_soporte = 12 if es_movil else 16
+            whatsapp_url = obtener_url_whatsapp_soporte(idioma)
 
             valor_inicial = _api_key_configurada()
             estado = ft.Text("", color=theme["text"], size=13)
@@ -1274,6 +1325,29 @@ def main(page: ft.Page):
                         estado.color = ft.Colors.AMBER_700
                 page.update()
 
+            def abrir_whatsapp_soporte(_=None):
+                if not whatsapp_url:
+                    return
+                try:
+                    page.launch_url(whatsapp_url, web_window_name="_blank")
+                    estado.value = ui["open_whatsapp_ok"]
+                    estado.color = theme["text"]
+                except Exception:
+                    try:
+                        if subprocess is None:
+                            raise RuntimeError("subprocess no disponible")
+                        subprocess.Popen(["cmd", "/c", "start", "", whatsapp_url], shell=False)
+                        estado.value = ui["open_whatsapp_ok"]
+                        estado.color = theme["text"]
+                    except Exception:
+                        try:
+                            page.set_clipboard(whatsapp_url)
+                        except Exception:
+                            pass
+                        estado.value = f"{ui['open_whatsapp_error']} {whatsapp_url}"
+                        estado.color = ft.Colors.AMBER_700
+                page.update()
+
             def siguiente(_=None):
                 if (input_key.value or "").strip():
                     guardar_key()
@@ -1312,6 +1386,49 @@ def main(page: ft.Page):
                             ui["support_desc"],
                             color=theme["text"],
                             size=13,
+                        ),
+                        ft.Container(
+                            visible=bool(whatsapp_url),
+                            padding=12,
+                            bgcolor=theme["panel_bg"],
+                            border=ft.border.all(2, theme["field_border"]),
+                            border_radius=14,
+                            content=ft.Column(
+                                [
+                                    ft.Row(
+                                        [
+                                            ft.Icon(ft.Icons.CHAT, color="#25D366", size=22),
+                                            ft.Text(
+                                                ui["whatsapp_title"],
+                                                size=15,
+                                                weight=ft.FontWeight.BOLD,
+                                                color=theme["primary"],
+                                            ),
+                                        ],
+                                        spacing=8,
+                                    ),
+                                    ft.Text(
+                                        ui["whatsapp_desc"],
+                                        color=theme["text"],
+                                        size=12,
+                                    ),
+                                    ft.ElevatedButton(
+                                        ui["whatsapp_button"],
+                                        icon=ft.Icons.OPEN_IN_NEW,
+                                        on_click=abrir_whatsapp_soporte,
+                                        width=9999,
+                                        style=ft.ButtonStyle(
+                                            bgcolor="#25D366",
+                                            color="#103E2A",
+                                            side=ft.BorderSide(3, theme["border"]),
+                                            shape=ft.RoundedRectangleBorder(radius=12),
+                                            padding=ft.padding.symmetric(vertical=12, horizontal=16),
+                                        ),
+                                    ),
+                                ],
+                                spacing=10,
+                                tight=True,
+                            ),
                         ),
                         ft.Container(
                             key="panel_soporte_historial",
