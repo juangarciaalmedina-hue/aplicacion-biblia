@@ -29,6 +29,7 @@ import flet as ft
 
 from biblia_app.bienvenida import (
     pantalla_carga_saludo,
+    pantalla_intro_dones,
     pantalla_saludos,
     pantalla_selector_idioma,
     pantalla_selector_modo,
@@ -1800,8 +1801,35 @@ def main(page: ft.Page):
                     content=pantalla_selector_modo(
                         page,
                         idioma,
-                        lambda modo: mostrar_selector_preguntas(idioma) if modo == "preguntas" else mostrar_contenido(idioma, inicio=modo),
+                        lambda modo: (
+                            mostrar_selector_preguntas(idioma)
+                            if modo == "preguntas"
+                            else mostrar_intro_dones(idioma)
+                            if modo == "dones"
+                            else mostrar_contenido(idioma, inicio=modo)
+                        ),
                         lambda: volver_desde_selector_modo(idioma),
+                    ),
+                    expand=True,
+                    alignment=ft.Alignment(0, 0),
+                )
+            )
+            page.update()
+        except Exception as exc:
+            mostrar_error(page, titulo_error("entry"), detalle_error(exc))
+
+    def mostrar_intro_dones(idioma: str):
+        try:
+            idioma_actual["code"] = idioma
+            page.clean()
+            page.vertical_alignment = ft.MainAxisAlignment.CENTER
+            page.add(
+                ft.Container(
+                    content=pantalla_intro_dones(
+                        page,
+                        idioma,
+                        lambda: mostrar_contenido(idioma, inicio="dones"),
+                        lambda: mostrar_selector_modo_entrada(idioma),
                     ),
                     expand=True,
                     alignment=ft.Alignment(0, 0),

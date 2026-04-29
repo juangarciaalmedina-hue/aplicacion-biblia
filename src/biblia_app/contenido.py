@@ -64,6 +64,189 @@ CHAT_HISTORY_TOTAL_CHARS = _leer_entero_env("GROQ_CHAT_HISTORY_TOTAL_CHARS", 180
 CHAT_SUMMARY_MESSAGE_MAX_CHARS = _leer_entero_env("GROQ_CHAT_SUMMARY_MESSAGE_MAX_CHARS", 160, 50)
 CHAT_SUMMARY_TOTAL_CHARS = _leer_entero_env("GROQ_CHAT_SUMMARY_TOTAL_CHARS", 1200, 200)
 
+TEST_DONES_ESPIRITUALES = [
+    {
+        "key": "ayuda",
+        "name": "Ayuda",
+        "summary": "Sueles fortalecer el trabajo de otros con apoyo práctico, estable y fiel.",
+        "verses": "Marcos 15:40-41; Hechos 9:36; Romanos 16:1-2; 1 Corintios 12:28",
+        "questions": [
+            "Me alegra hacer tareas discretas que alivian la carga de otros ministerios.",
+            "Suelo notar lo que falta y me pongo a colaborar sin buscar protagonismo.",
+        ],
+    },
+    {
+        "key": "liderazgo",
+        "name": "Liderazgo",
+        "summary": "Tiendes a marcar dirección, unir personas y mover grupos hacia una meta clara.",
+        "verses": "Romanos 12:8; 1 Timoteo 3:1-13; 1 Timoteo 5:17; Hebreos 13:17",
+        "questions": [
+            "Cuando un grupo no sabe por dónde seguir, suelo ayudar a ordenar el camino.",
+            "Me siento cómodo animando a otros para avanzar juntos hacia una meta concreta.",
+        ],
+    },
+    {
+        "key": "hospitalidad",
+        "name": "Hospitalidad",
+        "summary": "Te nace recibir, incluir y hacer que otros se sientan en casa.",
+        "verses": "Hechos 16:14-15; Romanos 12:13; 1 Pedro 4:9; Hebreos 13:1-2",
+        "questions": [
+            "Disfruto recibir personas nuevas y ayudarles a sentirse parte del grupo.",
+            "Abrir mi casa, mi tiempo o mi mesa para cuidar a otros me resulta natural.",
+        ],
+    },
+    {
+        "key": "servicio",
+        "name": "Servicio",
+        "summary": "Respondes con acción práctica cuando aparece una necesidad concreta.",
+        "verses": "Hechos 6:1-7; Romanos 12:7; Tito 3:14; Gálatas 6:10",
+        "questions": [
+            "Me activa más hacer algo útil que quedarme solo hablando del problema.",
+            "Puedo servir con alegría incluso en tareas pequeñas, repetitivas o poco visibles.",
+        ],
+    },
+    {
+        "key": "administracion",
+        "name": "Administración",
+        "summary": "Tienes facilidad para ordenar recursos, tiempos y personas con claridad.",
+        "verses": "Lucas 14:28-30; Hechos 6:1-7; 1 Corintios 12:28",
+        "questions": [
+            "Organizar planes, tiempos y responsables me sale con bastante naturalidad.",
+            "Me gusta convertir ideas sueltas en pasos concretos para que un proyecto avance.",
+        ],
+    },
+    {
+        "key": "discernimiento",
+        "name": "Discernimiento",
+        "summary": "Percibes con claridad cuando algo suena sano, confuso o espiritualmente desviado.",
+        "verses": "Mateo 16:21-23; Hechos 5:1-11; 1 Juan 4:1-6; 1 Corintios 12:10",
+        "questions": [
+            "Detecto con rapidez cuando una idea espiritual parece verdadera pero no lo es del todo.",
+            "Suelo captar intenciones, ambientes o influencias que otros tardan más en notar.",
+        ],
+    },
+    {
+        "key": "fe",
+        "name": "Fe",
+        "summary": "Te inclinas a confiar en Dios con firmeza aún cuando no ves soluciones claras.",
+        "verses": "Hechos 11:22-24; Romanos 4:18-21; 1 Corintios 12:9; Hebreos 11",
+        "questions": [
+            "En tiempos inciertos, me resulta natural seguir confiando en la fidelidad de Dios.",
+            "Siento paz para creerle a Dios por cosas grandes incluso cuando la situación parece difícil.",
+        ],
+    },
+    {
+        "key": "generosidad",
+        "name": "Generosidad",
+        "summary": "Compartes recursos con alegría y con deseo real de bendecir a otros.",
+        "verses": "Marcos 12:41-44; Romanos 12:8; 2 Corintios 8:1-7; 2 Corintios 9:2-7",
+        "questions": [
+            "Dar de mis recursos para la obra de Dios o para una necesidad real me produce gozo.",
+            "Puedo simplificar mis gastos si eso permite ayudar más a otros.",
+        ],
+    },
+    {
+        "key": "misericordia",
+        "name": "Misericordia",
+        "summary": "Te conmueven el dolor y la fragilidad ajena, y buscas aliviarla de forma cercana.",
+        "verses": "Mateo 9:35-36; Marcos 9:41; Romanos 12:8; 1 Tesalonicenses 5:14",
+        "questions": [
+            "Cuando alguien está herido o solo, siento deseo de acercarme y acompañarle.",
+            "No me cuesta dedicar tiempo a personas que están sufriendo para escuchar y sostener.",
+        ],
+    },
+    {
+        "key": "sabiduria",
+        "name": "Sabiduría",
+        "summary": "Tiendes a aplicar la verdad bíblica con acierto en decisiones complejas y concretas.",
+        "verses": "Hechos 6:3,10; 1 Corintios 2:6-13; 1 Corintios 12:8",
+        "questions": [
+            "Las personas suelen buscarme cuando necesitan orientación en decisiones delicadas.",
+            "Me resulta natural unir verdad bíblica y realidad práctica para aclarar un camino.",
+        ],
+    },
+    {
+        "key": "exhortacion",
+        "name": "Exhortación",
+        "summary": "Sabes animar, corregir y levantar a otros de una forma que los impulsa a crecer.",
+        "verses": "Hechos 14:22; Romanos 12:8; 1 Timoteo 4:13; Hebreos 10:24-25",
+        "questions": [
+            "Disfruto fortalecer a otros con palabras que animan, enfocan y mueven a crecer.",
+            "Puedo confrontar con amor sin destruir, buscando siempre restaurar y levantar.",
+        ],
+    },
+    {
+        "key": "ensenanza",
+        "name": "Enseñanza",
+        "summary": "Te gusta estudiar, entender bien y explicar con claridad la Escritura.",
+        "verses": "Hechos 18:24-28; Hechos 20:20-21; 1 Corintios 12:28; Efesios 4:11-14",
+        "questions": [
+            "Disfruto profundizar en la Biblia hasta comprender bien un pasaje o un tema.",
+            "Cuando explico la Escritura, suelo buscar orden, claridad y aplicación práctica.",
+        ],
+    },
+    {
+        "key": "pastoreo",
+        "name": "Pastoreo",
+        "summary": "Llevas carga por el crecimiento espiritual de personas concretas y las acompañas.",
+        "verses": "Juan 10:1-18; Efesios 4:11-14; 1 Timoteo 3:1-7; 1 Pedro 5:1-3",
+        "questions": [
+            "Me preocupa de verdad el avance espiritual de ciertas personas y hago seguimiento.",
+            "Suelo cuidar, orientar y sostener a creyentes para que no caminen solos.",
+        ],
+    },
+    {
+        "key": "apostolico",
+        "name": "Apostólico",
+        "summary": "Te ilusiona abrir camino, iniciar obra nueva y levantar estructuras sanas de ministerio.",
+        "verses": "Hechos 15:22-35; 1 Corintios 12:28; Efesios 4:11-14; Galatas 2:7-10",
+        "questions": [
+            "Me entusiasma iniciar proyectos ministeriales desde cero donde aún no hay nada consolidado.",
+            "Suelo pensar en cómo extender una obra para que crezca con base sólida y visión amplia.",
+        ],
+    },
+    {
+        "key": "misionero",
+        "name": "Misionero",
+        "summary": "Te adaptas con gusto a contextos distintos para servir a Cristo más allá de tu ambiente.",
+        "verses": "Hechos 8:4; Hechos 13:2-3; Hechos 22:21; Romanos 10:15",
+        "questions": [
+            "Servir a Dios entre personas de otra cultura, país o estilo de vida me atrae mucho.",
+            "Puedo adaptarme con relativa facilidad a ambientes muy distintos al mío para ministrar mejor.",
+        ],
+    },
+    {
+        "key": "profecia",
+        "name": "Profecía",
+        "summary": "Sientes carga por declarar la verdad de Dios con claridad, valentía y humildad.",
+        "verses": "Hechos 2:37-40; Hechos 7:51-53; 1 Tesalonicenses 1:5; 1 Corintios 14:1-4",
+        "questions": [
+            "Me pesa hablar con claridad cuando una situación exige verdad bíblica y llamado al cambio.",
+            "No me resulta fácil callar cuando veo que hay que confrontar en amor lo que está mal.",
+        ],
+    },
+    {
+        "key": "evangelismo",
+        "name": "Evangelismo",
+        "summary": "Te nace compartir a Cristo con naturalidad, claridad y deseo de respuesta.",
+        "verses": "Hechos 8:5-6; Hechos 8:26-40; Efesios 4:11-14; Hechos 21:8",
+        "questions": [
+            "Me resulta natural hablar de Jesús con personas que todavía no creen.",
+            "Disfruto explicar el evangelio de forma sencilla e invitar a otros a responder a Cristo.",
+        ],
+    },
+    {
+        "key": "intercesion",
+        "name": "Intercesión",
+        "summary": "Tienes constancia para orar por otros y cargar delante de Dios sus necesidades.",
+        "verses": "Colosenses 1:9-12; Colosenses 4:12-13; Santiago 5:14-16",
+        "questions": [
+            "Llevo con frecuencia personas, situaciones y ministerios a la oración durante bastante tiempo.",
+            "Siento carga espiritual por orar hasta que una necesidad quede realmente puesta delante del Señor.",
+        ],
+    },
+]
+
 
 def construir_system_prompt(lang_code: str, mode: str = "study") -> str:
     language_names = {
@@ -2627,7 +2810,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     page.bgcolor = theme["page_bg"]
     page.padding = 2
     page.scroll = ft.ScrollMode.AUTO
-    inicio_preferido = inicio if inicio in {"biblia", "filtros", "comportamiento", "incredulo", "cristianos", "chat_consejero", "chat_soporte"} else "biblia"
+    inicio_preferido = inicio if inicio in {"biblia", "filtros", "comportamiento", "incredulo", "cristianos", "dones", "chat_consejero", "chat_soporte"} else "biblia"
     controles_montados = False
     label_style_theme = ft.TextStyle(color=theme["primary"])
     textos_comportamiento = {
@@ -2776,6 +2959,80 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "status_ready": "Status: response ready",
         },
     }.get(lang_code, {})
+    textos_dones = {
+        "es": {
+            "title": "TEST DE DONES ESPIRITUALES",
+            "intro": "Responde esta autoevaluación del 0 al 4. No busca etiquetarte, sino ayudarte a ver por dónde sueles servir con más fuerza.",
+            "instructions": "Escala: 0 nada | 1 poco | 2 bastante | 3 mucho | 4 muy identificado.",
+            "score_label": "PUNTOS",
+            "score_missing": "Elige una puntuación",
+            "progress": "Respondidas: {done} de {total}",
+            "calculating": "Calculando resultado del test...",
+            "ready": "Resultado listo.",
+            "calculate": "CALCULAR RESULTADO",
+            "clear": "LIMPIAR TEST",
+            "result_title": "RESULTADO DEL TEST",
+            "pending": "Completa todas las preguntas para ver el resultado.",
+            "incomplete": "Te faltan {missing} preguntas por responder.",
+            "top_gifts": "Dones con mayor afinidad",
+            "all_scores": "Puntuaciones completas",
+            "pastoral_note": "Usa este resultado como orientación práctica y coméntalo con tu pastor o liderazgo.",
+        },
+        "ca": {
+            "title": "TEST DE DONES ESPIRITUALS",
+            "intro": "Respon aquesta autoavaluacio del 0 al 4. No busca etiquetar-te, sino ajudar-te a veure on acostumes a servir amb mes forca.",
+            "instructions": "Escala: 0 gens | 1 poc | 2 bastant | 3 molt | 4 molt identificat.",
+            "score_label": "PUNTS",
+            "score_missing": "Tria una puntuacio",
+            "progress": "Respostes: {done} de {total}",
+            "calculating": "Calculant resultat del test...",
+            "ready": "Resultat llest.",
+            "calculate": "CALCULAR RESULTAT",
+            "clear": "NETEJAR TEST",
+            "result_title": "RESULTAT DEL TEST",
+            "pending": "Completa totes les preguntes per veure el resultat.",
+            "incomplete": "Et falten {missing} preguntes per respondre.",
+            "top_gifts": "Dons amb mes afinitat",
+            "all_scores": "Puntuacions completes",
+            "pastoral_note": "Fes servir aquest resultat com a orientacio practica i comenta'l amb el teu pastor o lideratge.",
+        },
+        "fr": {
+            "title": "TEST DES DONS SPIRITUELS",
+            "intro": "Reponds a cette autoevaluation de 0 a 4. Elle ne cherche pas a te coller une etiquette, mais a t'aider a voir ou tu sers le plus naturellement.",
+            "instructions": "Echelle : 0 pas du tout | 1 un peu | 2 assez | 3 beaucoup | 4 tres fortement.",
+            "score_label": "NOTE",
+            "score_missing": "Choisis une note",
+            "progress": "Reponses : {done} sur {total}",
+            "calculating": "Calcul du resultat en cours...",
+            "ready": "Resultat pret.",
+            "calculate": "CALCULER LE RESULTAT",
+            "clear": "EFFACER LE TEST",
+            "result_title": "RESULTAT DU TEST",
+            "pending": "Complete toutes les questions pour voir le resultat.",
+            "incomplete": "Il te manque {missing} questions a remplir.",
+            "top_gifts": "Dons les plus probables",
+            "all_scores": "Scores complets",
+            "pastoral_note": "Utilise ce resultat comme orientation pratique et parle-en avec ton pasteur ou tes responsables.",
+        },
+        "en": {
+            "title": "SPIRITUAL GIFTS TEST",
+            "intro": "Answer this 0 to 4 self-assessment. It is meant to guide you, not to box you in.",
+            "instructions": "Scale: 0 not at all | 1 a little | 2 fairly true | 3 very true | 4 strongly true.",
+            "score_label": "SCORE",
+            "score_missing": "Choose a score",
+            "progress": "Answered: {done} of {total}",
+            "calculating": "Calculating test result...",
+            "ready": "Result ready.",
+            "calculate": "CALCULATE RESULT",
+            "clear": "CLEAR TEST",
+            "result_title": "TEST RESULT",
+            "pending": "Complete every question to see the result.",
+            "incomplete": "You still have {missing} unanswered questions.",
+            "top_gifts": "Strongest gift areas",
+            "all_scores": "Full scores",
+            "pastoral_note": "Use this result as practical guidance and discuss it with your pastor or leaders.",
+        },
+    }.get(lang_code, {})
     textos_chat_consejero = {
         "es": {
             "title": "CHAT CONSEJERO CRISTIANO",
@@ -2783,7 +3040,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "placeholder": "Escribe aquí tu situación, duda o carga. Por ejemplo: estoy muy angustiado, no sé cómo perdonar, tengo miedo, necesito orientación...",
             "send": "ENVIAR MENSAJE",
             "clear": "LIMPIAR CHAT",
-            "header_status": "Responde con base bÃ­blica y tono pastoral",
+            "header_status": "Responde con base bíblica y tono pastoral",
             "empty_message": "Escribe primero un mensaje",
             "status_generating": "Estado: respondiendo en el chat...",
             "status_ready": "Estado: respuesta lista",
@@ -2815,7 +3072,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "placeholder": "Escriu aquí la teva situació, dubte o càrrega. Per exemple: estic molt anguniat, no sé com perdonar, tinc por, necessito orientació...",
             "send": "ENVIAR MISSATGE",
             "clear": "NETEJAR XAT",
-            "header_status": "Respon amb base bÃ­blica i to pastoral",
+            "header_status": "Respon amb base bíblica i to pastoral",
             "empty_message": "Escriu primer un missatge",
             "status_generating": "Estat: responent al xat...",
             "status_ready": "Estat: resposta llesta",
@@ -4137,6 +4394,98 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         border_radius=14,
         bgcolor=theme["secondary"],
     )
+    total_preguntas_dones = sum(len(item["questions"]) for item in TEST_DONES_ESPIRITUALES)
+    opciones_puntuacion_dones = [ft.dropdown.Option(key=str(i), text=str(i)) for i in range(5)]
+    controles_dones: list[ft.Dropdown] = []
+    grupos_controles_dones: list[tuple[dict[str, object], list[ft.Dropdown]]] = []
+    bloques_preguntas_dones: list[ft.Control] = []
+    texto_estado_dones = ft.Text(
+        textos_dones["progress"].format(done=0, total=total_preguntas_dones),
+        color="#666666",
+        size=12,
+    )
+    texto_feedback_dones = ft.Text(
+        "",
+        color=theme["muted"],
+        size=12,
+        italic=True,
+        visible=False,
+    )
+    pr_dones = ft.ProgressBar(visible=False, color=theme["primary"])
+    markdown_resultado_dones = ft.Markdown(
+        value="",
+        selectable=True,
+        extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+    )
+    resultado_test_dones = ft.Container(
+        key="resultado_test_dones",
+        visible=False,
+        padding=14,
+        border=ft.border.all(4, theme["panel_border"]),
+        border_radius=18,
+        bgcolor=theme["accent"],
+        content=ft.Column(
+            [
+                ft.Text(textos_dones["result_title"], size=18, weight="bold", color=theme["primary"]),
+                markdown_resultado_dones,
+            ],
+            spacing=10,
+        ),
+    )
+
+    def actualizar_estado_test_dones(_=None):
+        respondidas = sum(1 for control in controles_dones if str(control.value or "").strip() != "")
+        texto_estado_dones.value = textos_dones["progress"].format(done=respondidas, total=total_preguntas_dones)
+
+    numero_pregunta_dones = 1
+    for bloque_don in TEST_DONES_ESPIRITUALES:
+        controles_bloque: list[ft.Dropdown] = []
+        for texto_pregunta in bloque_don["questions"]:
+            dd_puntuacion = ft.Dropdown(
+                label=textos_dones["score_label"],
+                options=opciones_puntuacion_dones,
+                value=None,
+                width=136,
+                dense=True,
+                text_size=13,
+                content_padding=ft.padding.symmetric(horizontal=10, vertical=8),
+                bgcolor=theme["field_bg"],
+                border_color=theme["field_border"],
+                border_width=4,
+                label_style=ft.TextStyle(color=theme["primary"], size=11, weight=ft.FontWeight.BOLD),
+            )
+            dd_puntuacion.on_change = actualizar_estado_test_dones
+            dd_puntuacion.on_select = actualizar_estado_test_dones
+            controles_dones.append(dd_puntuacion)
+            controles_bloque.append(dd_puntuacion)
+            bloques_preguntas_dones.append(
+                ft.Container(
+                    padding=10,
+                    border=ft.border.all(3, theme["field_border"]),
+                    border_radius=14,
+                    bgcolor=theme["panel_bg"],
+                    content=ft.ResponsiveRow(
+                        [
+                            ft.Container(
+                                col={"xs": 12, "sm": 9, "md": 10},
+                                content=ft.Text(
+                                    f"{numero_pregunta_dones}. {texto_pregunta}",
+                                    size=13,
+                                    color=theme["text"],
+                                ),
+                            ),
+                            ft.Container(
+                                col={"xs": 12, "sm": 3, "md": 2},
+                                content=dd_puntuacion,
+                            ),
+                        ],
+                        run_spacing=8,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                )
+            )
+            numero_pregunta_dones += 1
+        grupos_controles_dones.append((bloque_don, controles_bloque))
     contenedor_tipo_tamano = ft.Container()
 
 
@@ -5464,6 +5813,88 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         else:
             texto_contexto_activo_valor.value = ""
             contenedor_contexto_activo.visible = False
+
+    def construir_markdown_resultado_dones(resultados_ordenados: list[dict[str, object]]) -> str:
+        if not resultados_ordenados:
+            return textos_dones["pending"]
+
+        indice_corte = min(4, len(resultados_ordenados) - 1)
+        umbral_top = resultados_ordenados[indice_corte]["score"]
+        top = [item for item in resultados_ordenados if item["score"] >= umbral_top and item["score"] > 0]
+        if not top:
+            top = resultados_ordenados[:5]
+
+        lineas = [f"## {textos_dones['top_gifts']}"]
+        for posicion, item in enumerate(top, start=1):
+            lineas.append(
+                f"### {posicion}. {item['name']} ({item['score']}/{item['max_score']})\n"
+                f"{item['summary']}"
+            )
+
+        lineas.append(f"## {textos_dones['all_scores']}")
+        for item in resultados_ordenados:
+            lineas.append(f"- **{item['name']}**: {item['score']}/{item['max_score']}")
+
+        lineas.append(f"\n_{textos_dones['pastoral_note']}_")
+        return "\n\n".join(lineas).strip()
+
+    def limpiar_test_dones(_=None):
+        for control in controles_dones:
+            control.value = None
+            control.text = ""
+        markdown_resultado_dones.value = ""
+        resultado_test_dones.visible = False
+        texto_feedback_dones.value = ""
+        texto_feedback_dones.visible = False
+        pr_dones.visible = False
+        btn_calcular_dones.disabled = False
+        actualizar_estado_test_dones()
+        page.update()
+
+    async def calcular_test_dones_async():
+        pendientes = [control for control in controles_dones if str(control.value or "").strip() == ""]
+        if pendientes:
+            texto_feedback_dones.value = textos_dones["incomplete"].format(missing=len(pendientes))
+            texto_feedback_dones.color = ft.Colors.RED_400
+            texto_feedback_dones.visible = True
+            mostrar_mensaje(page, textos_dones["incomplete"].format(missing=len(pendientes)))
+            page.update()
+            return
+
+        texto_feedback_dones.value = textos_dones["calculating"]
+        texto_feedback_dones.color = theme["muted"]
+        texto_feedback_dones.visible = True
+        pr_dones.visible = True
+        btn_calcular_dones.disabled = True
+        page.update()
+        await asyncio.sleep(0.08)
+
+        resultados = []
+        for bloque_don, controles_bloque in grupos_controles_dones:
+            puntuaciones = [int(str(control.value or "0")) for control in controles_bloque]
+            resultados.append(
+                {
+                    "name": bloque_don["name"],
+                    "summary": bloque_don["summary"],
+                    "verses": bloque_don["verses"],
+                    "score": sum(puntuaciones),
+                    "max_score": len(puntuaciones) * 4,
+                }
+            )
+
+        resultados_ordenados = sorted(resultados, key=lambda item: (-int(item["score"]), str(item["name"])))
+        markdown_resultado_dones.value = construir_markdown_resultado_dones(resultados_ordenados)
+        resultado_test_dones.visible = True
+        texto_feedback_dones.value = textos_dones["ready"]
+        texto_feedback_dones.color = ft.Colors.GREEN_700
+        pr_dones.visible = False
+        btn_calcular_dones.disabled = False
+        page.update()
+        await asyncio.sleep(0.05)
+        try:
+            page.scroll_to(scroll_key="resultado_test_dones", duration=260)
+        except Exception:
+            pass
 
     def manejar_bloqueos(e=None):
         activo = next((d for d in especiales if d.value != no_selection), None)
@@ -8342,7 +8773,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                     "des paz, claridad y sabiduria para este tiempo. En el nombre de Jesus. Amen."
                 ),
                 (
-                    "Senor Dios, ponemos esta conversacion en tus manos y te pedimos tu "
+                    "Señor Dios, ponemos esta conversacion en tus manos y te pedimos tu "
                     "direccion, tu paz y tu luz para hablar con verdad y amor. En el nombre de Jesus. Amen."
                 ),
                 (
@@ -9675,6 +10106,21 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         height=56,
         expand=True,
     )
+    btn_calcular_dones = ft.ElevatedButton(
+        content=contenido_boton_generar(textos_dones["calculate"], ft.Icons.CHECKLIST),
+        on_click=lambda e: page.run_task(calcular_test_dones_async),
+        style=estilo_boton_rojo,
+        height=56,
+        expand=True,
+    )
+    btn_limpiar_dones = ft.ElevatedButton(
+        textos_dones["clear"],
+        icon=ft.Icons.CLEAR,
+        on_click=limpiar_test_dones,
+        style=estilo_boton_amarillo,
+        height=56,
+        expand=True,
+    )
     btn_enviar_chat_consejero = ft.IconButton(
         icon=ft.Icons.SEND_ROUNDED,
         icon_color=theme["primary_text"],
@@ -9785,6 +10231,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         height=48,
         visible=inicio_preferido == "cristianos" and on_volver_inicio is not None,
     )
+    btn_volver_inicio_dones = ft.ElevatedButton(
+        back_start_label,
+        icon=ft.Icons.ARROW_BACK,
+        on_click=(lambda e: on_volver_inicio()) if on_volver_inicio is not None else None,
+        style=estilo_boton_amarillo,
+        height=48,
+        visible=inicio_preferido == "dones" and on_volver_inicio is not None,
+    )
     btn_volver_inicio_chat_consejero = ft.ElevatedButton(
         back_start_label,
         icon=ft.Icons.ARROW_BACK,
@@ -9811,6 +10265,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     cabecera_incredulo = ft.Container()
     titulo_cristianos = ft.Text(textos_cristianos["title"], weight="bold", size=18, color=theme["primary"])
     cabecera_cristianos = ft.Container()
+    titulo_dones = ft.Text(textos_dones["title"], weight="bold", size=18, color=theme["primary"])
+    cabecera_dones = ft.Container()
     titulo_chat_consejero = ft.Text(textos_chat_activo["title"], weight="bold", size=18, color=theme["primary"])
     cabecera_chat_consejero = ft.Container()
     avatar_chat_consejero = ft.Container(
@@ -9946,6 +10402,19 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 )
                 if btn_volver_inicio_cristianos.visible
                 else titulo_cristianos
+            )
+        )
+        cabecera_dones.content = (
+            ft.Column([titulo_dones, btn_volver_inicio_dones], spacing=10)
+            if estrecha and btn_volver_inicio_dones.visible
+            else (
+                ft.Row(
+                    [titulo_dones, btn_volver_inicio_dones],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                )
+                if btn_volver_inicio_dones.visible
+                else titulo_dones
             )
         )
 
@@ -10211,6 +10680,46 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         border_radius=22,
         shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
     )
+    panel_dones = ft.Container(
+        key="panel_dones",
+        content=ft.Column(
+            [
+                cabecera_dones,
+                ft.Text(textos_dones["intro"], color=theme["text"], size=13),
+                ft.Container(
+                    padding=12,
+                    border=ft.border.all(3, theme["field_border"]),
+                    border_radius=14,
+                    bgcolor=theme["accent"],
+                    content=ft.Column(
+                        [
+                            ft.Text(textos_dones["instructions"], color=theme["text"], size=12),
+                            texto_estado_dones,
+                        ],
+                        spacing=8,
+                    ),
+                ),
+                texto_feedback_dones,
+                pr_dones,
+                ft.Column(bloques_preguntas_dones, spacing=8),
+                ft.ResponsiveRow(
+                    [
+                        ft.Container(col={"xs": 12, "sm": 6, "md": 6}, content=btn_calcular_dones),
+                        ft.Container(col={"xs": 12, "sm": 6, "md": 6}, content=btn_limpiar_dones),
+                    ],
+                    spacing=10,
+                    run_spacing=10,
+                ),
+                resultado_test_dones,
+            ],
+            spacing=12,
+        ),
+        padding=14,
+        bgcolor=theme["panel_bg"],
+        border=ft.border.all(4, theme["panel_border"]),
+        border_radius=22,
+        shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
+    )
     caja_chat_consejero = ft.Container(
         content=chat_conversacion,
         padding=ft.padding.symmetric(horizontal=12, vertical=14),
@@ -10433,6 +10942,21 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 contenedor_cuerpo.content = ft.Column([panel_cristianos], spacing=18, expand=True)
             return
 
+        if inicio_preferido == "dones":
+            panel_pasaje.visible = False
+            panel_filtros.visible = False
+            panel_generacion.visible = False
+            panel_comportamiento.visible = False
+            panel_incredulo.visible = False
+            panel_cristianos.visible = False
+            panel_chat_consejero.visible = False
+            panel_resultado.visible = False
+            panel_dones.visible = True
+            panel_dones.bgcolor = theme["panel_bg"]
+            panel_dones.border = ft.border.all(4, theme["panel_border"])
+            contenedor_cuerpo.content = ft.Column([panel_dones], spacing=18, expand=True)
+            return
+
         if es_modo_chat:
             if not historial_chat_consejero:
                 asegurar_saludo_inicial_chat()
@@ -10449,6 +10973,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             panel_comportamiento.visible = False
             panel_incredulo.visible = False
             panel_cristianos.visible = False
+            panel_dones.visible = False
             panel_chat_consejero.visible = True
             panel_chat_consejero.bgcolor = theme["panel_bg"]
             panel_chat_consejero.border = ft.border.all(4, theme["panel_border"])
@@ -10461,6 +10986,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         panel_comportamiento.visible = False
         panel_incredulo.visible = False
         panel_cristianos.visible = False
+        panel_dones.visible = False
         panel_chat_consejero.visible = False
         if paso_actual in {"version", "book_order", "book", "chapter", "start", "end"}:
             panel_pasaje.border = ft.border.all(5, theme["panel_border"])
@@ -10562,6 +11088,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         page.scroll_to(scroll_key="panel_incredulo", duration=300)
     elif inicio_preferido == "cristianos":
         page.scroll_to(scroll_key="panel_cristianos", duration=300)
+    elif inicio_preferido == "dones":
+        page.scroll_to(scroll_key="panel_dones", duration=300)
     elif es_modo_chat:
         page.scroll_to(scroll_key="panel_chat_consejero", duration=300)
     else:

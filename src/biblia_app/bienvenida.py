@@ -367,6 +367,12 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
         "fr": ("CHAT CONSEILLER CHRÉTIEN", ""),
         "en": ("CHRISTIAN COUNSELOR CHAT", ""),
     }.get(language_code, ("CHAT CONSEJERO CRISTIANO", ""))
+    texto_dones = {
+        "es": ("TEST DE DONES ESPIRITUALES", ""),
+        "ca": ("TEST DE DONES ESPIRITUALS", ""),
+        "fr": ("TEST DES DONS SPIRITUELS", ""),
+        "en": ("SPIRITUAL GIFTS TEST", ""),
+    }.get(language_code, ("TEST DE DONES ESPIRITUALES", ""))
     texto_chat_soporte = {
         "es": ("GUÍA DE LA APP", ""),
         "ca": ("GUIA DE L'APP", ""),
@@ -498,6 +504,7 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
         boton_modo(texto_estudio[0], texto_estudio[1], ft.Icons.FILTER_ALT, colores_botones[1][0], colores_botones[1][1], lambda: on_select_mode("filtros")),
         boton_modo(texto_preguntas[0], texto_preguntas[1], ft.Icons.HELP_OUTLINE, colores_botones[2][0], colores_botones[2][1], lambda: on_select_mode("preguntas")),
         boton_modo(texto_chat_consejero[0], texto_chat_consejero[1], ft.Icons.CHAT, colores_botones[3][0], colores_botones[3][1], lambda: on_select_mode("chat_consejero")),
+        boton_modo(texto_dones[0], texto_dones[1], ft.Icons.CHECKLIST, colores_botones[5][0], colores_botones[5][1], lambda: on_select_mode("dones")),
     ]
 
     if on_volver is not None:
@@ -528,6 +535,216 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=12,
         tight=True,
+    )
+
+
+def pantalla_intro_dones(page: ft.Page, language_code: str, on_continuar, on_volver=None):
+    theme = get_language_theme(language_code)
+    textos_por_idioma = {
+        "es": {
+            "title": "ANTES DE HACER EL TEST",
+            "subtitle": "Lee primero esta recomendación breve para usar bien el resultado.",
+            "recommendation_title": "Recomendación para que el test sea útil:",
+            "recommendation_paragraphs": [
+                'Para que los resultados sean lo más reales posibles, trata de responder pensando en lo que realmente haces o sientes, no en lo que "crees que deberías ser". Por ejemplo, si te preguntan si te gusta hablar en público, responde con total sinceridad aunque creas que ser "maestro" suena mejor que ser "ayudador". Todos los dones son igual de importantes.',
+            ],
+            "advice_title": 'Un pequeño consejo de "amigo experto"',
+            "advice_intro": "Ningún test es infalible ni una verdad absoluta. Es una herramienta de orientación. La mejor forma de confirmar un don es:",
+            "advice_points": [
+                "La práctica: intenta servir en diferentes áreas y observa dónde hay fruto.",
+                "La confirmación de la comunidad: a menudo otros ven en nosotros talentos que nosotros mismos no notamos.",
+                "La oración: busca dirección personal delante de Dios con calma y humildad.",
+            ],
+            "closing": "Si después del test sigues con dudas, lo mejor es hablarlo con tu pastor o con alguien maduro en la fe.",
+            "start": "EMPEZAR TEST",
+            "back": "VOLVER",
+        },
+        "ca": {
+            "title": "ABANS DE FER EL TEST",
+            "subtitle": "Llegeix primer aquesta recomanacio breu per interpretar millor el resultat.",
+            "recommendation_title": "Recomanacio",
+            "recommendation_items": [
+                '"Test de dons espirituals PDF" si prefereixes imprimir-lo i fer-lo a ma.',
+                '"Questionari de carismes cristians online" si vols comparar amb altres eines.',
+                "Pagines de recursos eclesials, perque molts ministeris ofereixen versions digitals interactives.",
+            ],
+            "advice_title": 'Un petit consell de "l amic expert"',
+            "advice_intro": "Cap test es infallible ni una veritat absoluta. Es una eina d'orientacio. La millor manera de confirmar un do es:",
+            "advice_points": [
+                "La practica: intenta servir en diferents arees i observa on hi ha fruit.",
+                "La confirmacio de la comunitat: sovint altres veuen en nosaltres talents que nosaltres mateixos no detectem.",
+                "La pregaria: busca direccio personal davant de Deu amb calma i humilitat.",
+            ],
+            "closing": "Si despres del test encara tens dubtes, el millor es parlar-ne amb el teu pastor o amb algu madur en la fe.",
+            "start": "COMENCAR TEST",
+            "back": "TORNAR",
+        },
+        "fr": {
+            "title": "AVANT LE TEST",
+            "subtitle": "Lis d'abord cette breve recommandation pour bien interpreter le resultat.",
+            "recommendation_title": "Recommandation",
+            "recommendation_items": [
+                '"Test des dons spirituels PDF" si tu preferes l imprimer et le faire a la main.',
+                '"Questionnaire des charismes chretiens en ligne" si tu veux comparer avec d autres outils.',
+                "Pages de ressources d eglise, car beaucoup de ministeres proposent des versions numeriques interactives.",
+            ],
+            "advice_title": 'Un petit conseil "ami expert"',
+            "advice_intro": "Aucun test n est infaillible ni une verite absolue. C est un outil d orientation. La meilleure facon de confirmer un don est :",
+            "advice_points": [
+                "La pratique : sers dans plusieurs domaines et observe ou il y a du fruit.",
+                "La confirmation de la communaute : bien souvent, d autres voient en nous des talents que nous ne remarquons pas.",
+                "La priere : cherche la direction de Dieu avec calme et humilite.",
+            ],
+            "closing": "Si tu restes dans le doute apres le test, le mieux est d en parler avec ton pasteur ou une personne mature dans la foi.",
+            "start": "COMMENCER LE TEST",
+            "back": "RETOUR",
+        },
+        "en": {
+            "title": "BEFORE THE TEST",
+            "subtitle": "Read this short recommendation first so the result helps you in the right way.",
+            "recommendation_title": "Recommendation",
+            "recommendation_items": [
+                '"Spiritual gifts test PDF" if you prefer to print it and work through it by hand.',
+                '"Online Christian gifts questionnaire" if you want to compare with other tools.',
+                "Church resource pages, since many ministries offer interactive digital versions.",
+            ],
+            "advice_title": 'A small "trusted friend" note',
+            "advice_intro": "No test is infallible or an absolute truth. It is a guidance tool. The best way to confirm a gift is:",
+            "advice_points": [
+                "Practice: serve in different areas and notice where there is fruit.",
+                "Community confirmation: other people often see gifts in us that we do not notice ourselves.",
+                "Prayer: seek personal direction from God with calm and humility.",
+            ],
+            "closing": "If you still have doubts after the test, it is wise to talk with your pastor or a mature believer.",
+            "start": "START TEST",
+            "back": "BACK",
+        },
+    }
+    textos = textos_por_idioma.get(language_code, textos_por_idioma["es"])
+
+    recomendacion_controles = [
+        ft.Text(textos["recommendation_title"], size=18, weight="bold", color=theme["primary"]),
+    ]
+    if textos.get("recommendation_paragraphs"):
+        for parrafo in textos["recommendation_paragraphs"]:
+            recomendacion_controles.append(
+                ft.Text(parrafo, color=theme["text"], size=14)
+            )
+    else:
+        for item in textos["recommendation_items"]:
+            recomendacion_controles.append(
+                ft.Row(
+                    [
+                        ft.Icon(ft.Icons.CHECK_CIRCLE, color=theme["primary"], size=18),
+                        ft.Text(item, color=theme["text"], size=13, expand=True),
+                    ],
+                    spacing=10,
+                    vertical_alignment=ft.CrossAxisAlignment.START,
+                )
+            )
+
+    consejo_controles = []
+    if textos.get("advice_title"):
+        consejo_controles.extend(
+            [
+                ft.Text(textos["advice_title"], size=20, weight="bold", color=theme["primary"]),
+                ft.Text(textos["advice_intro"], color=theme["text"], size=14),
+            ]
+        )
+    for indice, item in enumerate(textos["advice_points"], start=1):
+        consejo_controles.append(
+            ft.Row(
+                [
+                    ft.Container(
+                        content=ft.Text(str(indice), weight="bold", color=theme["primary_text"]),
+                        width=30,
+                        height=30,
+                        alignment=ft.Alignment(0, 0),
+                        bgcolor=theme["primary"],
+                        border_radius=15,
+                    ),
+                    ft.Text(item, color=theme["text"], size=14, expand=True),
+                ],
+                spacing=12,
+                vertical_alignment=ft.CrossAxisAlignment.START,
+            )
+        )
+    if textos.get("closing"):
+        consejo_controles.append(
+            ft.Text(textos["closing"], color=theme["text"], size=14, weight="bold")
+        )
+
+    botones = [
+        ft.ElevatedButton(
+            textos["start"],
+            on_click=lambda e: on_continuar(),
+            style=ft.ButtonStyle(
+                bgcolor=theme["primary"],
+                color=theme["primary_text"],
+                side=ft.BorderSide(4, theme["border"]),
+                shape=ft.RoundedRectangleBorder(radius=16),
+                padding=ft.padding.symmetric(horizontal=20, vertical=14),
+            ),
+            width=280,
+            height=56,
+        )
+    ]
+    if on_volver is not None:
+        botones.append(
+            ft.OutlinedButton(
+                textos["back"],
+                on_click=lambda e: on_volver(),
+                style=ft.ButtonStyle(
+                    side=ft.BorderSide(3, theme["border"]),
+                    color=theme["text"],
+                    shape=ft.RoundedRectangleBorder(radius=16),
+                    padding=ft.padding.symmetric(horizontal=20, vertical=14),
+                ),
+                width=280,
+                height=52,
+            )
+        )
+
+    return ft.Container(
+        content=ft.Column(
+            [
+                ft.Icon(ft.Icons.AUTO_AWESOME, size=42, color=theme["primary"]),
+                ft.Text(textos["title"], size=24, weight="bold", color=theme["primary"], text_align=ft.TextAlign.CENTER),
+                ft.Text(textos["subtitle"], size=14, color=theme["text"], text_align=ft.TextAlign.CENTER),
+                ft.Container(
+                    padding=16,
+                    bgcolor=theme["accent"],
+                    border=ft.border.all(4, theme["panel_border"]),
+                    border_radius=20,
+                    content=ft.Column(recomendacion_controles, spacing=12),
+                ),
+                ft.Container(
+                    padding=16,
+                    bgcolor=theme["panel_bg"],
+                    border=ft.border.all(4, theme["panel_border"]),
+                    border_radius=20,
+                    content=ft.Column(
+                        consejo_controles,
+                        spacing=14,
+                    ),
+                    visible=bool(consejo_controles),
+                ),
+                ft.Column(
+                    botones,
+                    spacing=10,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+            ],
+            spacing=16,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            scroll=ft.ScrollMode.AUTO,
+        ),
+        width=360,
+        padding=18,
+        border_radius=24,
+        bgcolor=theme["panel_bg"],
+        border=ft.border.all(6, theme["primary"]),
+        shadow=ft.BoxShadow(blur_radius=18, color="#0000001A", offset=ft.Offset(0, 6)),
     )
 
 
