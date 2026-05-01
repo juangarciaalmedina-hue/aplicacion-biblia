@@ -30,6 +30,7 @@ import flet as ft
 from biblia_app.bienvenida import (
     pantalla_carga_saludo,
     pantalla_intro_dones,
+    pantalla_intro_suenos,
     pantalla_saludos,
     pantalla_selector_idioma,
     pantalla_selector_modo,
@@ -1806,6 +1807,8 @@ def main(page: ft.Page):
                             if modo == "preguntas"
                             else mostrar_intro_dones(idioma)
                             if modo == "dones"
+                            else mostrar_intro_suenos(idioma)
+                            if modo == "chat_suenos"
                             else mostrar_contenido(idioma, inicio=modo)
                         ),
                         lambda: volver_desde_selector_modo(idioma),
@@ -1829,6 +1832,27 @@ def main(page: ft.Page):
                         page,
                         idioma,
                         lambda: mostrar_contenido(idioma, inicio="dones"),
+                        lambda: mostrar_selector_modo_entrada(idioma),
+                    ),
+                    expand=True,
+                    alignment=ft.Alignment(0, 0),
+                )
+            )
+            page.update()
+        except Exception as exc:
+            mostrar_error(page, titulo_error("entry"), detalle_error(exc))
+
+    def mostrar_intro_suenos(idioma: str):
+        try:
+            idioma_actual["code"] = idioma
+            page.clean()
+            page.vertical_alignment = ft.MainAxisAlignment.CENTER
+            page.add(
+                ft.Container(
+                    content=pantalla_intro_suenos(
+                        page,
+                        idioma,
+                        lambda: mostrar_contenido(idioma, inicio="chat_suenos"),
                         lambda: mostrar_selector_modo_entrada(idioma),
                     ),
                     expand=True,

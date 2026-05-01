@@ -367,6 +367,12 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
         "fr": ("CHAT CONSEILLER CHRÉTIEN", ""),
         "en": ("CHRISTIAN COUNSELOR CHAT", ""),
     }.get(language_code, ("CHAT CONSEJERO CRISTIANO", ""))
+    texto_chat_suenos = {
+        "es": ("CHAT INTERPRETACIÓN DE SUEÑOS", ""),
+        "ca": ("XAT INTERPRETACIÓ DE SOMNIS", ""),
+        "fr": ("CHAT INTERPRÉTATION DES RÊVES", ""),
+        "en": ("DREAM INTERPRETATION CHAT", ""),
+    }.get(language_code, ("CHAT INTERPRETACIÓN DE SUEÑOS", ""))
     texto_dones = {
         "es": ("TEST DE DONES ESPIRITUALES", ""),
         "ca": ("TEST DE DONES ESPIRITUALS", ""),
@@ -433,6 +439,7 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
             ("#C60B1E", "#FFFFFF"),
             ("#FFC400", "#2F1B00"),
             ("#C60B1E", "#FFFFFF"),
+            ("#FFC400", "#2F1B00"),
             ("#C60B1E", "#FFFFFF"),
         ],
         "ca": [
@@ -441,6 +448,7 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
             ("#C8102E", "#FFFFFF"),
             ("#F6D04D", "#351600"),
             ("#C8102E", "#FFFFFF"),
+            ("#F6D04D", "#351600"),
             ("#C8102E", "#FFFFFF"),
         ],
         "fr": [
@@ -450,6 +458,7 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
             ("#0055A4", "#FFFFFF"),
             ("#EF4135", "#FFFFFF"),
             ("#0055A4", "#FFFFFF"),
+            ("#EF4135", "#FFFFFF"),
         ],
         "en": [
             ("#012169", "#FFFFFF"),
@@ -458,6 +467,7 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
             ("#012169", "#FFFFFF"),
             ("#C8102E", "#FFFFFF"),
             ("#012169", "#FFFFFF"),
+            ("#C8102E", "#FFFFFF"),
         ],
     }.get(language_code, [
         (theme["primary"], theme["primary_text"]),
@@ -466,6 +476,7 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
         (theme["secondary"], theme["secondary_text"]),
         (theme["primary"], theme["primary_text"]),
         (theme["primary"], theme["primary_text"]),
+        (theme["secondary"], theme["secondary_text"]),
     ])
 
     def boton_modo(texto, ayuda, icono, color_fondo, color_texto, accion):
@@ -499,12 +510,13 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
         ft.Text(cfg["welcome"]["title"], size=24, weight="bold", color=theme["primary"], text_align=ft.TextAlign.CENTER),
         ft.Text(titulo_seleccion, size=20, weight="bold", color=theme["text"], text_align=ft.TextAlign.CENTER),
         ft.Divider(height=4, color="transparent"),
-        boton_modo(texto_chat_soporte[0], texto_chat_soporte[1], ft.Icons.HELP_OUTLINE, colores_botones[4][0], colores_botones[4][1], lambda: on_select_mode("chat_soporte")),
-        boton_modo(texto_biblia[0], texto_biblia[1], ft.Icons.AUTO_STORIES, colores_botones[0][0], colores_botones[0][1], lambda: on_select_mode("biblia")),
-        boton_modo(texto_estudio[0], texto_estudio[1], ft.Icons.FILTER_ALT, colores_botones[1][0], colores_botones[1][1], lambda: on_select_mode("filtros")),
-        boton_modo(texto_preguntas[0], texto_preguntas[1], ft.Icons.HELP_OUTLINE, colores_botones[2][0], colores_botones[2][1], lambda: on_select_mode("preguntas")),
-        boton_modo(texto_chat_consejero[0], texto_chat_consejero[1], ft.Icons.CHAT, colores_botones[3][0], colores_botones[3][1], lambda: on_select_mode("chat_consejero")),
-        boton_modo(texto_dones[0], texto_dones[1], ft.Icons.CHECKLIST, colores_botones[5][0], colores_botones[5][1], lambda: on_select_mode("dones")),
+        boton_modo(texto_chat_soporte[0], texto_chat_soporte[1], ft.Icons.HELP_OUTLINE, colores_botones[0][0], colores_botones[0][1], lambda: on_select_mode("chat_soporte")),
+        boton_modo(texto_biblia[0], texto_biblia[1], ft.Icons.AUTO_STORIES, colores_botones[1][0], colores_botones[1][1], lambda: on_select_mode("biblia")),
+        boton_modo(texto_estudio[0], texto_estudio[1], ft.Icons.FILTER_ALT, colores_botones[2][0], colores_botones[2][1], lambda: on_select_mode("filtros")),
+        boton_modo(texto_preguntas[0], texto_preguntas[1], ft.Icons.HELP_OUTLINE, colores_botones[3][0], colores_botones[3][1], lambda: on_select_mode("preguntas")),
+        boton_modo(texto_chat_consejero[0], texto_chat_consejero[1], ft.Icons.CHAT, colores_botones[4][0], colores_botones[4][1], lambda: on_select_mode("chat_consejero")),
+        boton_modo(texto_chat_suenos[0], texto_chat_suenos[1], ft.Icons.AUTO_AWESOME, colores_botones[5][0], colores_botones[5][1], lambda: on_select_mode("chat_suenos")),
+        boton_modo(texto_dones[0], texto_dones[1], ft.Icons.CHECKLIST, colores_botones[6][0], colores_botones[6][1], lambda: on_select_mode("dones")),
     ]
 
     if on_volver is not None:
@@ -728,6 +740,234 @@ def pantalla_intro_dones(page: ft.Page, language_code: str, on_continuar, on_vol
                         spacing=14,
                     ),
                     visible=bool(consejo_controles),
+                ),
+                ft.Column(
+                    botones,
+                    spacing=10,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+            ],
+            spacing=16,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            scroll=ft.ScrollMode.AUTO,
+        ),
+        width=360,
+        padding=18,
+        border_radius=24,
+        bgcolor=theme["panel_bg"],
+        border=ft.border.all(6, theme["primary"]),
+        shadow=ft.BoxShadow(blur_radius=18, color="#0000001A", offset=ft.Offset(0, 6)),
+    )
+
+
+def pantalla_intro_suenos(page: ft.Page, language_code: str, on_continuar, on_volver=None):
+    theme = get_language_theme(language_code)
+    textos_por_idioma = {
+        "es": {
+            "title": "ANTES DE INTERPRETAR UN SUEÑO",
+            "subtitle": "Usa esta sección como ayuda bíblica y pastoral, no como un oráculo.",
+            "notice_title": "Consideraciones éticas y doctrinales",
+            "notice_paragraphs": [
+                "Esta herramienta no reemplaza la Biblia, la oración ni la guía de un pastor. La interpretación final no la decide una app, sino Dios en su verdad y su voluntad.",
+                "No trabajamos con astrología, tarot, numerología, energías, amuletos ni lenguaje esotérico. Si un símbolo no tiene base bíblica suficiente, lo más honesto será decirlo con claridad.",
+            ],
+            "how_title": "Cómo funciona",
+            "how_intro": "La orientación del chat se apoya en tres pilares:",
+            "how_points": [
+                "Base bíblica: cada observación debe anclarse en las Escrituras, no en diccionarios místicos.",
+                "Simbología cristiana: los símbolos solo se interpretan según su contexto bíblico y el contexto del sueño.",
+                "Discernimiento espiritual: no todo sueño tiene un mensaje especial; a veces refleja cargas, temores o recuerdos.",
+            ],
+            "use_title": "Qué conviene contar en el chat",
+            "use_points": [
+                "Describe el sueño con los detalles principales: personas, lugares, acciones y emociones.",
+                "Cuenta también tu contexto actual: qué estás viviendo, orando o discerniendo en estos días.",
+                "Recibirás una respuesta prudente, del tipo 'esto podría sugerir...', no afirmaciones absolutas sobre el futuro.",
+            ],
+            "closing": "Si un sueño te inquieta mucho o crees que tiene peso espiritual, lo mejor es orarlo y comentarlo con tu pastor o con creyentes maduros.",
+            "start": "ABRIR CHAT DE SUEÑOS",
+            "back": "VOLVER",
+        },
+        "ca": {
+            "title": "ABANS D'INTERPRETAR UN SOMNI",
+            "subtitle": "Fes servir aquesta secció com a ajuda bíblica i pastoral, no com un oracle.",
+            "notice_title": "Consideracions ètiques i doctrinals",
+            "notice_paragraphs": [
+                "Aquesta eina no substitueix la Bíblia, la pregària ni la guia d'un pastor. La interpretació final no la decideix una app, sinó Déu en la seva veritat i voluntat.",
+                "No treballem amb astrologia, tarot, numerologia, energies, amulets ni llenguatge esotèric. Si un símbol no té prou base bíblica, el més honest serà dir-ho clarament.",
+            ],
+            "how_title": "Com funciona",
+            "how_intro": "L'orientació del xat es recolza en tres pilars:",
+            "how_points": [
+                "Base bíblica: cada observació s'ha d'ancorar a les Escriptures, no a diccionaris místics.",
+                "Simbologia cristiana: els símbols només s'interpreten segons el seu context bíblic i el context del somni.",
+                "Discerniment espiritual: no tot somni té un missatge especial; de vegades reflecteix càrregues, pors o records.",
+            ],
+            "use_title": "Què convé explicar al xat",
+            "use_points": [
+                "Descriu el somni amb els detalls principals: persones, llocs, accions i emocions.",
+                "Explica també el teu context actual: què estàs vivint, pregant o discernint aquests dies.",
+                "Rebràs una resposta prudent, del tipus 'això podria suggerir...', no afirmacions absolutes sobre el futur.",
+            ],
+            "closing": "Si un somni t'inquieta molt o creus que té pes espiritual, el millor és pregar-ho i comentar-ho amb el teu pastor o amb creients madurs.",
+            "start": "OBRIR XAT DE SOMNIS",
+            "back": "TORNAR",
+        },
+        "fr": {
+            "title": "AVANT D'INTERPRÉTER UN RÊVE",
+            "subtitle": "Utilise cette section comme une aide biblique et pastorale, pas comme un oracle.",
+            "notice_title": "Considérations éthiques et doctrinales",
+            "notice_paragraphs": [
+                "Cet outil ne remplace ni la Bible, ni la prière, ni la direction d'un pasteur. L'interprétation finale n'appartient pas à une application mais à Dieu, dans sa vérité et sa volonté.",
+                "Nous n'utilisons ni astrologie, ni tarot, ni numérologie, ni énergies, ni langage ésotérique. Si un symbole n'a pas de base biblique suffisante, le plus honnête sera de le dire clairement.",
+            ],
+            "how_title": "Comment cela fonctionne",
+            "how_intro": "L'orientation du chat repose sur trois piliers :",
+            "how_points": [
+                "Base biblique : chaque observation doit être ancrée dans l'Écriture, non dans des dictionnaires mystiques.",
+                "Symbolique chrétienne : les symboles ne s'interprètent qu'à la lumière de leur contexte biblique et du contexte du rêve.",
+                "Discernement spirituel : tous les rêves ne portent pas un message spécial ; certains reflètent simplement des charges, des peurs ou des souvenirs.",
+            ],
+            "use_title": "Que raconter dans le chat",
+            "use_points": [
+                "Décris le rêve avec les détails principaux : personnes, lieux, actions et émotions.",
+                "Ajoute aussi ton contexte actuel : ce que tu vis, ce pour quoi tu pries, ce que tu discernes en ce moment.",
+                "Tu recevras une réponse prudente du type 'cela pourrait suggérer...', et non des affirmations absolues sur l'avenir.",
+            ],
+            "closing": "Si un rêve t'inquiète beaucoup ou te semble spirituellement important, le mieux est de le remettre dans la prière et d'en parler avec ton pasteur ou avec des croyants mûrs.",
+            "start": "OUVRIR LE CHAT DES RÊVES",
+            "back": "RETOUR",
+        },
+        "en": {
+            "title": "BEFORE INTERPRETING A DREAM",
+            "subtitle": "Use this section as biblical and pastoral help, not as an oracle.",
+            "notice_title": "Ethical and doctrinal considerations",
+            "notice_paragraphs": [
+                "This tool does not replace the Bible, prayer, or the guidance of a pastor. Final interpretation does not belong to an app, but to God in his truth and will.",
+                "We do not work with astrology, tarot, numerology, energies, charms, or esoteric language. If a symbol does not have enough biblical basis, the most honest answer is to say so clearly.",
+            ],
+            "how_title": "How it works",
+            "how_intro": "The chat relies on three pillars:",
+            "how_points": [
+                "Biblical foundation: every observation must be anchored in Scripture, not in mystical dream dictionaries.",
+                "Christian symbolism: symbols are interpreted only through their biblical context and the context of the dream.",
+                "Spiritual discernment: not every dream carries a special message; some simply reflect burdens, fears, or memories.",
+            ],
+            "use_title": "What to share in the chat",
+            "use_points": [
+                "Describe the dream with the main details: people, places, actions, and emotions.",
+                "Also share your current context: what you are living through, praying about, or discerning these days.",
+                "You will receive a careful response such as 'this could suggest...', not absolute claims about the future.",
+            ],
+            "closing": "If a dream troubles you deeply or seems spiritually weighty, the wisest step is to pray about it and talk with your pastor or mature believers.",
+            "start": "OPEN DREAM CHAT",
+            "back": "BACK",
+        },
+    }
+    textos = textos_por_idioma.get(language_code, textos_por_idioma["es"])
+
+    aviso_controles = [
+        ft.Text(textos["notice_title"], size=18, weight="bold", color=theme["primary"]),
+    ]
+    for parrafo in textos["notice_paragraphs"]:
+        aviso_controles.append(ft.Text(parrafo, color=theme["text"], size=14))
+
+    base_controles = [
+        ft.Text(textos["how_title"], size=20, weight="bold", color=theme["primary"]),
+        ft.Text(textos["how_intro"], color=theme["text"], size=14),
+    ]
+    for indice, item in enumerate(textos["how_points"], start=1):
+        base_controles.append(
+            ft.Row(
+                [
+                    ft.Container(
+                        content=ft.Text(str(indice), weight="bold", color=theme["primary_text"]),
+                        width=30,
+                        height=30,
+                        alignment=ft.Alignment(0, 0),
+                        bgcolor=theme["primary"],
+                        border_radius=15,
+                    ),
+                    ft.Text(item, color=theme["text"], size=14, expand=True),
+                ],
+                spacing=12,
+                vertical_alignment=ft.CrossAxisAlignment.START,
+            )
+        )
+
+    uso_controles = [
+        ft.Text(textos["use_title"], size=20, weight="bold", color=theme["primary"]),
+    ]
+    for item in textos["use_points"]:
+        uso_controles.append(
+            ft.Row(
+                [
+                    ft.Icon(ft.Icons.CHECK_CIRCLE, color=theme["primary"], size=18),
+                    ft.Text(item, color=theme["text"], size=14, expand=True),
+                ],
+                spacing=10,
+                vertical_alignment=ft.CrossAxisAlignment.START,
+            )
+        )
+    uso_controles.append(ft.Text(textos["closing"], color=theme["text"], size=14, weight="bold"))
+
+    botones = [
+        ft.ElevatedButton(
+            textos["start"],
+            on_click=lambda e: on_continuar(),
+            style=ft.ButtonStyle(
+                bgcolor=theme["primary"],
+                color=theme["primary_text"],
+                side=ft.BorderSide(4, theme["border"]),
+                shape=ft.RoundedRectangleBorder(radius=16),
+                padding=ft.padding.symmetric(horizontal=20, vertical=14),
+            ),
+            width=280,
+            height=56,
+        )
+    ]
+    if on_volver is not None:
+        botones.append(
+            ft.OutlinedButton(
+                textos["back"],
+                on_click=lambda e: on_volver(),
+                style=ft.ButtonStyle(
+                    side=ft.BorderSide(3, theme["border"]),
+                    color=theme["text"],
+                    shape=ft.RoundedRectangleBorder(radius=16),
+                    padding=ft.padding.symmetric(horizontal=20, vertical=14),
+                ),
+                width=280,
+                height=52,
+            )
+        )
+
+    return ft.Container(
+        content=ft.Column(
+            [
+                ft.Icon(ft.Icons.AUTO_AWESOME, size=42, color=theme["primary"]),
+                ft.Text(textos["title"], size=24, weight="bold", color=theme["primary"], text_align=ft.TextAlign.CENTER),
+                ft.Text(textos["subtitle"], size=14, color=theme["text"], text_align=ft.TextAlign.CENTER),
+                ft.Container(
+                    padding=16,
+                    bgcolor=theme["accent"],
+                    border=ft.border.all(4, theme["panel_border"]),
+                    border_radius=20,
+                    content=ft.Column(aviso_controles, spacing=12),
+                ),
+                ft.Container(
+                    padding=16,
+                    bgcolor=theme["panel_bg"],
+                    border=ft.border.all(4, theme["panel_border"]),
+                    border_radius=20,
+                    content=ft.Column(base_controles, spacing=14),
+                ),
+                ft.Container(
+                    padding=16,
+                    bgcolor=theme["panel_bg"],
+                    border=ft.border.all(4, theme["panel_border"]),
+                    border_radius=20,
+                    content=ft.Column(uso_controles, spacing=12),
                 ),
                 ft.Column(
                     botones,

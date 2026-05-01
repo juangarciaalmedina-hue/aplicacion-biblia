@@ -2813,7 +2813,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     page.bgcolor = theme["page_bg"]
     page.padding = 2
     page.scroll = ft.ScrollMode.AUTO
-    inicio_preferido = inicio if inicio in {"biblia", "filtros", "comportamiento", "incredulo", "cristianos", "dones", "chat_consejero", "chat_soporte"} else "biblia"
+    inicio_preferido = inicio if inicio in {"biblia", "filtros", "comportamiento", "incredulo", "cristianos", "dones", "chat_consejero", "chat_soporte", "chat_suenos"} else "biblia"
     controles_montados = False
     label_style_theme = ft.TextStyle(color=theme["primary"])
     textos_comportamiento = {
@@ -3272,9 +3272,137 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ],
         },
     }.get(lang_code, {})
-    es_modo_chat = inicio_preferido in {"chat_consejero", "chat_soporte"}
+    textos_chat_suenos = {
+        "es": {
+            "title": "CHAT INTERPRETACION DE SUENOS",
+            "message": "CUENTAME TU SUENO",
+            "placeholder": "Escribe aqui tu sueno con los detalles principales y, si quieres, lo que estas viviendo ahora. Por ejemplo: sonaba con agua, una puerta cerrada y mucha inquietud...",
+            "send": "ENVIAR MENSAJE",
+            "clear": "LIMPIAR CHAT",
+            "header_status": "Orientacion biblica, no oraculo ni adivinacion",
+            "empty_message": "Escribe primero tu sueno o tu pregunta",
+            "status_generating": "Estado: discerniendo el sueno...",
+            "status_ready": "Estado: respuesta lista",
+            "intro": "Recibiras una orientacion prudente, biblica y pastoral sobre los posibles significados del sueno.",
+            "greetings": [
+                "Hola. Puedes contarme tu sueno con calma, incluyendo lo que viste, sentiste y el contexto que estas viviendo estos dias. Lo miraremos con prudencia a la luz de la Biblia.",
+                "Hola. Escribe tu sueno con los detalles principales y, si quieres, tambien lo que estas orando o discerniendo en este tiempo. Buscaremos una orientacion biblica sin ir mas alla de lo que la Escritura permite afirmar.",
+                "Bienvenido. Cuentame el sueno paso a paso y dime que fue lo que mas te llamo la atencion o te inquieto. Te respondere con una lectura biblica y pastoral, no esoterica.",
+            ],
+            "greeting": "Hola. Puedes contarme tu sueno con calma, incluyendo lo que viste, sentiste y el contexto que estas viviendo estos dias. Lo miraremos con prudencia a la luz de la Biblia.",
+            "warning": "Esta seccion no funciona como un oraculo ni reemplaza la Biblia, la oracion o la guia de tu pastor. No usamos tarot, astrologia ni lenguaje esoterico.",
+            "you": "Tu",
+            "assistant": "Guia biblica de suenos",
+            "typing": "_La guia biblica de suenos esta escribiendo..._",
+            "fallback_response": "Perdona, necesito un poco mas de contexto para ayudarte mejor. Cuentame el sueno con mas detalle y tambien que sentiste al despertar.",
+            "quick_questions": [
+                "He sonado con agua",
+                "He sonado con una casa",
+                "He sonado con animales",
+                "No se si este sueno viene de Dios",
+                "Este sueno me inquieta",
+                "Quiero una orientacion biblica",
+            ],
+        },
+        "ca": {
+            "title": "XAT INTERPRETACIO DE SOMNIS",
+            "message": "EXPLICA'M EL TEU SOMNI",
+            "placeholder": "Escriu aqui el teu somni amb els detalls principals i, si vols, el que estas vivint ara. Per exemple: somiava amb aigua, una porta tancada i molta inquietud...",
+            "send": "ENVIAR MISSATGE",
+            "clear": "NETEJAR XAT",
+            "header_status": "Orientacio biblica, no oracle ni endevinacio",
+            "empty_message": "Escriu primer el teu somni o la teva pregunta",
+            "status_generating": "Estat: discernint el somni...",
+            "status_ready": "Estat: resposta llesta",
+            "intro": "Rebras una orientacio prudent, biblica i pastoral sobre els possibles significats del somni.",
+            "greetings": [
+                "Hola. Pots explicar-me el teu somni amb calma, incloent el que vas veure, sentir i el context que estas vivint aquests dies. Ho mirarem amb prudencia a la llum de la Biblia.",
+                "Hola. Escriu el teu somni amb els detalls principals i, si vols, tambe allo que estas pregant o discernint en aquest temps. Buscarem una orientacio biblica sense anar mes enlla del que l'Escriptura permet afirmar.",
+                "Benvingut. Explica'm el somni pas a pas i digues-me que et va cridar mes l'atencio o que et va inquietar. Et respondre amb una lectura biblica i pastoral, no esoterica.",
+            ],
+            "greeting": "Hola. Pots explicar-me el teu somni amb calma, incloent el que vas veure, sentir i el context que estas vivint aquests dies. Ho mirarem amb prudencia a la llum de la Biblia.",
+            "warning": "Aquesta seccio no funciona com un oracle ni substitueix la Biblia, la pregaria o la guia del teu pastor. No fem servir tarot, astrologia ni llenguatge esoteric.",
+            "you": "Tu",
+            "assistant": "Guia biblica de somnis",
+            "typing": "_La guia biblica de somnis esta escrivint..._",
+            "fallback_response": "Perdona, necessito una mica mes de context per ajudar-te millor. Explica'm el somni amb mes detall i tambe que vas sentir en despertar.",
+            "quick_questions": [
+                "He somiat amb aigua",
+                "He somiat amb una casa",
+                "He somiat amb animals",
+                "No se si aquest somni ve de Deu",
+                "Aquest somni m'inquieta",
+                "Vull una orientacio biblica",
+            ],
+        },
+        "fr": {
+            "title": "CHAT INTERPRETATION DES REVES",
+            "message": "RACONTE-MOI TON REVE",
+            "placeholder": "Ecris ici ton reve avec les details principaux et, si tu veux, ce que tu traverses en ce moment. Par exemple : je revais d'eau, d'une porte fermee et d'une grande inquietude...",
+            "send": "ENVOYER LE MESSAGE",
+            "clear": "EFFACER LE CHAT",
+            "header_status": "Orientation biblique, pas oracle ni divination",
+            "empty_message": "Ecris d'abord ton reve ou ta question",
+            "status_generating": "Etat : discernement du reve...",
+            "status_ready": "Etat : reponse prete",
+            "intro": "Tu recevras une orientation prudente, biblique et pastorale sur les significations possibles du reve.",
+            "greetings": [
+                "Bonjour. Tu peux me raconter ton reve calmement, en incluant ce que tu as vu, ressenti et le contexte que tu traverses ces jours-ci. Nous le regarderons avec prudence a la lumiere de la Bible.",
+                "Bonjour. Ecris ton reve avec les details principaux et, si tu veux, ce que tu pries ou discernes en ce moment. Nous chercherons une orientation biblique sans aller au-dela de ce que l'Ecriture permet d'affirmer.",
+                "Bienvenue. Raconte-moi le reve pas a pas et dis-moi ce qui t'a le plus marque ou inquiété. Je te repondrai avec une lecture biblique et pastorale, non esoterique.",
+            ],
+            "greeting": "Bonjour. Tu peux me raconter ton reve calmement, en incluant ce que tu as vu, ressenti et le contexte que tu traverses ces jours-ci. Nous le regarderons avec prudence a la lumiere de la Bible.",
+            "warning": "Cette section ne fonctionne pas comme un oracle et ne remplace ni la Bible, ni la priere, ni la direction de ton pasteur. Nous n'utilisons ni tarot, ni astrologie, ni langage esoterique.",
+            "you": "Toi",
+            "assistant": "Guide biblique des reves",
+            "typing": "_Le guide biblique des reves est en train d'ecrire..._",
+            "fallback_response": "Pardonne-moi, j'ai besoin d'un peu plus de contexte pour t'aider au mieux. Raconte-moi le reve avec plus de details et dis-moi aussi ce que tu as ressenti au reveil.",
+            "quick_questions": [
+                "J'ai reve d'eau",
+                "J'ai reve d'une maison",
+                "J'ai reve d'animaux",
+                "Je ne sais pas si ce reve vient de Dieu",
+                "Ce reve m'inquiete",
+                "Je veux une orientation biblique",
+            ],
+        },
+        "en": {
+            "title": "DREAM INTERPRETATION CHAT",
+            "message": "TELL ME YOUR DREAM",
+            "placeholder": "Write your dream here with the main details and, if you want, what you are going through right now. For example: I dreamed about water, a closed door, and strong unrest...",
+            "send": "SEND MESSAGE",
+            "clear": "CLEAR CHAT",
+            "header_status": "Biblical guidance, not an oracle or divination",
+            "empty_message": "Write your dream or question first",
+            "status_generating": "Status: discerning the dream...",
+            "status_ready": "Status: response ready",
+            "intro": "You will receive a careful, biblical, and pastoral orientation about the possible meaning of the dream.",
+            "greetings": [
+                "Hello. You can tell me your dream calmly, including what you saw, felt, and the context you are living through these days. We will look at it carefully in the light of Scripture.",
+                "Hello. Write your dream with the main details and, if you want, also what you are praying about or discerning right now. We will seek biblical guidance without going beyond what Scripture allows us to say.",
+                "Welcome. Tell me the dream step by step and what stood out to you or troubled you most. I will answer with a biblical and pastoral reading, not an esoteric one.",
+            ],
+            "greeting": "Hello. You can tell me your dream calmly, including what you saw, felt, and the context you are living through these days. We will look at it carefully in the light of Scripture.",
+            "warning": "This section is not an oracle and does not replace the Bible, prayer, or the guidance of your pastor. We do not use tarot, astrology, or esoteric language.",
+            "you": "You",
+            "assistant": "Biblical dream guide",
+            "typing": "_The biblical dream guide is typing..._",
+            "fallback_response": "Sorry, I need a little more context to help well. Tell me the dream with more detail and also what you felt when you woke up.",
+            "quick_questions": [
+                "I dreamed about water",
+                "I dreamed about a house",
+                "I dreamed about animals",
+                "I do not know if this dream comes from God",
+                "This dream troubles me",
+                "I want biblical guidance",
+            ],
+        },
+    }.get(lang_code, {})
+    es_modo_chat = inicio_preferido in {"chat_consejero", "chat_soporte", "chat_suenos"}
     es_modo_chat_soporte = inicio_preferido == "chat_soporte"
-    textos_chat_activo = textos_chat_soporte if es_modo_chat_soporte else textos_chat_consejero
+    es_modo_chat_suenos = inicio_preferido == "chat_suenos"
+    es_modo_chat_simple = es_modo_chat_soporte or es_modo_chat_suenos
+    textos_chat_activo = textos_chat_soporte if es_modo_chat_soporte else textos_chat_suenos if es_modo_chat_suenos else textos_chat_consejero
 
     dd_biblia = ft.Dropdown(
         label=ui["version"],
@@ -6610,11 +6738,37 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         texto_limpio = re.sub(r"(?is)<thinking>.*$", " ", texto_limpio)
         texto_limpio = re.sub(r"(?im)^\s*</?think>\s*$", " ", texto_limpio)
         texto_limpio = re.sub(r"(?im)^\s*</?thinking>\s*$", " ", texto_limpio)
-        texto_limpio = re.sub(
-            r"(?im)^\s*(consejero cristiano|consejero|assistant|chat consejero cristiano)\s*:\s*",
-            "",
-            texto_limpio,
+        etiquetas_asistente = {
+            "consejero cristiano",
+            "consejero",
+            "assistant",
+            "chat consejero cristiano",
+            str(textos_chat_activo.get("assistant", "") or "").strip(),
+        }
+        variantes_etiquetas = set()
+        for etiqueta in etiquetas_asistente:
+            etiqueta_limpia = etiqueta.strip()
+            if not etiqueta_limpia:
+                continue
+            variantes_etiquetas.add(etiqueta_limpia)
+            variantes_etiquetas.add(
+                "".join(
+                    ch
+                    for ch in unicodedata.normalize("NFKD", etiqueta_limpia)
+                    if not unicodedata.combining(ch)
+                )
+            )
+        patron_etiquetas = "|".join(
+            re.escape(etiqueta)
+            for etiqueta in sorted(variantes_etiquetas, key=len, reverse=True)
+            if etiqueta
         )
+        if patron_etiquetas:
+            texto_limpio = re.sub(
+                rf"(?im)^\s*(?:{patron_etiquetas})\s*:\s*",
+                "",
+                texto_limpio,
+            )
         texto_limpio = re.sub(
             r"(?i)(?:[¡!]*\s*am(?:e|é)n[¡!]*){3,}",
             "Amén.",
@@ -6728,7 +6882,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         return any(pista in ultimo_mensaje for pista in pistas_riesgo)
 
     def construir_instruccion_ritmica_chat_consejero() -> tuple[str, str]:
-        if es_modo_chat_soporte:
+        if es_modo_chat_simple:
             return "", "none"
         if respuestas_desde_intervencion_chat + 1 < objetivo_intervencion_chat:
             return "", "none"
@@ -6769,7 +6923,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     def registrar_ritmo_chat_consejero(resultado_ritmo: str) -> None:
         nonlocal indice_intervencion_chat_consejero, respuestas_desde_intervencion_chat, objetivo_intervencion_chat, cierre_acompanamiento_chat_realizado
-        if es_modo_chat_soporte:
+        if es_modo_chat_simple:
             return
         if resultado_ritmo == "close":
             cierre_acompanamiento_chat_realizado = True
@@ -8860,7 +9014,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Actua como la guia de uso de esta aplicacion llamada Biblia IA. "
                 "Tu trabajo es ayudar al usuario a entender como funciona el programa y a orientarse dentro de la app. "
                 "Responde en espanol de Espana, con tono claro, amable y directo. "
-                "Explica paso a paso para que sirve cada pantalla principal: configuracion de IA, Biblia, Estudio Biblico, Preguntas, Chat Consejero Cristiano y Guia de la App. "
+                "Explica paso a paso para que sirve cada pantalla principal: configuracion de IA, Biblia, Estudio Biblico, Preguntas, Chat Consejero Cristiano, Chat Interpretacion de Suenos y Guia de la App. "
                 "Da especialmente ayuda de orientacion: por donde empezar, que seccion conviene usar en cada caso y que boton pulsar despues. "
                 "Tu objetivo principal no es describir mucho, sino llevar al usuario a la seccion correcta de la app. "
                 "Cuando puedas, responde con una ruta clara del tipo: usa esta seccion por esta razon. "
@@ -8884,7 +9038,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Actua com el suport tecnic d'aquesta aplicacio anomenada Biblia IA. "
                 "La teva feina es ajudar l'usuari a entendre com funciona el programa i a resoldre dubtes practics d'us. "
                 "Respon en catala, amb un to clar, amable i directe. "
-                "Explica pas a pas com fer servir les pantalles principals: configuracio d'IA, Biblia, Estudi Biblic, Preguntes, Xat Conseller Cristia i Xat Suport Tecnic. "
+                "Explica pas a pas com fer servir les pantalles principals: configuracio d'IA, Biblia, Estudi Biblic, Preguntes, Xat Conseller Cristia, Xat Interpretacio de Somnis i Xat Suport Tecnic. "
                 "Ajuda amb errors habituals com API key invalida, manca de connexio, limit 429 de Groq, models no disponibles o respostes buides. "
                 "Si l'usuari esmenta un error, explica que vol dir i proposa un o dos passos concrets per provar, sense llistes llargues. "
                 "Si l'usuari pregunta per teologia, conselleria o estudi biblic, redirigeix-lo amb amabilitat a la seccio adequada de l'app en lloc de respondre com a conseller. "
@@ -8898,7 +9052,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Agis comme le support technique de cette application appelee Biblia IA. "
                 "Ta mission est d'aider l'utilisateur a comprendre le programme et a resoudre ses questions pratiques d'utilisation. "
                 "Reponds en francais, avec un ton clair, aimable et direct. "
-                "Explique pas a pas comment utiliser les ecrans principaux : configuration IA, Bible, Etude biblique, Questions, Chat conseiller chretien et Chat support technique. "
+                "Explique pas a pas comment utiliser les ecrans principaux : configuration IA, Bible, Etude biblique, Questions, Chat conseiller chretien, Chat interpretation des reves et Chat support technique. "
                 "Aide avec les erreurs courantes comme cle API invalide, absence de connexion, limite 429 de Groq, modeles indisponibles ou reponses vides. "
                 "Si l'utilisateur mentionne une erreur, explique ce qu'elle signifie et propose une ou deux etapes concretes a essayer, sans longues listes. "
                 "Si l'utilisateur pose une question de theologie, de relation d'aide ou d'etude biblique, redirige-le avec bienveillance vers la bonne section de l'application au lieu de repondre comme conseiller. "
@@ -8912,7 +9066,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Act as the technical support chat for this app called Biblia IA. "
                 "Your job is to help the user understand how the program works and solve practical usage questions. "
                 "Reply in English with a clear, kind, and direct tone. "
-                "Explain step by step how to use the main screens: AI setup, Bible, Bible Study, Questions, Christian Counselor Chat, and Technical Support Chat. "
+                "Explain step by step how to use the main screens: AI setup, Bible, Bible Study, Questions, Christian Counselor Chat, Dream Interpretation Chat, and Technical Support Chat. "
                 "Help with common errors such as invalid API key, missing connection, Groq 429 limits, unavailable models, or empty responses. "
                 "If the user mentions an error, explain what it means and suggest one or two concrete steps to try, without long lists. "
                 "If the user asks for theology, counseling, or Bible study, gently redirect them to the right section of the app instead of answering as a counselor. "
@@ -8925,11 +9079,126 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         }
         return prompts.get(lang_code, prompts["en"]).format(historial=historial_texto)
 
+    def construir_prompt_chat_suenos() -> str:
+        historial_texto = construir_historial_chat_para_prompt(
+            textos_chat_suenos["you"],
+            textos_chat_suenos["assistant"],
+        )
+
+        prompts = {
+            "es": (
+                "Actua como una guia cristiana evangelica para interpretar suenos con prudencia, sobriedad y fidelidad a la Biblia. "
+                "Responde en espanol de Espana, con tono pastoral, claro, humilde y cercano. "
+                "No actues como oraculo, adivino ni profeta de certezas absolutas. "
+                "No reemplazas la Biblia, la oracion ni la guia de un pastor. "
+                "No uses astrologia, tarot, numerologia, decretos misticos, energias, amuletos, guias espirituales, lenguaje new age ni ningun marco esoterico. "
+                "Si el usuario busca una lectura esoterica o de adivinacion, rechaza ese marco con respeto y redirige a Cristo, la Escritura y el discernimiento en oracion. "
+                "Basa tus observaciones solo en la Biblia y, cuando ayude, en principios evangelicos sobrios. "
+                "No inventes simbolismos ni versiculos. Si un simbolo no tiene una base biblica clara, dilo con honestidad. "
+                "Explica que no todo sueno viene necesariamente de Dios; algunos pueden reflejar cargas, recuerdos, temores, deseos o preocupaciones. "
+                "Antes de interpretar, procura entender bien el sueno y el contexto espiritual y emocional de la persona. "
+                "Tu prioridad normal es dar una interpretacion inicial con lo que ya hay, aunque sea breve y prudente. "
+                "Si faltan detalles importantes, haz como maximo una sola pregunta breve de aclaracion, y solo si sin ella seria irresponsable interpretar. "
+                "No conviertas la conversacion en una entrevista ni encadenes varias preguntas seguidas. "
+                "Si faltan datos secundarios, menciona la limitacion en una frase y aun asi ofrece una lectura preliminar con lo disponible. "
+                "Cuando ya tengas suficiente contexto, responde de forma tentativa y humilde usando expresiones como 'podria sugerir', 'podria apuntar a' o 'conviene discernir si'. "
+                "Cuando menciones un simbolo, conectalo con su posible base biblica y con el contexto concreto del sueno. "
+                "No afirmes fechas, destinos cerrados, promesas automaticas ni anuncios categoricos sobre el futuro. "
+                "Da siempre una orientacion final hacia la oracion, la Biblia y el consejo pastoral maduro. "
+                "Si el usuario expresa miedo intenso, confusion espiritual fuerte o angustia persistente, responde con calma, anima a orar y a buscar acompanamiento pastoral. "
+                "Responde como en un chat real, con frases cortas y naturales. "
+                "Normalmente responde en 2 a 4 frases breves, sin listas y sin Markdown. "
+                "Da una sola idea principal por mensaje. "
+                "No termines la mayoria de mensajes con preguntas. Solo pregunta algo al final si esa unica aclaracion es realmente necesaria para afinar la interpretacion. "
+                f"Historial del chat:\n{historial_texto}"
+            ),
+            "ca": (
+                "Actua com una guia cristiana evangelica per interpretar somnis amb prudencia, sobrietat i fidelitat a la Biblia. "
+                "Respon en catala, amb un to pastoral, clar, humil i proper. "
+                "No actues com un oracle, un endevI ni un profeta de certeses absolutes. "
+                "No substitueixes la Biblia, la pregaria ni la guia d'un pastor. "
+                "No facis servir astrologia, tarot, numerologia, decrets mistics, energies, amulets, guies espirituals, llenguatge new age ni cap marc esoteric. "
+                "Si l'usuari busca una lectura esoterica o d'endevinacio, rebutja aquest marc amb respecte i redirigeix cap a Crist, l'Escriptura i el discerniment en pregaria. "
+                "Base les teves observacions nomes en la Biblia i, quan ajude, en principis evangelics sobris. "
+                "No inventis simbolismes ni versicles. Si un simbol no te una base biblica clara, digues-ho amb honestedat. "
+                "Explica que no tot somni ve necessàriament de Deu; alguns poden reflectir carregues, records, pors, desitjos o preocupacions. "
+                "Abans d'interpretar, procura entendre be el somni i el context espiritual i emocional de la persona. "
+                "La teva prioritat normal es donar una interpretacio inicial amb el que ja hi ha, encara que siga breu i prudent. "
+                "Si falten detalls importants, fes com a maxim una sola pregunta breu d'aclariment, i nomes si sense aixo seria irresponsable interpretar. "
+                "No convertisques la conversa en una entrevista ni encadenes diverses preguntes seguides. "
+                "Si falten dades secundaries, esmenta la limitacio en una frase i tot i aixi ofereix una lectura preliminar amb el que tens. "
+                "Quan ja tingues prou context, respon de manera tentativa i humil amb expressions com 'podria suggerir', 'podria apuntar a' o 'convé discernir si'. "
+                "Quan esmentes un simbol, connecta'l amb la seva possible base biblica i amb el context concret del somni. "
+                "No afirmes dates, destins tancats, promeses automatiques ni anuncis categorics sobre el futur. "
+                "Dona sempre una orientacio final cap a la pregaria, la Biblia i el consell pastoral madur. "
+                "Respon com en un xat real, amb frases curtes i naturals. "
+                "Normalment respon en 2 a 4 frases breus, sense llistes ni Markdown. "
+                "Dona una sola idea principal per missatge. "
+                "No acabes la majoria de missatges amb preguntes. Nomes pregunta al final si aquesta unica aclariment es realment necessaria per afinar la interpretacio. "
+                f"Historial del xat:\n{historial_texto}"
+            ),
+            "fr": (
+                "Agis comme un guide chretien evangelique pour l'interpretation des reves, avec prudence, sobriete et fidelite a la Bible. "
+                "Reponds en francais, avec un ton pastoral, clair, humble et proche. "
+                "N'agis pas comme un oracle, un devin ou un prophete de certitudes absolues. "
+                "Tu ne remplaces ni la Bible, ni la priere, ni la direction d'un pasteur. "
+                "N'utilise ni astrologie, ni tarot, ni numerologie, ni energies, ni amulettes, ni langage esoterique ou new age. "
+                "Si l'utilisateur cherche une lecture esoterique ou divinatoire, refuse ce cadre avec respect et redirige vers le Christ, l'Ecriture et le discernement dans la priere. "
+                "Base tes observations seulement sur la Bible et, si utile, sur des principes evangeliques sobres. "
+                "N'invente ni symboles, ni versets. Si un symbole n'a pas de base biblique claire, dis-le honnetement. "
+                "Explique que tous les reves ne viennent pas forcement de Dieu ; certains peuvent simplement refleter des charges, des souvenirs, des peurs, des desirs ou des inquietudes. "
+                "Avant d'interpreter, cherche a bien comprendre le reve ainsi que le contexte spirituel et emotionnel de la personne. "
+                "Ta priorite normale est de donner d'abord une interpretation initiale avec les elements deja fournis, meme si elle reste breve et prudente. "
+                "S'il manque des details importants, pose au maximum une seule question courte de clarification, et seulement si interpreter sans cela serait imprudent. "
+                "Ne transforme pas la conversation en interrogatoire et n'enchaine pas plusieurs questions de suite. "
+                "S'il manque seulement des details secondaires, mentionne la limite en une phrase et donne quand meme une lecture preliminaire avec ce qui est deja disponible. "
+                "Quand tu as assez de contexte, reponds de maniere prudente et humble avec des expressions comme 'cela pourrait suggerer' ou 'il peut etre bon de discerner si'. "
+                "Quand tu mentionnes un symbole, relie-le a sa possible base biblique et au contexte concret du reve. "
+                "N'annonce ni dates, ni destins fixes, ni promesses automatiques, ni declarations categorique sur l'avenir. "
+                "Oriente toujours la personne vers la priere, la Bible et un accompagnement pastoral mature. "
+                "Reponds comme dans un vrai chat, avec des phrases courtes et naturelles. "
+                "Reponds normalement en 2 a 4 phrases breves, sans listes ni Markdown. "
+                "Donne une seule idee principale par message. "
+                "Ne termine pas la plupart des messages par une question. Pose une question finale seulement si cette unique precision est vraiment necessaire pour affiner l'interpretation. "
+                f"Historique du chat:\n{historial_texto}"
+            ),
+            "en": (
+                "Act as an evangelical Christian guide for dream interpretation with prudence, sobriety, and faithfulness to Scripture. "
+                "Reply in English with a pastoral, clear, humble, and warm tone. "
+                "Do not act like an oracle, diviner, or prophet of absolute certainty. "
+                "You do not replace the Bible, prayer, or the guidance of a pastor. "
+                "Do not use astrology, tarot, numerology, mystical decrees, energies, charms, spirit guides, new age language, or any esoteric framework. "
+                "If the user seeks an esoteric or fortune-telling reading, refuse that framework respectfully and redirect them to Christ, Scripture, and prayerful discernment. "
+                "Base your observations only on the Bible and, when helpful, on sober evangelical principles. "
+                "Do not invent symbols or verses. If a symbol does not have clear biblical grounding, say so honestly. "
+                "Explain that not every dream necessarily comes from God; some may simply reflect burdens, memories, fears, desires, or concerns. "
+                "Before interpreting, try to understand the dream and the person's spiritual and emotional context well. "
+                "Your normal priority is to give an initial interpretation with the information already provided, even if it must stay brief and cautious. "
+                "If important details are missing, ask at most one short clarifying question, and only if interpreting without it would be irresponsible. "
+                "Do not turn the conversation into an interview or chain several questions in a row. "
+                "If only secondary details are missing, mention that limitation in one sentence and still offer a preliminary reading with what is already available. "
+                "Once you have enough context, answer tentatively and humbly using wording such as 'this could suggest' or 'it may be wise to discern whether'. "
+                "When you mention a symbol, connect it to its possible biblical basis and to the concrete context of the dream. "
+                "Do not announce dates, fixed outcomes, automatic promises, or categorical statements about the future. "
+                "Always point the person toward prayer, Scripture, and mature pastoral counsel. "
+                "Reply like a real chat, with short and natural sentences. "
+                "Usually answer in 2 to 4 short sentences, without lists and without Markdown. "
+                "Give one main idea per message. "
+                "Do not end most messages with questions. Ask something at the end only if that single clarification is truly necessary to refine the interpretation. "
+                f"Chat history:\n{historial_texto}"
+            ),
+        }
+        return prompts.get(lang_code, prompts["en"])
+
     def construir_prompt_chat_activo(instruccion_turno: str = "") -> str:
-        return construir_prompt_chat_soporte() if es_modo_chat_soporte else construir_prompt_chat_consejero(instruccion_turno)
+        if es_modo_chat_soporte:
+            return construir_prompt_chat_soporte()
+        if es_modo_chat_suenos:
+            return construir_prompt_chat_suenos()
+        return construir_prompt_chat_consejero(instruccion_turno)
 
     def detectar_aceptacion_oracion_chat_consejero() -> bool:
-        if es_modo_chat_soporte or not historial_chat_consejero:
+        if es_modo_chat_simple or not historial_chat_consejero:
             return False
 
         ultimo_usuario = next(
@@ -9138,7 +9407,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         return random.choice(opciones)
 
     def construir_instruccion_despues_de_amen_chat_consejero() -> str:
-        if es_modo_chat_soporte or len(historial_chat_consejero) < 2:
+        if es_modo_chat_simple or len(historial_chat_consejero) < 2:
             return ""
 
         ultimo_usuario = next(
@@ -9199,7 +9468,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         return instrucciones.get(lang_code, instrucciones["es"])
 
     def construir_instruccion_primer_problema_chat_consejero() -> str:
-        if es_modo_chat_soporte:
+        if es_modo_chat_simple:
             return ""
 
         mensajes_usuario = sum(
@@ -9282,7 +9551,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         return instrucciones.get(f"{lang_code}_{clave}", instrucciones[f"es_{clave}"])
 
     def construir_instruccion_cierre_acompanamiento_chat_consejero() -> tuple[str, str]:
-        if es_modo_chat_soporte or cierre_acompanamiento_chat_realizado:
+        if es_modo_chat_simple or cierre_acompanamiento_chat_realizado:
             return "", "none"
 
         mensajes_asistente = sum(
@@ -9376,7 +9645,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     def asegurar_cierre_oracion_chat_consejero(texto: str, mensaje_usuario: str) -> str:
         respuesta = (texto or "").strip()
-        if not respuesta or es_modo_chat_soporte:
+        if not respuesta or es_modo_chat_simple:
             return respuesta
         if not es_respuesta_oracion_chat_consejero(respuesta, mensaje_usuario):
             return respuesta
@@ -9392,7 +9661,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     def limpiar_cierre_oracion_chat_consejero(texto: str, mensaje_usuario: str) -> str:
         respuesta = (texto or "").strip()
-        if not respuesta or es_modo_chat_soporte:
+        if not respuesta or es_modo_chat_simple:
             return respuesta
         if es_respuesta_oracion_chat_consejero(respuesta, mensaje_usuario):
             return respuesta
@@ -9417,7 +9686,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     def variar_inicio_entiendo_chat_consejero(texto: str) -> str:
         respuesta = (texto or "").strip()
-        if not respuesta or es_modo_chat_soporte:
+        if not respuesta or es_modo_chat_simple:
             return respuesta
 
         match = re.match(
@@ -9471,7 +9740,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     def suavizar_uso_nombre_chat_consejero(texto: str) -> str:
         respuesta = (texto or "").strip()
-        if not respuesta or es_modo_chat_soporte:
+        if not respuesta or es_modo_chat_simple:
             return respuesta
 
         nombre = obtener_nombre_usuario_chat_consejero()
@@ -9499,7 +9768,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     def limpiar_repeticiones_chat_consejero(texto: str) -> str:
         respuesta = (texto or "").strip()
-        if not respuesta or es_modo_chat_soporte:
+        if not respuesta or es_modo_chat_simple:
             return respuesta
 
         respuesta = re.sub(
@@ -9662,7 +9931,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     def limpiar_cierre_oracion_chat_consejero(texto: str, mensaje_usuario: str) -> str:
         respuesta = (texto or "").strip()
-        if not respuesta or es_modo_chat_soporte:
+        if not respuesta or es_modo_chat_simple:
             return respuesta
         if es_respuesta_oracion_chat_consejero(respuesta, mensaje_usuario):
             return respuesta
@@ -10569,7 +10838,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         bgcolor=theme["secondary"],
         border=ft.border.all(3, theme["primary"]),
         border_radius=24,
-        content=ft.Icon(ft.Icons.HELP_OUTLINE if es_modo_chat_soporte else ft.Icons.FORUM_ROUNDED, color=theme["secondary_text"], size=24),
+        content=ft.Icon(ft.Icons.AUTO_AWESOME if es_modo_chat_suenos else (ft.Icons.HELP_OUTLINE if es_modo_chat_soporte else ft.Icons.FORUM_ROUNDED), color=theme["secondary_text"], size=24),
         alignment=ft.Alignment(0, 0),
     )
     titulo_resultado = ft.Text(ui["result"], size=18, weight="bold", color=theme["primary"])
@@ -10729,7 +10998,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                                 textos_chat_activo["header_status"],
                                 size=12,
                                 color=theme["primary_text"],
-                                visible=es_modo_chat_soporte,
+                                visible=bool(textos_chat_activo["header_status"]),
                             ),
                         ],
                         spacing=2,
