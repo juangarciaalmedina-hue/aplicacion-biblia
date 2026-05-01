@@ -6246,22 +6246,24 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ):
                 continue
 
-            frases = re.split(r"(?<=[.!?])\s+|\n+", bloque)
-            frases_filtradas: list[str] = []
-            for frase in frases:
-                frase_limpia = frase.strip()
-                if not frase_limpia:
+            lineas = bloque.splitlines()
+            lineas_filtradas: list[str] = []
+            for linea in lineas:
+                linea_limpia = linea.rstrip()
+                if not linea_limpia.strip():
+                    if lineas_filtradas and lineas_filtradas[-1] != "":
+                        lineas_filtradas.append("")
                     continue
                 if any(
-                    len(frase_limpia) >= 50
-                    and len(previa) >= 50
-                    and fragmentos_son_muy_parecidos_estudio(frase_limpia, previa)
-                    for previa in frases_filtradas[-3:]
+                    len(linea_limpia.strip()) >= 50
+                    and len(previa.strip()) >= 50
+                    and fragmentos_son_muy_parecidos_estudio(linea_limpia.strip(), previa.strip())
+                    for previa in lineas_filtradas[-4:]
                 ):
                     continue
-                frases_filtradas.append(frase_limpia)
+                lineas_filtradas.append(linea_limpia)
 
-            bloque_limpio = " ".join(frases_filtradas).strip() or bloque
+            bloque_limpio = "\n".join(lineas_filtradas).strip() or bloque
             bloques_filtrados.append(bloque_limpio)
 
         respuesta = "\n\n".join(bloques_filtrados).strip() or respuesta
