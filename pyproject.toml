@@ -4,11 +4,16 @@ build-backend = "briefcase.build"
 
 [project]
 name = "biblia_app"
-version = "1.0.1"
+version = "1.0.2"
 description = "Aplicacion biblica con bienvenida y contenido IA"
 authors = [{ name = "Juan" }]
 requires-python = ">=3.10"
 license = { text = "Proprietary" }
+
+[tool.flet]
+product = "Biblia IA"
+org = "com.jmgalmedina"
+build_number = 3
 
 [tool.flet.app]
 path = "."
@@ -45,6 +50,7 @@ exclude = [
 [tool.flet.android]
 split_per_abi = true
 target_arch = ["arm64"]
+bundle_id = "com.jmgalmedina"
 
 [tool.flet.android.cleanup]
 app = true
@@ -73,7 +79,7 @@ wasm = true
 [tool.briefcase]
 project_name = "Biblia App"
 bundle = "com.jmgalmedina"
-version = "1.0.1"
+version = "1.0.2"
 url = "https://tiktok.com/@jmgalmedina"
 author = "Juan"
 author_email = "example@example.com"
