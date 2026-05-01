@@ -261,6 +261,9 @@ def construir_system_prompt(lang_code: str, mode: str = "study") -> str:
         f"You must answer only in {target_language}. Do not mix languages. "
         "Never reveal hidden reasoning, chain-of-thought, analysis, or internal notes. "
         "Never output tags such as <think>, </think>, or similar reasoning markers. "
+        "Do not write process phrases such as 'First, I need to', 'Let me think', 'I should', "
+        "'Voy a', 'Primero', 'Debo', 'Je vais', or similar planning text. "
+        "Start directly with the final answer for the user. "
         "Base your responses only on the Bible, preferably Reina-Valera 1960 or equivalent faithful translations, "
         "and on recognized evangelical commentaries and study resources such as Matthew Henry, John MacArthur, Warren Wiersbe, "
         "Charles Spurgeon, J. Vernon McGee, R.C. Sproul, Holman Study Bible, and MacArthur Study Bible. "
@@ -6194,6 +6197,213 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         texto_limpio = re.sub(r"\n{3,}", "\n\n", texto_limpio)
         return texto_limpio.strip()
 
+    def tokenizar_para_repeticion_estudio(texto: str) -> list[str]:
+        base = limpiar_texto_generado_ia(texto)
+        if not base:
+            return []
+        normalizado = unicodedata.normalize("NFKD", base.lower())
+        sin_tildes = "".join(caracter for caracter in normalizado if not unicodedata.combining(caracter))
+        return [token for token in re.findall(r"[a-z0-9]+", sin_tildes) if len(token) >= 3]
+
+    def fragmentos_son_muy_parecidos_estudio(a: str, b: str) -> bool:
+        tokens_a = tokenizar_para_repeticion_estudio(a)
+        tokens_b = tokenizar_para_repeticion_estudio(b)
+        if len(tokens_a) < 8 or len(tokens_b) < 8:
+            return False
+
+        set_a = set(tokens_a)
+        set_b = set(tokens_b)
+        if not set_a or not set_b:
+            return False
+
+        solape = len(set_a & set_b)
+        minimo = min(len(set_a), len(set_b))
+        if minimo and solape >= max(6, int(minimo * 0.82)):
+            return True
+
+        prefijo_a = " ".join(tokens_a[:12])
+        prefijo_b = " ".join(tokens_b[:12])
+        return bool(prefijo_a and prefijo_a == prefijo_b)
+
+    def limpiar_repeticiones_estudio(texto: str) -> str:
+        respuesta = limpiar_texto_generado_ia(texto)
+        if not respuesta:
+            return respuesta
+
+        bloques = [
+            bloque.strip()
+            for bloque in re.split(r"(?:\n\s*\n|\n\s*[-=_]{3,}\s*\n)", respuesta)
+            if bloque and bloque.strip()
+        ]
+        if not bloques:
+            return respuesta
+
+        bloques_filtrados: list[str] = []
+        for bloque in bloques:
+            if any(
+                len(bloque) >= 80 and len(previo) >= 80 and fragmentos_son_muy_parecidos_estudio(bloque, previo)
+                for previo in bloques_filtrados
+            ):
+                continue
+
+            frases = re.split(r"(?<=[.!?])\s+|\n+", bloque)
+            frases_filtradas: list[str] = []
+            for frase in frases:
+                frase_limpia = frase.strip()
+                if not frase_limpia:
+                    continue
+                if any(
+                    len(frase_limpia) >= 50
+                    and len(previa) >= 50
+                    and fragmentos_son_muy_parecidos_estudio(frase_limpia, previa)
+                    for previa in frases_filtradas[-3:]
+                ):
+                    continue
+                frases_filtradas.append(frase_limpia)
+
+            bloque_limpio = " ".join(frases_filtradas).strip() or bloque
+            bloques_filtrados.append(bloque_limpio)
+
+        respuesta = "\n\n".join(bloques_filtrados).strip() or respuesta
+        respuesta = re.sub(r"\n{3,}", "\n\n", respuesta)
+        respuesta = re.sub(r"[ \t]{2,}", " ", respuesta)
+        respuesta = re.sub(r"\s+([,;:.!?])", r"\1", respuesta)
+        return respuesta.strip()
+
+    def respuesta_parece_repetitiva(texto: str) -> bool:
+        respuesta = limpiar_texto_generado_ia(texto)
+        if not respuesta or respuesta.startswith("Error"):
+            return False
+
+        bloques = [
+            bloque.strip()
+            for bloque in re.split(r"(?:\n\s*\n|\n\s*[-=_]{3,}\s*\n)", respuesta)
+            if bloque and bloque.strip()
+        ]
+        duplicados_bloque = 0
+        for indice, bloque in enumerate(bloques):
+            if any(
+                len(bloque) >= 80 and len(previo) >= 80 and fragmentos_son_muy_parecidos_estudio(bloque, previo)
+                for previo in bloques[:indice]
+            ):
+                duplicados_bloque += 1
+        if duplicados_bloque >= 1:
+            return True
+
+        frases = [frase.strip() for frase in re.split(r"(?<=[.!?])\s+|\n+", respuesta) if frase.strip()]
+        duplicados_frase = 0
+        for indice, frase in enumerate(frases):
+            if any(
+                len(frase) >= 50 and len(previa) >= 50 and fragmentos_son_muy_parecidos_estudio(frase, previa)
+                for previa in frases[max(0, indice - 5):indice]
+            ):
+                duplicados_frase += 1
+        return duplicados_frase >= 2
+
+    def respuesta_parece_razonamiento_filtrado(texto: str) -> bool:
+        texto_limpio = limpiar_texto_generado_ia(texto)
+        if not texto_limpio or texto_limpio.startswith("Error"):
+            return False
+
+        inicio = texto_limpio[:420].strip().lower()
+        patrones = (
+            r"^first,\s*i need to\b",
+            r"^first,\s*i(?:'|’)ll\b",
+            r"^first,\s*i will\b",
+            r"^first,\s*i shall\b",
+            r"^first,\s*let me\b",
+            r"^let me\b",
+            r"^i need to\b",
+            r"^i(?:'|’)ll\b",
+            r"^i will\b",
+            r"^i should\b",
+            r"^then,\b",
+            r"^next,\b",
+            r"^before answering\b",
+            r"^to answer this\b",
+            r"^voy a\b",
+            r"^primero\b",
+            r"^debo\b",
+            r"^necesito\b",
+            r"^antes de responder\b",
+            r"^para responder\b",
+            r"^je dois\b",
+            r"^je vais\b",
+            r"^d'abord\b",
+            r"^avant de repondre\b",
+        )
+        if any(re.search(patron, inicio) for patron in patrones):
+            return True
+
+        marcadores_meta = (
+            "let me make sure",
+            "i'll start by",
+            "i will start by",
+            "then, break down each",
+            "then break down each",
+            "break down each verse",
+            "verse 18 talks about",
+            "verse 19 mentions",
+            "verse 20 emphasizes",
+            "i should explain",
+            "i need to connect this",
+            "i need to ensure",
+            "let me review the previous response",
+            "check the word count",
+            "internal reasoning",
+            "hidden reasoning",
+            "pensamiento interno",
+            "razonamiento interno",
+            "voy a explicar cada versiculo",
+            "debo explicar cada versiculo",
+            "je vais expliquer chaque verset",
+        )
+        return any(marcador in inicio for marcador in marcadores_meta)
+
+    def respuesta_parece_fuera_de_idioma(texto: str) -> bool:
+        texto_limpio = limpiar_texto_generado_ia(texto)
+        if not texto_limpio or texto_limpio.startswith("Error") or lang_code == "en":
+            return False
+
+        inicio = texto_limpio[:260].strip().lower()
+        patrones_ingles = (
+            r"^first,\s*i need to\b",
+            r"^first,\s*i(?:'|’)ll\b",
+            r"^first,\s*i will\b",
+            r"^let me\b",
+            r"^i need to\b",
+            r"^i(?:'|’)ll\b",
+            r"^i will\b",
+            r"^i should\b",
+            r"^then,\b",
+            r"^next,\b",
+            r"^to answer this\b",
+            r"\bthe rv1960 translation of\b",
+            r"\bbreak down each verse\b",
+            r"\bcheck the word count\b",
+            r"\bwithout going into too much detail\b",
+        )
+        if any(re.search(patron, inicio) for patron in patrones_ingles):
+            return True
+
+        palabras = re.findall(r"[a-z']+", inicio)
+        if not palabras:
+            return False
+
+        comunes_ingles = {
+            "the", "and", "then", "with", "without", "into", "about", "need", "should",
+            "start", "verse", "talks", "mentions", "explains", "review", "previous",
+            "response", "word", "count", "clear", "subheadings", "final", "accurately",
+        }
+        comunes_romance = {
+            "que", "con", "para", "como", "pero", "porque", "versiculo", "versiculos",
+            "texto", "pasaje", "respuesta", "estudio", "palabras", "directamente",
+            "frances", "catala", "espanol", "biblico", "explica", "analiza",
+        }
+        total_ingles = sum(1 for palabra in palabras if palabra in comunes_ingles)
+        total_romance = sum(1 for palabra in palabras if palabra in comunes_romance)
+        return total_ingles >= 4 and total_ingles >= total_romance + 2
+
     def clasificar_escritura(caracter: str) -> str:
         if not caracter or not caracter.isalpha():
             return ""
@@ -6289,22 +6499,104 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return "Error from AI: a corrupted response mixed with other alphabets was received. Please try again."
         return "Error de IA: se recibio un texto corrupto o mezclado con otros alfabetos. Vuelve a intentarlo."
 
+    def instruccion_recuperacion_sin_proceso(mode: str) -> str:
+        if lang_code == "ca":
+            tipus = "l'estudi" if mode == "study" else "la resposta"
+            return (
+                f"La resposta anterior ha mostrat text de proces intern o ha començat en un idioma incorrecte. "
+                f"Torna a escriure {tipus} des de zero directament en catala. "
+                "No expliquis el que faras, no diguis 'primer', 'he de', 'vaig a' ni frases semblants. "
+                "Comença directament pel contingut final per a l'usuari."
+            )
+        if lang_code == "fr":
+            type_reponse = "l'etude" if mode == "study" else "la reponse"
+            return (
+                f"La reponse precedente a affiche un texte de processus interne ou a commence dans une mauvaise langue. "
+                f"Reecris {type_reponse} depuis zero directement en francais. "
+                "N'explique pas ce que tu vas faire et n'utilise pas des phrases comme 'd'abord', 'je dois' ou 'je vais'. "
+                "Commence directement par le contenu final pour l'utilisateur."
+            )
+        if lang_code == "en":
+            response_type = "the study" if mode == "study" else "the answer"
+            return (
+                f"The previous response exposed internal process text or started in the wrong language. "
+                f"Rewrite {response_type} from scratch directly in English. "
+                "Do not explain what you are going to do and do not use phrases such as 'First, I need to', 'Let me', or 'I should'. "
+                "Start immediately with the final user-facing content."
+            )
+        tipo = "el estudio" if mode == "study" else "la respuesta"
+        return (
+            f"La respuesta anterior ha mostrado texto de proceso interno o ha empezado en un idioma incorrecto. "
+            f"Vuelve a escribir {tipo} desde cero directamente en espanol de Espana. "
+            "No expliques lo que vas a hacer ni uses frases como 'Primero', 'Voy a', 'Debo', 'Necesito' o similares. "
+            "Empieza directamente por el contenido final para el usuario."
+        )
+
+    def instruccion_recuperacion_sin_repeticiones(mode: str) -> str:
+        if lang_code == "ca":
+            tipus = "l'estudi" if mode == "study" else "la resposta"
+            return (
+                f"La resposta anterior ha repetit frases o paragrafs gairebe iguals. "
+                f"Torna a escriure {tipus} des de zero en catala natural, sense repetir idees, frases ni blocs semblants. "
+                "Cada apartat ha d'aportar informacio nova i avancar amb claredat."
+            )
+        if lang_code == "fr":
+            type_reponse = "l'etude" if mode == "study" else "la reponse"
+            return (
+                f"La reponse precedente repetait des phrases ou des paragraphes presque identiques. "
+                f"Reecris {type_reponse} depuis zero dans un francais naturel, sans repeter les idees, les phrases ni des blocs similaires. "
+                "Chaque section doit apporter une information nouvelle et faire avancer l'explication."
+            )
+        if lang_code == "en":
+            response_type = "the study" if mode == "study" else "the answer"
+            return (
+                f"The previous response repeated near-identical sentences or paragraphs. "
+                f"Rewrite {response_type} from scratch in natural English without repeating ideas, sentences, or similar blocks. "
+                "Each section must add new information and move the explanation forward."
+            )
+        tipo = "el estudio" if mode == "study" else "la respuesta"
+        return (
+            f"La respuesta anterior ha repetido frases o parrafos casi iguales. "
+            f"Vuelve a escribir {tipo} desde cero en espanol de Espana natural, sin repetir ideas, frases ni bloques parecidos. "
+            "Cada apartado debe aportar informacion nueva y hacer avanzar la explicacion."
+        )
+
     def asegurar_respuesta_legible(respuesta: str, prompt_base: str, mode: str) -> str:
-        respuesta_limpia = limpiar_texto_generado_ia(respuesta)
+        respuesta_limpia = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(respuesta))
         if not respuesta_limpia or respuesta_limpia.startswith("Error"):
             return respuesta_limpia
-        if not respuesta_parece_corrupta(respuesta_limpia):
+        if (
+            not respuesta_parece_corrupta(respuesta_limpia)
+            and not respuesta_parece_razonamiento_filtrado(respuesta_limpia)
+            and not respuesta_parece_fuera_de_idioma(respuesta_limpia)
+            and not respuesta_parece_repetitiva(respuesta_limpia)
+        ):
             return respuesta_limpia
 
-        prompt_recuperacion = f"{prompt_base}\n\n{instruccion_recuperacion_texto(mode)}"
+        instrucciones_recuperacion = []
+        if respuesta_parece_corrupta(respuesta_limpia):
+            instrucciones_recuperacion.append(instruccion_recuperacion_texto(mode))
+        if respuesta_parece_razonamiento_filtrado(respuesta_limpia) or respuesta_parece_fuera_de_idioma(respuesta_limpia):
+            instrucciones_recuperacion.append(instruccion_recuperacion_sin_proceso(mode))
+        if respuesta_parece_repetitiva(respuesta_limpia):
+            instrucciones_recuperacion.append(instruccion_recuperacion_sin_repeticiones(mode))
+
+        prompt_recuperacion = f"{prompt_base}\n\n" + "\n\n".join(instrucciones_recuperacion)
         segunda_respuesta = consultar_ia(prompt_recuperacion, lang_code=lang_code, mode=mode)
-        segunda_limpia = limpiar_texto_generado_ia(segunda_respuesta)
-        if segunda_limpia and not segunda_limpia.startswith("Error") and not respuesta_parece_corrupta(segunda_limpia):
+        segunda_limpia = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(segunda_respuesta))
+        if (
+            segunda_limpia
+            and not segunda_limpia.startswith("Error")
+            and not respuesta_parece_corrupta(segunda_limpia)
+            and not respuesta_parece_razonamiento_filtrado(segunda_limpia)
+            and not respuesta_parece_fuera_de_idioma(segunda_limpia)
+            and not respuesta_parece_repetitiva(segunda_limpia)
+        ):
             return segunda_limpia
         return mensaje_respuesta_corrupta()
 
     def asignar_resultado_markdown(texto: str, limpiar: bool = False) -> None:
-        result_md.value = limpiar_texto_generado_ia(texto) if limpiar else texto
+        result_md.value = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(texto)) if limpiar else texto
 
     def limpiar_respuesta_chat_visible(texto: str) -> str:
         texto_limpio = limpiar_texto_generado_ia(texto)
