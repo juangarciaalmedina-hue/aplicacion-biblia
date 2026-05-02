@@ -3,15 +3,11 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parent
-SRC_DIR = ROOT / "src"
-VENDOR_DIR = ROOT / "vendor_py"
 
-for path in (ROOT, VENDOR_DIR, SRC_DIR):
+for path in (ROOT, ROOT / "vendor_py"):
     path_str = str(path)
     if path_str not in sys.path:
         sys.path.insert(0, path_str)
-
-import certifi
 
 
 def _load_local_package(name: str, init_path: Path):
@@ -36,7 +32,7 @@ except ModuleNotFoundError as exc:
         raise
 
     ft = None
-    for candidate in (ROOT / "flet" / "__init__.py", VENDOR_DIR / "flet" / "__init__.py"):
+    for candidate in (ROOT / "flet" / "__init__.py", ROOT / "vendor_py" / "flet" / "__init__.py"):
         if candidate.exists():
             ft = _load_local_package("flet", candidate)
             break

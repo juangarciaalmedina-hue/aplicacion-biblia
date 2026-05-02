@@ -9,14 +9,15 @@ description = "Aplicacion biblica con bienvenida y contenido IA"
 authors = [{ name = "Juan" }]
 requires-python = ">=3.10"
 license = { text = "Proprietary" }
+dependencies = ["flet", "certifi", "six"]
 
 [tool.flet]
 product = "Biblia IA"
 org = "com.jmgalmedina"
-build_number = 3
+build_number = 28
 
 [tool.flet.app]
-path = "."
+path = "src"
 module = "main"
 name = "biblia_app"
 description = "Aplicacion biblica para pruebas"
@@ -35,7 +36,9 @@ exclude = [
     ".mypy_cache",
     ".ruff_cache",
     ".gradle",
+    ".gradle-local",
     ".gradle-user-home",
+    ".tmp",
     ".dart_tool",
     "netlify",
     "tests",
@@ -52,8 +55,13 @@ split_per_abi = true
 target_arch = ["arm64"]
 bundle_id = "com.jmgalmedina"
 
+[tool.flet.android.signing]
+key_store = "C:/APLICACIONBIBLIA/android-upload-key.jks"
+key_alias = "upload"
+
 [tool.flet.android.cleanup]
 app = true
+packages = false
 app_files = [
     "README.md",
     "pyproject.toml",
@@ -88,5 +96,5 @@ author_email = "example@example.com"
 formal_name = "Biblia App"
 description = "Aplicacion biblica con bienvenida y contenido IA"
 sources = ["src/biblia_app"]
-requires = ["flet", "certifi"]
+requires = ["flet", "certifi", "six"]
 module = "biblia_app"

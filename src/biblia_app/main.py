@@ -44,8 +44,11 @@ ANULAR_SEGUNDA_PAGINA_SALUDOS = False
 ANULAR_PAGINA_CONFIG_KEY = False
 WEB_API_KEY_STORAGE_KEY = "com.jmgalmedina.biblia_app.groq_api_key"
 GROQ_KEYS_URL = "https://console.groq.com/keys"
-WHATSAPP_SUPPORT_CONTACT = os.getenv("WHATSAPP_SUPPORT_CONTACT", "").strip()
-WHATSAPP_SUPPORT_MESSAGE = os.getenv("WHATSAPP_SUPPORT_MESSAGE", "").strip()
+WHATSAPP_SUPPORT_CONTACT = os.getenv("WHATSAPP_SUPPORT_CONTACT", "34644769052").strip()
+WHATSAPP_SUPPORT_MESSAGE = os.getenv(
+    "WHATSAPP_SUPPORT_MESSAGE",
+    "Hola, necesito ayuda con la configuracion de Biblia IA.",
+).strip()
 
 
 async def _resolver_resultado_async(resultado):
@@ -70,7 +73,7 @@ def _mensaje_whatsapp_soporte(lang_code: str = "es") -> str:
 def obtener_url_whatsapp_soporte(lang_code: str = "es") -> str:
     contacto = WHATSAPP_SUPPORT_CONTACT
     if not contacto:
-        return ""
+        contacto = "34644769052"
     if contacto.startswith(("http://", "https://", "whatsapp://")):
         return contacto
 
@@ -881,6 +884,7 @@ def main(page: ft.Page):
             textos = {
                 "es": {
                     "title": "Configuracion de IA (Inteligencia Artificial)",
+                    "build_badge": "Build 28",
                     "desc": "Proceso rapido: 1) Pulsa 'Conseguir key gratuita'. 2) En la pagina de Groq: inicia sesion, entra en 'API Keys', pulsa 'Create API Key' y copia la clave generada. 3) Vuelve a la app y pegala aqui. 4) Pulsa 'Probar conexion'. 5) Si todo va bien, pulsa 'Siguiente'. Nota: al ser una key gratuita, tiene limites de uso/consultas segun las politicas de Groq.",
                     "notice": "Aviso: si una key ya te funciona, no tienes que poner una nueva cada vez que abras el programa. Solo cambiala si deja de funcionar o si quieres usar otra distinta.",
                     "install_title": "Instalar la app",
@@ -909,8 +913,8 @@ def main(page: ft.Page):
                     "support_typing": "La ayuda local esta escribiendo...",
                     "support_suggestions": "Sugerencias para seguir",
                     "whatsapp_title": "Ayuda por WhatsApp",
-                    "whatsapp_desc": "Si prefieres hablar con una persona, abre aqui el chat de soporte de WhatsApp.",
-                    "whatsapp_button": "Abrir WhatsApp",
+                    "whatsapp_desc": "Si prefieres hablar con una persona, abre aqui el chat de soporte por WhatsApp.",
+                    "whatsapp_button": "Soporte WhatsApp",
                     "open_whatsapp_ok": "Abriendo chat de WhatsApp...",
                     "open_whatsapp_error": "No se pudo abrir WhatsApp. Enlace copiado al portapapeles.",
                     "faq_key": "Como consigo la key",
@@ -925,6 +929,7 @@ def main(page: ft.Page):
                 },
                 "ca": {
                     "title": "Configuracio d'IA (Intelligencia Artificial)",
+                    "build_badge": "Build 28",
                     "desc": "Proces rapid: 1) Prem 'Aconseguir key gratuita'. 2) A la pagina de Groq: inicia sessio, entra a 'API Keys', prem 'Create API Key' i copia la clau generada. 3) Torna a l'app i enganxa-la aqui. 4) Prem 'Provar connexio'. 5) Si tot va be, prem 'Seguent'. Nota: com que es una key gratuita, te limits d'us/consultes segons les politiques de Groq.",
                     "notice": "Avís: si una key ja et funciona, no n'has de posar una de nova cada vegada que obris el programa. Només cal canviar-la si deixa de funcionar o si en vols usar una altra.",
                     "install_title": "Installar l'app",
@@ -953,8 +958,8 @@ def main(page: ft.Page):
                     "support_typing": "El suport local esta escrivint...",
                     "support_suggestions": "Suggeriments per continuar",
                     "whatsapp_title": "Ajuda per WhatsApp",
-                    "whatsapp_desc": "Si prefereixes parlar amb una persona, obre aqui el xat de suport de WhatsApp.",
-                    "whatsapp_button": "Obrir WhatsApp",
+                    "whatsapp_desc": "Si prefereixes parlar amb una persona, obre aqui el xat de suport per WhatsApp.",
+                    "whatsapp_button": "Suport WhatsApp",
                     "open_whatsapp_ok": "Obrint xat de WhatsApp...",
                     "open_whatsapp_error": "No s'ha pogut obrir WhatsApp. Enllac copiat al porta-retalls.",
                     "faq_key": "Com aconseguir la key",
@@ -969,6 +974,7 @@ def main(page: ft.Page):
                 },
                 "fr": {
                     "title": "Configuration IA (Intelligence Artificielle)",
+                    "build_badge": "Build 28",
                     "desc": "Processus rapide : 1) Clique 'Obtenir une cle gratuite'. 2) Sur la page Groq : connecte-toi, ouvre 'API Keys', clique sur 'Create API Key' et copie la cle generee. 3) Reviens dans l'app et colle-la ici. 4) Clique 'Tester la connexion'. 5) Si tout va bien, clique 'Suivant'. Remarque : comme la cle est gratuite, elle a des limites d'usage/de requetes selon les politiques de Groq.",
                     "notice": "Remarque : si une cle fonctionne deja, tu n'as pas besoin d'en mettre une nouvelle a chaque ouverture du programme. Change-la seulement si elle ne fonctionne plus ou si tu veux en utiliser une autre.",
                     "install_title": "Installer l'app",
@@ -997,8 +1003,8 @@ def main(page: ft.Page):
                     "support_typing": "Le support local ecrit...",
                     "support_suggestions": "Suggestions pour continuer",
                     "whatsapp_title": "Aide par WhatsApp",
-                    "whatsapp_desc": "Si tu preferes parler avec une personne, ouvre ici le chat de support WhatsApp.",
-                    "whatsapp_button": "Ouvrir WhatsApp",
+                    "whatsapp_desc": "Si tu preferes parler avec une personne, ouvre ici le chat de support par WhatsApp.",
+                    "whatsapp_button": "Support WhatsApp",
                     "open_whatsapp_ok": "Ouverture du chat WhatsApp...",
                     "open_whatsapp_error": "Impossible d'ouvrir WhatsApp. Lien copie dans le presse-papiers.",
                     "faq_key": "Comment obtenir la cle",
@@ -1013,6 +1019,7 @@ def main(page: ft.Page):
                 },
                 "en": {
                     "title": "AI Setup (Artificial Intelligence)",
+                    "build_badge": "Build 28",
                     "desc": "Quick process: 1) Click 'Get free key'. 2) On the Groq page: sign in, open 'API Keys', click 'Create API Key', and copy the generated key. 3) Return to the app and paste it here. 4) Click 'Test connection'. 5) If everything is fine, click 'Next'. Note: free keys have usage/query limits according to Groq policies.",
                     "notice": "Notice: if a key already works for you, you do not need to enter a new one every time you open the program. Change it only if it stops working or if you want to use a different one.",
                     "install_title": "Install the app",
@@ -1042,7 +1049,7 @@ def main(page: ft.Page):
                     "support_suggestions": "Suggested next help",
                     "whatsapp_title": "WhatsApp help",
                     "whatsapp_desc": "If you prefer talking to a person, open the WhatsApp support chat here.",
-                    "whatsapp_button": "Open WhatsApp",
+                    "whatsapp_button": "WhatsApp support",
                     "open_whatsapp_ok": "Opening WhatsApp chat...",
                     "open_whatsapp_error": "Could not open WhatsApp. Link copied to clipboard.",
                     "faq_key": "How to get the key",
@@ -1304,50 +1311,61 @@ def main(page: ft.Page):
                 estado.color = theme["text"]
                 page.update()
 
-            def abrir_web_groq(_=None):
-                url = GROQ_KEYS_URL
+            async def _abrir_url_externa(url: str) -> bool:
                 try:
-                    page.launch_url(url, web_window_name="_blank")
-                    estado.value = ui["open_key_ok"]
-                    estado.color = theme["text"]
+                    if page.web:
+                        await _resolver_resultado_async(
+                            page.url_launcher.launch_url(
+                                url,
+                                web_only_window_name="_blank",
+                            )
+                        )
+                    else:
+                        await _resolver_resultado_async(
+                            page.url_launcher.launch_url(
+                                url,
+                                mode=ft.LaunchMode.EXTERNAL_APPLICATION,
+                                web_only_window_name="_blank",
+                            )
+                        )
+                    return True
                 except Exception:
                     try:
                         # Fallback para escritorio Windows cuando launch_url falla.
                         if subprocess is None:
                             raise RuntimeError("subprocess no disponible")
                         subprocess.Popen(["cmd", "/c", "start", "", url], shell=False)
-                        estado.value = ui["open_key_ok"]
-                        estado.color = theme["text"]
+                        return True
                     except Exception:
-                        try:
-                            page.set_clipboard(url)
-                        except Exception:
-                            pass
-                        estado.value = f"{ui['open_key_error']} {url}"
-                        estado.color = ft.Colors.AMBER_700
+                        return False
+
+            async def abrir_web_groq(_=None):
+                url = GROQ_KEYS_URL
+                if await _abrir_url_externa(url):
+                    estado.value = ui["open_key_ok"]
+                    estado.color = theme["text"]
+                else:
+                    try:
+                        page.set_clipboard(url)
+                    except Exception:
+                        pass
+                    estado.value = f"{ui['open_key_error']} {url}"
+                    estado.color = ft.Colors.AMBER_700
                 page.update()
 
-            def abrir_whatsapp_soporte(_=None):
+            async def abrir_whatsapp_soporte(_=None):
                 if not whatsapp_url:
                     return
-                try:
-                    page.launch_url(whatsapp_url, web_window_name="_blank")
+                if await _abrir_url_externa(whatsapp_url):
                     estado.value = ui["open_whatsapp_ok"]
                     estado.color = theme["text"]
-                except Exception:
+                else:
                     try:
-                        if subprocess is None:
-                            raise RuntimeError("subprocess no disponible")
-                        subprocess.Popen(["cmd", "/c", "start", "", whatsapp_url], shell=False)
-                        estado.value = ui["open_whatsapp_ok"]
-                        estado.color = theme["text"]
+                        page.set_clipboard(whatsapp_url)
                     except Exception:
-                        try:
-                            page.set_clipboard(whatsapp_url)
-                        except Exception:
-                            pass
-                        estado.value = f"{ui['open_whatsapp_error']} {whatsapp_url}"
-                        estado.color = ft.Colors.AMBER_700
+                        pass
+                    estado.value = f"{ui['open_whatsapp_error']} {whatsapp_url}"
+                    estado.color = ft.Colors.AMBER_700
                 page.update()
 
             def siguiente(_=None):
@@ -1388,49 +1406,6 @@ def main(page: ft.Page):
                             ui["support_desc"],
                             color=theme["text"],
                             size=13,
-                        ),
-                        ft.Container(
-                            visible=bool(whatsapp_url),
-                            padding=12,
-                            bgcolor=theme["panel_bg"],
-                            border=ft.border.all(2, theme["field_border"]),
-                            border_radius=14,
-                            content=ft.Column(
-                                [
-                                    ft.Row(
-                                        [
-                                            ft.Icon(ft.Icons.CHAT, color="#25D366", size=22),
-                                            ft.Text(
-                                                ui["whatsapp_title"],
-                                                size=15,
-                                                weight=ft.FontWeight.BOLD,
-                                                color=theme["primary"],
-                                            ),
-                                        ],
-                                        spacing=8,
-                                    ),
-                                    ft.Text(
-                                        ui["whatsapp_desc"],
-                                        color=theme["text"],
-                                        size=12,
-                                    ),
-                                    ft.ElevatedButton(
-                                        ui["whatsapp_button"],
-                                        icon=ft.Icons.OPEN_IN_NEW,
-                                        on_click=abrir_whatsapp_soporte,
-                                        width=9999,
-                                        style=ft.ButtonStyle(
-                                            bgcolor="#25D366",
-                                            color="#103E2A",
-                                            side=ft.BorderSide(3, theme["border"]),
-                                            shape=ft.RoundedRectangleBorder(radius=12),
-                                            padding=ft.padding.symmetric(vertical=12, horizontal=16),
-                                        ),
-                                    ),
-                                ],
-                                spacing=10,
-                                tight=True,
-                            ),
                         ),
                         ft.Container(
                             key="panel_soporte_historial",
@@ -1574,6 +1549,19 @@ def main(page: ft.Page):
                                     color=theme["primary"],
                                     text_align=ft.TextAlign.CENTER,
                                 ),
+                                ft.Container(
+                                    padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                                    bgcolor=theme["secondary"],
+                                    border=ft.border.all(2, theme["border"]),
+                                    border_radius=999,
+                                    content=ft.Text(
+                                        ui["build_badge"],
+                                        color=theme["secondary_text"],
+                                        size=12,
+                                        weight=ft.FontWeight.BOLD,
+                                        text_align=ft.TextAlign.CENTER,
+                                    ),
+                                ),
                                 ft.Text(
                                     ui["desc"],
                                     color=theme["text"],
@@ -1638,8 +1626,7 @@ def main(page: ft.Page):
                                     content=ft.OutlinedButton(
                                         ui["get_key"],
                                         icon=ft.Icons.OPEN_IN_NEW,
-                                        on_click=None if page.web else abrir_web_groq,
-                                        url=GROQ_KEYS_URL if page.web else None,
+                                        on_click=abrir_web_groq,
                                         width=ancho_boton_key,
                                         style=ft.ButtonStyle(
                                             color=theme["text"],
@@ -1661,23 +1648,7 @@ def main(page: ft.Page):
                                 ft.ResponsiveRow(
                                     [
                                         ft.Container(
-                                            col={"xs": 12, "sm": 4, "md": 4},
-                                            content=ft.ElevatedButton(
-                                                ui["diagnostic"],
-                                                icon=ft.Icons.MEDICAL_INFORMATION,
-                                                on_click=diagnostico,
-                                                width=9999,
-                                                style=ft.ButtonStyle(
-                                                    bgcolor=theme["secondary"],
-                                                    color=theme["secondary_text"],
-                                                    side=ft.BorderSide(4, theme["border"]),
-                                                    shape=ft.RoundedRectangleBorder(radius=14),
-                                                    padding=ft.padding.symmetric(vertical=14),
-                                                ),
-                                            ),
-                                        ),
-                                        ft.Container(
-                                            col={"xs": 12, "sm": 4, "md": 4},
+                                            col={"xs": 12, "sm": 6, "md": 6},
                                             content=ft.ElevatedButton(
                                                 ui["test"],
                                                 icon=ft.Icons.WIFI_FIND,
@@ -1693,7 +1664,7 @@ def main(page: ft.Page):
                                             ),
                                         ),
                                         ft.Container(
-                                            col={"xs": 12, "sm": 4, "md": 4},
+                                            col={"xs": 12, "sm": 6, "md": 6},
                                             content=ft.ElevatedButton(
                                                 ui["next"],
                                                 icon=ft.Icons.ARROW_FORWARD,
@@ -1708,26 +1679,69 @@ def main(page: ft.Page):
                                                 ),
                                             ),
                                         ),
-                                        ft.Container(
-                                            col={"xs": 12, "sm": 12, "md": 12},
-                                            content=ft.OutlinedButton(
-                                                ui["back"],
-                                                icon=ft.Icons.ARROW_BACK,
-                                                on_click=lambda _: mostrar_selector_idioma(),
-                                                width=9999,
-                                                style=ft.ButtonStyle(
-                                                    color=theme["text"],
-                                                    side=ft.BorderSide(4, theme["border"]),
-                                                    shape=ft.RoundedRectangleBorder(radius=14),
-                                                    padding=ft.padding.symmetric(vertical=14),
-                                                ),
-                                            ),
-                                        ),
                                     ],
                                     spacing=10,
                                     run_spacing=10,
                                 ),
+                                ft.Container(
+                                    width=ancho_contenido,
+                                    padding=12,
+                                    bgcolor=theme["panel_bg"],
+                                    border=ft.border.all(2, theme["field_border"]),
+                                    border_radius=14,
+                                    content=ft.Column(
+                                        [
+                                            ft.Row(
+                                                [
+                                                    ft.Icon(ft.Icons.CHAT, color="#25D366", size=22),
+                                                    ft.Text(
+                                                        ui["whatsapp_title"],
+                                                        size=15,
+                                                        weight=ft.FontWeight.BOLD,
+                                                        color=theme["primary"],
+                                                    ),
+                                                ],
+                                                spacing=8,
+                                            ),
+                                            ft.Text(
+                                                ui["whatsapp_desc"],
+                                                color=theme["text"],
+                                                size=12,
+                                            ),
+                                            ft.ElevatedButton(
+                                                ui["whatsapp_button"],
+                                                icon=ft.Icons.OPEN_IN_NEW,
+                                                on_click=abrir_whatsapp_soporte,
+                                                width=9999,
+                                                style=ft.ButtonStyle(
+                                                    bgcolor="#25D366",
+                                                    color="#103E2A",
+                                                    side=ft.BorderSide(3, theme["border"]),
+                                                    shape=ft.RoundedRectangleBorder(radius=12),
+                                                    padding=ft.padding.symmetric(vertical=12, horizontal=16),
+                                                ),
+                                            ),
+                                        ],
+                                        spacing=10,
+                                        tight=True,
+                                    ),
+                                ),
                                 panel_soporte_local,
+                                ft.Container(
+                                    col={"xs": 12, "sm": 12, "md": 12},
+                                    content=ft.OutlinedButton(
+                                        ui["back"],
+                                        icon=ft.Icons.ARROW_BACK,
+                                        on_click=lambda _: mostrar_selector_idioma(),
+                                        width=9999,
+                                        style=ft.ButtonStyle(
+                                            color=theme["text"],
+                                            side=ft.BorderSide(4, theme["border"]),
+                                            shape=ft.RoundedRectangleBorder(radius=14),
+                                            padding=ft.padding.symmetric(vertical=14),
+                                        ),
+                                    ),
+                                ),
                             ],
                             spacing=14,
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
