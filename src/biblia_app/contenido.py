@@ -4619,6 +4619,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         grupos_controles_dones.append((bloque_don, controles_bloque))
     contenedor_tipo_tamano = ft.Container()
 
+    def reconstruir_contenedor_tipo_tamano():
+        contenedor_tipo_tamano.content = ft.Column(
+            [control for control in [contenedor_tipo, contenedor_tamano] if control.visible],
+            spacing=10,
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+        )
 
     def aplicar_tema_sugerido(tema: str):
         dd_tema_sugerido.value = tema
@@ -5732,6 +5738,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     def obtener_paso_actual() -> str:
         activo = next((d for d in especiales if d.value != no_selection), None)
         tema_activo = dd_tema_sugerido.value != "Ninguno"
+        book_order_resuelto = (
+            pasos_interactuados["book_order"]
+            or dd_libro.value != no_selection
+            or pasos_interactuados["book"]
+            or pasos_interactuados["chapter"]
+            or pasos_interactuados["start"]
+            or pasos_interactuados["end"]
+        )
 
         if activo is not None or tema_activo:
             if dd_tipo.value == "Ninguno":
@@ -5744,7 +5758,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         if dd_biblia.value == "Ninguna" and dd_libro.value == no_selection and not pasos_interactuados["version"]:
             return "version"
-        if (dd_biblia.value != "Ninguna" or pasos_interactuados["version"]) and not pasos_interactuados["book_order"]:
+        if (dd_biblia.value != "Ninguna" or pasos_interactuados["version"]) and not book_order_resuelto:
             return "book_order"
         if dd_libro.value == no_selection:
             return "book"
@@ -5897,6 +5911,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             page.update()
 
     def cambiar_version_pasaje(e=None):
+        nonlocal vista_resultado_completa
+        dd_tipo.value = "Ninguno"
+        dd_tamano.value = "Ninguno"
+        pasos_interactuados["study_type"] = False
+        pasos_interactuados["words"] = False
+        vista_resultado_completa = False
         manejar_bloqueos()
         refrescar_por_cambio()
 
@@ -6137,6 +6157,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             or (bool(dd_ini.value) and dd_libro.value != no_selection)
             or (bool(dd_fin.value) and dd_libro.value != no_selection)
         )
+        mostrar_controles_generacion = pasaje_completo() or activo is not None or tema_activo
         bloqueado = activo is not None or tema_activo
         color_inactivo = theme["field_bg"]
         color_activo = theme["accent"]
@@ -6153,10 +6174,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         dd_ini.disabled = bloqueado
         dd_fin.disabled = bloqueado
         dd_tema_sugerido.disabled = activo is not None or pasaje_activo
-        dd_tipo.disabled = paso_actual not in {"study_type", "generate"}
-        dd_tamano.disabled = paso_actual not in {"words", "generate"}
-        contenedor_tipo.visible = paso_actual in {"study_type", "words", "generate"}
-        contenedor_tamano.visible = paso_actual in {"words", "generate"} and dd_tipo.value != "Solo versiculos"
+        dd_tipo.disabled = not mostrar_controles_generacion
+        dd_tamano.disabled = not (mostrar_controles_generacion and dd_tipo.value not in {"Ninguno", "Solo versiculos"})
+        contenedor_tipo.visible = mostrar_controles_generacion
+        contenedor_tamano.visible = mostrar_controles_generacion and dd_tipo.value not in {"Ninguno", "Solo versiculos"}
+        reconstruir_contenedor_tipo_tamano()
         try:
             btn_generar.visible = paso_actual == "generate"
         except NameError:
@@ -10893,11 +10915,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         contenedor_tipo.expand = False
         contenedor_tamano.expand = False
-        contenedor_tipo_tamano.content = ft.Column(
-            [contenedor_tipo, contenedor_tamano],
-            spacing=10,
-            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-        )
+        reconstruir_contenedor_tipo_tamano()
 
         cabecera_pasaje.content = (
             ft.Column([titulo_pasaje, btn_volver_inicio_pasaje], spacing=10)
