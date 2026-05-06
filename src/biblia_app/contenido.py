@@ -58,6 +58,8 @@ def _leer_entero_env(clave: str, por_defecto: int, minimo: int) -> int:
 
 QUESTION_PROMPT_MAX_CHARS = _leer_entero_env("GROQ_QUESTION_PROMPT_MAX_CHARS", 9000, 2000)
 QUESTION_PROMPT_RETRY_CHARS = _leer_entero_env("GROQ_QUESTION_PROMPT_RETRY_CHARS", 5500, 1500)
+STUDY_PROMPT_MAX_CHARS = _leer_entero_env("GROQ_STUDY_PROMPT_MAX_CHARS", 12000, 3000)
+STUDY_PROMPT_RETRY_CHARS = _leer_entero_env("GROQ_STUDY_PROMPT_RETRY_CHARS", 8000, 2000)
 CHAT_HISTORY_TURNS = _leer_entero_env("GROQ_CHAT_HISTORY_TURNS", 8, 2)
 CHAT_MESSAGE_MAX_CHARS = _leer_entero_env("GROQ_CHAT_MESSAGE_MAX_CHARS", 280, 80)
 CHAT_HISTORY_TOTAL_CHARS = _leer_entero_env("GROQ_CHAT_HISTORY_TOTAL_CHARS", 1800, 300)
@@ -256,6 +258,17 @@ def construir_system_prompt(lang_code: str, mode: str = "study") -> str:
         "en": "English",
     }
     target_language = language_names.get(lang_code, "espanol de Espana")
+    reglas_precision_biblica = (
+        "Before outputting any biblical quotation, verse list, or passage, run a silent internal verification protocol at least twice: "
+        "1) confirm the book, chapter, and verse numbers, "
+        "2) confirm that the wording matches the requested translation if one was specified, "
+        "3) confirm that you are not mixing wording from different translations, and "
+        "4) confirm that you are not filling gaps from memory with guessed text. "
+        "If you are not highly certain of the exact wording, do not present it as a literal quotation. "
+        "In that case, give only the secure reference, or say honestly that the exact wording should be checked in a Bible or trusted Bible website/app. "
+        "Never claim that you checked the web, an online Bible, or an external source if you did not actually receive that text in the prompt. "
+        "When precision is uncertain, honesty is mandatory and preferable to a wrong verse."
+    )
     base_instrucciones = (
         "You are an evangelical Christian assistant. "
         f"You must answer only in {target_language}. Do not mix languages. "
@@ -273,7 +286,8 @@ def construir_system_prompt(lang_code: str, mode: str = "study") -> str:
         "Do not use mystical, esoteric, or secular self-help language. "
         "Do not give professional medical, legal, or psychological advice. "
         "If the user asks about matters outside Christianity, respond respectfully but redirect toward biblical truth and Christian discipleship. "
-        "Guide the user toward Christ, the Word of God, repentance, faith, obedience, prayer, and a solid Christian life."
+        "Guide the user toward Christ, the Word of God, repentance, faith, obedience, prayer, and a solid Christian life. "
+        f"{reglas_precision_biblica}"
     )
 
     if mode == "question":
@@ -286,6 +300,50 @@ def construir_system_prompt(lang_code: str, mode: str = "study") -> str:
         f"{base_instrucciones} "
         "Respect the requested structure and tone when preparing studies, reflections, outlines, or explanations."
     )
+
+
+def construir_system_prompt_compacto(lang_code: str, mode: str = "study") -> str:
+    instrucciones = {
+        "es": (
+            "Eres un asistente cristiano evangelico. Responde solo en espanol de Espana. "
+            "No muestres razonamientos internos ni etiquetas tipo <think>. "
+            "No inventes versiculos, citas ni datos biblicos. "
+            "Si citas Biblia, verifica con cuidado libro, capitulo, versiculo y version; si no tienes certeza alta, se honesto. "
+            "Usa tono pastoral, claro y fiel a la Escritura. "
+        ),
+        "ca": (
+            "Ets un assistent cristia evangelic. Respon nomes en catala. "
+            "No mostris raonaments interns ni etiquetes tipus <think>. "
+            "No inventis versicles, cites ni dades bibliques. "
+            "Si cites la Biblia, verifica amb cura llibre, capitol, versicle i versio; si no tens certesa alta, sigues honest. "
+            "Fes servir un to pastoral, clar i fidel a l'Escriptura. "
+        ),
+        "fr": (
+            "Tu es un assistant chretien evangelique. Reponds seulement en francais. "
+            "N'affiche pas de raisonnement interne ni de balises comme <think>. "
+            "N'invente pas de versets, de citations ni de faits bibliques. "
+            "Si tu cites la Bible, verifie soigneusement livre, chapitre, verset et version ; si tu n'es pas tres sur, sois honnete. "
+            "Utilise un ton pastoral, clair et fidele a l'Ecriture. "
+        ),
+        "en": (
+            "You are an evangelical Christian assistant. Reply only in English. "
+            "Do not reveal internal reasoning or tags like <think>. "
+            "Do not invent Bible verses, quotations, or facts. "
+            "If you quote Scripture, carefully verify book, chapter, verse, and translation; if you are not highly certain, be honest. "
+            "Use a pastoral, clear tone faithful to Scripture. "
+        ),
+    }
+    cierre = {
+        "es": "Respeta la estructura pedida y empieza directamente con la respuesta final.",
+        "ca": "Respecta l'estructura demanada i comenca directament amb la resposta final.",
+        "fr": "Respecte la structure demandee et commence directement par la reponse finale.",
+        "en": "Respect the requested structure and start directly with the final answer.",
+    }
+    base = instrucciones.get(lang_code, instrucciones["es"])
+    final = cierre.get(lang_code, cierre["es"])
+    if mode == "question":
+        return f"{base}Responde con claridad pastoral y natural. {final}"
+    return f"{base}{final}"
 
 
 def mensaje_configuracion_ia(lang_code: str) -> str:
@@ -353,11 +411,8 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
         return mensaje_configuracion_ia(lang_code)
 
     prompt_original = str(prompt or "").strip()
-    prompt_preparado = (
-        compactar_prompt_para_groq(prompt_original, QUESTION_PROMPT_MAX_CHARS)
-        if mode == "question"
-        else prompt_original
-    )
+    limite_inicial = QUESTION_PROMPT_MAX_CHARS if mode == "question" else STUDY_PROMPT_MAX_CHARS
+    prompt_preparado = compactar_prompt_para_groq(prompt_original, limite_inicial)
 
     def modelos_disponibles_cuenta() -> list[str]:
         try:
@@ -399,13 +454,21 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
     for modelo in modelos_candidatos:
         prompt_actual = prompt_preparado
         reintentos_tamano = 0
+        usar_system_prompt_compacto = False
         while True:
             payload = {
                 "model": modelo,
                 "temperature": float(os.getenv("GROQ_TEMPERATURE", str(GROQ_TEMPERATURE))),
                 "top_p": float(os.getenv("GROQ_TOP_P", str(GROQ_TOP_P))),
                 "messages": [
-                    {"role": "system", "content": construir_system_prompt(lang_code, mode)},
+                    {
+                        "role": "system",
+                        "content": (
+                            construir_system_prompt_compacto(lang_code, mode)
+                            if usar_system_prompt_compacto
+                            else construir_system_prompt(lang_code, mode)
+                        ),
+                    },
                     {"role": "user", "content": prompt_actual},
                 ],
             }
@@ -435,13 +498,19 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
                         mensaje = detalle
                     mensaje_normalizado = str(mensaje).lower()
                     if exc.code == 413 or "request entity too large" in mensaje_normalizado or "payload too large" in mensaje_normalizado:
-                        if mode == "question" and reintentos_tamano < 2:
+                        if reintentos_tamano < 2:
                             reintentos_tamano += 1
-                            limite = QUESTION_PROMPT_RETRY_CHARS if reintentos_tamano == 1 else max(1500, QUESTION_PROMPT_RETRY_CHARS // 2)
+                            limite_base = QUESTION_PROMPT_RETRY_CHARS if mode == "question" else STUDY_PROMPT_RETRY_CHARS
+                            limite = limite_base if reintentos_tamano == 1 else max(1500, limite_base // 2)
                             nuevo_prompt = compactar_prompt_para_groq(prompt_original, limite)
                             if nuevo_prompt != prompt_actual:
                                 prompt_actual = nuevo_prompt
                                 continue
+                        if not usar_system_prompt_compacto:
+                            usar_system_prompt_compacto = True
+                            limite_base = QUESTION_PROMPT_RETRY_CHARS if mode == "question" else STUDY_PROMPT_RETRY_CHARS
+                            prompt_actual = compactar_prompt_para_groq(prompt_original, max(1500, limite_base // 2))
+                            continue
                         return mensaje_prompt_demasiado_grande(lang_code)
                     ultimo_error = f"Error de IA (HTTP {exc.code}): {mensaje}"
                     if exc.code in (400, 403, 404):
@@ -5531,6 +5600,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         selectable=True,
         extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
     )
+    contenido_resultado = ft.Column(
+        [],
+        spacing=12,
+        scroll=ft.ScrollMode.ALWAYS,
+    )
     chat_conversacion = ft.ListView(
         controls=[],
         spacing=10,
@@ -5554,7 +5628,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         bgcolor=theme["accent"],
         border_color=theme["secondary"],
         border_width=5,
-        label=ui["result"],
+        label="",
         label_style=label_style_theme,
         expand=True,
         visible=False,
@@ -6322,7 +6396,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     def refrescar_por_cambio(e=None):
         pr.visible = False
         pr_chat_consejero.visible = False
-        result_md.value = ""
+        asignar_resultado_markdown("")
         texto_estado.value = ui["status_ready"]
         texto_estado.color = "#2E7D32"
         actualizar_resumen()
@@ -6335,6 +6409,20 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     def contar_palabras(texto: str) -> int:
         texto_limpio = re.sub(r"[#*_>`~\-\[\]\(\)]", " ", texto or "")
         return len(re.findall(r"\b[\w??????????????]+\b", texto_limpio))
+
+    def contar_palabras_resultado_sin_versiculos(texto: str) -> int:
+        contenido = str(texto or "").strip()
+        if not contenido:
+            return 0
+        bloques = extraer_bloques_resultado(contenido)
+        if not bloques:
+            return 0
+        texto_no_versiculos = "\n\n".join(
+            bloque_texto.strip()
+            for tipo_bloque, bloque_texto in bloques
+            if tipo_bloque != "versiculos" and str(bloque_texto or "").strip()
+        ).strip()
+        return contar_palabras(texto_no_versiculos or contenido)
 
     def limpiar_texto_generado_ia(texto: str) -> str:
         if not texto:
@@ -6380,6 +6468,15 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         if not respuesta:
             return respuesta
 
+        def es_linea_separador_decorativo(linea: str) -> bool:
+            texto_linea = str(linea or "").strip()
+            if len(texto_linea) < 3:
+                return False
+            if not re.fullmatch(r"[-=*_\s]+", texto_linea):
+                return False
+            solo_marcas = re.sub(r"\s+", "", texto_linea)
+            return len(solo_marcas) >= 3
+
         bloques = [
             bloque.strip()
             for bloque in re.split(r"(?:\n\s*\n|\n\s*[-=_]{3,}\s*\n)", respuesta)
@@ -6398,8 +6495,18 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
             lineas = bloque.splitlines()
             lineas_filtradas: list[str] = []
+            separadores_consecutivos = 0
             for linea in lineas:
                 linea_limpia = linea.rstrip()
+                es_separador_markdown = es_linea_separador_decorativo(linea_limpia)
+                if es_separador_markdown:
+                    separadores_consecutivos += 1
+                    if separadores_consecutivos > 1:
+                        continue
+                    if lineas_filtradas and lineas_filtradas[-1] != "":
+                        lineas_filtradas.append("")
+                    continue
+                separadores_consecutivos = 0
                 if not linea_limpia.strip():
                     if lineas_filtradas and lineas_filtradas[-1] != "":
                         lineas_filtradas.append("")
@@ -6417,6 +6524,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             bloques_filtrados.append(bloque_limpio)
 
         respuesta = "\n\n".join(bloques_filtrados).strip() or respuesta
+        respuesta = re.sub(r"(?m)^[\s\-=_*]{3,}$", "", respuesta)
         respuesta = re.sub(r"\n{3,}", "\n\n", respuesta)
         respuesta = re.sub(r"[ \t]{2,}", " ", respuesta)
         respuesta = re.sub(r"\s+([,;:.!?])", r"\1", respuesta)
@@ -6584,9 +6692,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return False
 
         texto_analisis = re.sub(r"`{1,3}.*?`{1,3}", " ", texto_limpio, flags=re.S)
+        texto_analisis = "".join(
+            caracter
+            for caracter in unicodedata.normalize("NFKD", texto_analisis)
+            if not unicodedata.combining(caracter)
+        )
         letras = [caracter for caracter in texto_analisis if caracter.isalpha()]
         total_letras = len(letras)
-        if total_letras < 24:
+        if total_letras < 40:
             return False
 
         conteos: dict[str, int] = {}
@@ -6597,11 +6710,38 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         no_latinas = sum(valor for clave, valor in conteos.items() if clave != "latin")
         escrituras_activas = sum(1 for valor in conteos.values() if valor >= 4)
-        if no_latinas >= max(12, int(total_letras * 0.18)):
+        secuencias_no_latinas: list[int] = []
+        secuencia_actual = 0
+        for caracter in texto_analisis:
+            if caracter.isalpha() and clasificar_escritura(caracter) != "latin":
+                secuencia_actual += 1
+            else:
+                if secuencia_actual:
+                    secuencias_no_latinas.append(secuencia_actual)
+                    secuencia_actual = 0
+        if secuencia_actual:
+            secuencias_no_latinas.append(secuencia_actual)
+
+        secuencia_maxima_no_latina = max(secuencias_no_latinas, default=0)
+        proporcion_no_latina = no_latinas / max(1, total_letras)
+        otras_letras = conteos.get("other", 0)
+        proporcion_otras = otras_letras / max(1, total_letras)
+
+        scripts_fuertes = sum(
+            conteos.get(nombre, 0)
+            for nombre in ("cyrillic", "greek", "arabic", "hebrew", "cjk", "hangul", "thai")
+        )
+        proporcion_scripts_fuertes = scripts_fuertes / max(1, total_letras)
+
+        if scripts_fuertes >= max(28, int(total_letras * 0.38)) and secuencia_maxima_no_latina >= 8:
             return True
-        if escrituras_activas >= 3 and no_latinas >= 8:
+        if escrituras_activas >= 3 and scripts_fuertes >= 18 and secuencia_maxima_no_latina >= 6:
             return True
-        if conteos.get("other", 0) >= max(8, int(total_letras * 0.12)):
+        if otras_letras >= max(28, int(total_letras * 0.35)) and proporcion_otras >= 0.35 and secuencia_maxima_no_latina >= 8:
+            return True
+        if proporcion_scripts_fuertes >= 0.5:
+            return True
+        if proporcion_no_latina >= 0.6 and secuencia_maxima_no_latina >= 10:
             return True
         return False
 
@@ -6650,6 +6790,29 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         if lang_code == "en":
             return "Error from AI: a corrupted response mixed with other alphabets was received. Please try again."
         return "Error de IA: se recibio un texto corrupto o mezclado con otros alfabetos. Vuelve a intentarlo."
+
+    def mensaje_respuesta_incompleta() -> str:
+        if lang_code == "ca":
+            return "Error de IA: s'ha rebut una resposta massa buida o incompleta. Torna-ho a provar."
+        if lang_code == "fr":
+            return "Erreur IA : la reponse recue etait trop vide ou incomplete. Reessaie."
+        if lang_code == "en":
+            return "AI error: the response was too empty or incomplete. Please try again."
+        return "Error de IA: se recibio una respuesta demasiado vacia o incompleta. Vuelve a intentarlo."
+
+    def mensaje_error_generacion_interna() -> str:
+        if lang_code == "ca":
+            return "Error de IA: hi ha hagut un problema intern en generar la resposta. Torna-ho a provar."
+        if lang_code == "fr":
+            return "Erreur IA : un probleme interne s'est produit pendant la generation de la reponse. Reessaie."
+        if lang_code == "en":
+            return "AI error: an internal problem occurred while generating the response. Please try again."
+        return "Error de IA: ha ocurrido un problema interno al generar la respuesta. Vuelve a intentarlo."
+
+    def asegurar_resultado_visible_o_error() -> None:
+        texto_actual = str(result_md.value or "").strip()
+        if not texto_actual or resultado_es_placeholder_temporal():
+            asignar_resultado_markdown(mensaje_respuesta_incompleta(), limpiar=False)
 
     def instruccion_recuperacion_sin_proceso(mode: str) -> str:
         if lang_code == "ca":
@@ -6713,6 +6876,76 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Cada apartado debe aportar informacion nueva y hacer avanzar la explicacion."
         )
 
+    def instruccion_recuperacion_respuesta_incompleta(mode: str) -> str:
+        if lang_code == "ca":
+            tipus = "l'estudi" if mode == "study" else "la resposta"
+            return (
+                f"La resposta anterior ha quedat massa buida, incompleta o reduida a un titol. "
+                f"Torna a escriure {tipus} complet des de zero, amb contingut real i desenvolupat."
+            )
+        if lang_code == "fr":
+            type_reponse = "l'etude" if mode == "study" else "la reponse"
+            return (
+                f"La reponse precedente etait trop vide, incomplete ou reduite a un simple titre. "
+                f"Reecris {type_reponse} completement depuis zero avec un vrai contenu developpe."
+            )
+        if lang_code == "en":
+            response_type = "the study" if mode == "study" else "the answer"
+            return (
+                f"The previous response was too empty, incomplete, or reduced to only a heading. "
+                f"Rewrite {response_type} completely from scratch with real developed content."
+            )
+        tipo = "el estudio" if mode == "study" else "la respuesta"
+        return (
+            f"La respuesta anterior ha quedado demasiado vacia, incompleta o reducida a un simple titulo. "
+            f"Vuelve a escribir {tipo} completo desde cero, con contenido real y desarrollado."
+        )
+
+    def respuesta_parece_demasiado_vacia(texto: str, mode: str) -> bool:
+        respuesta = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(texto)).strip()
+        if not respuesta:
+            return True
+        if respuesta.startswith("Error"):
+            return False
+
+        lineas_utiles = [
+            limpiar_linea_markdown_resultado(linea)
+            for linea in respuesta.splitlines()
+            if limpiar_linea_markdown_resultado(linea)
+        ]
+        if not lineas_utiles:
+            return True
+
+        normalizados = [normalizar_texto_resultado(linea) for linea in lineas_utiles]
+        solo_encabezados = {
+            "resultado",
+            "resultat",
+            "result",
+            "response",
+            "reponse",
+            "study",
+            "estudio",
+            "reflexion",
+            "reflexio",
+            "commentary",
+            "comentario",
+        }
+        if len(lineas_utiles) <= 2 and all(item in solo_encabezados for item in normalizados):
+            return True
+
+        minimo_palabras = 18 if mode == "study" else 8
+        if contar_palabras(respuesta) < minimo_palabras:
+            return True
+
+        lineas_no_titulo = [
+            linea
+            for linea in lineas_utiles
+            if not linea_parece_titulo_comentario(linea)
+        ]
+        if not lineas_no_titulo:
+            return True
+        return False
+
     def asegurar_respuesta_legible(respuesta: str, prompt_base: str, mode: str) -> str:
         respuesta_limpia = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(respuesta))
         if not respuesta_limpia or respuesta_limpia.startswith("Error"):
@@ -6722,6 +6955,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             and not respuesta_parece_razonamiento_filtrado(respuesta_limpia)
             and not respuesta_parece_fuera_de_idioma(respuesta_limpia)
             and not respuesta_parece_repetitiva(respuesta_limpia)
+            and not respuesta_parece_demasiado_vacia(respuesta_limpia, mode)
         ):
             return respuesta_limpia
 
@@ -6732,6 +6966,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             instrucciones_recuperacion.append(instruccion_recuperacion_sin_proceso(mode))
         if respuesta_parece_repetitiva(respuesta_limpia):
             instrucciones_recuperacion.append(instruccion_recuperacion_sin_repeticiones(mode))
+        if respuesta_parece_demasiado_vacia(respuesta_limpia, mode):
+            instrucciones_recuperacion.append(instruccion_recuperacion_respuesta_incompleta(mode))
 
         prompt_recuperacion = f"{prompt_base}\n\n" + "\n\n".join(instrucciones_recuperacion)
         segunda_respuesta = consultar_ia(prompt_recuperacion, lang_code=lang_code, mode=mode)
@@ -6743,12 +6979,310 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             and not respuesta_parece_razonamiento_filtrado(segunda_limpia)
             and not respuesta_parece_fuera_de_idioma(segunda_limpia)
             and not respuesta_parece_repetitiva(segunda_limpia)
+            and not respuesta_parece_demasiado_vacia(segunda_limpia, mode)
         ):
             return segunda_limpia
         return mensaje_respuesta_corrupta()
 
     def asignar_resultado_markdown(texto: str, limpiar: bool = False) -> None:
         result_md.value = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(texto)) if limpiar else texto
+        sincronizar_vista_resultado()
+
+    def resultado_es_placeholder_temporal() -> bool:
+        texto = normalizar_texto_resultado(limpiar_texto_generado_ia(result_md.value or ""))
+        if not texto:
+            return False
+        placeholders = {
+            normalizar_texto_resultado(limpiar_texto_generado_ia(generating_text)),
+            normalizar_texto_resultado(limpiar_texto_generado_ia(repeating_text)),
+            normalizar_texto_resultado(limpiar_texto_generado_ia(asking_text)),
+        }
+        return texto in {item for item in placeholders if item}
+
+    def normalizar_texto_resultado(texto: str) -> str:
+        texto = str(texto or "").strip()
+        if not texto:
+            return ""
+        texto = "".join(
+            ch
+            for ch in unicodedata.normalize("NFKD", texto)
+            if not unicodedata.combining(ch)
+        )
+        return re.sub(r"\s+", " ", texto).strip().lower()
+
+    def limpiar_linea_markdown_resultado(linea: str) -> str:
+        limpia = str(linea or "").strip()
+        limpia = re.sub(r"^#{1,6}\s*", "", limpia)
+        limpia = re.sub(r"^\*\*(.+?)\*\*$", r"\1", limpia)
+        limpia = re.sub(r"^__(.+?)__$", r"\1", limpia)
+        return limpia.strip()
+
+    def linea_parece_titulo_comentario(linea: str) -> bool:
+        texto = str(linea or "").strip()
+        if not texto:
+            return False
+        if re.match(r"^#{1,6}\s+\S", texto):
+            return True
+        if re.match(r"^\*\*.+\*\*$", texto):
+            return True
+        return False
+
+    def linea_parece_versiculo_resultado(linea: str) -> bool:
+        texto = str(linea or "").strip()
+        if not texto:
+            return False
+        texto_sin_numero = re.sub(r"^\d{1,3}[.)]\s*", "", texto)
+        normalizado = normalizar_texto_resultado(limpiar_linea_markdown_resultado(texto_sin_numero))
+        prefijos_comentario = (
+            "analisis",
+            "análisis",
+            "analysis",
+            "analise",
+            "analyse",
+            "aplicacion",
+            "aplicación",
+            "application",
+            "conclusion",
+            "conclusión",
+            "conclusio",
+            "devocional",
+            "desarrollo homiletico",
+            "desarrollo homilético",
+            "homiletic development",
+            "observacion",
+            "observación",
+            "reflexion",
+            "reflexión",
+            "comentario",
+            "commentary",
+            "commentaire",
+            "estudio",
+        )
+        if any(normalizado.startswith(prefijo) for prefijo in prefijos_comentario):
+            return False
+        if re.match(r"^\d{1,3}[.)]?\s+\S", texto):
+            return True
+        if len(re.findall(r"(?:^|\s)\d{1,3}[.)]?\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]", texto)) >= 2:
+            return True
+        return False
+
+    def linea_parece_referencia_pasaje_resultado(linea: str) -> bool:
+        texto = limpiar_linea_markdown_resultado(linea)
+        if not texto:
+            return False
+        return bool(re.search(r"\b\d{1,3}:\d{1,3}(?:-\d{1,3})?\b", texto))
+
+    def linea_parece_inicio_comentario_resultado(linea: str) -> bool:
+        texto = str(linea or "").strip()
+        if not texto:
+            return False
+        normalizado = normalizar_texto_resultado(limpiar_linea_markdown_resultado(texto))
+        prefijos = (
+            "estudio",
+            "study",
+            "comment",
+            "comentario",
+            "comentari",
+            "commentaire",
+            "commentary",
+            "marco contextual",
+            "contexto",
+            "context",
+            "analyse",
+            "analisis",
+            "analisi",
+            "analisi del testo",
+            "analisis del texto",
+            "aplicacion",
+            "aplicacio",
+            "application",
+            "ensenanza",
+            "ensenyament",
+            "enseignement",
+            "teaching",
+            "reflexion",
+            "reflexio",
+            "reflexion breve",
+            "estudio breve",
+            "breve estudio",
+            "observacion",
+            "observacio",
+            "observation",
+        )
+        if normalizado.startswith(("v.", "vv.", "v ", "vv ")):
+            return True
+        if any(normalizado.startswith(prefijo) for prefijo in prefijos):
+            return True
+        if re.match(r"^\d+\.\s+[A-ZÁÉÍÓÚÑÄËÏÖÜÀÈÌÒÙÂÊÎÔÛ][^\n]{0,80}$", texto):
+            return True
+        return linea_parece_titulo_comentario(texto)
+
+    def separar_comentario_inline_de_versiculos(texto: str) -> tuple[str, str]:
+        contenido = str(texto or "").strip()
+        if not contenido:
+            return "", ""
+
+        marcadores = (
+            r"\bEstudio breve\b",
+            r"\bAplicacion practica\b",
+            r"\bAplicación práctica\b",
+            r"\bConclusion\b",
+            r"\bConclusión\b",
+            r"\bReflexion\b",
+            r"\bReflexión\b",
+            r"\bDevocional\b",
+            r"\bComentario\b",
+            r"\bEnsenanza\b",
+            r"\bEnseñanza\b",
+            r"\bAplicacio practica\b",
+            r"\bAplicació pràctica\b",
+            r"\bConclusio\b",
+            r"\bConclusió\b",
+            r"\bReflexio\b",
+            r"\bComentari\b",
+            r"\bApplication\b",
+            r"\bBrief study\b",
+            r"\bPractical application\b",
+            r"\bReflection\b",
+            r"\bCommentary\b",
+            r"\bEtude breve\b",
+            r"\bÉtude brève\b",
+            r"\bApplication pratique\b",
+            r"\bReflexion breve\b",
+            r"\bRéflexion brève\b",
+            r"\bCommentaire\b",
+        )
+        patron = re.compile("|".join(marcadores), flags=re.IGNORECASE)
+        coincidencia = patron.search(contenido)
+        if not coincidencia:
+            return contenido, ""
+
+        izquierda = contenido[:coincidencia.start()].rstrip()
+        derecha = contenido[coincidencia.start():].lstrip()
+        if not izquierda or not derecha or len(izquierda) < 40:
+            return contenido, ""
+        return izquierda, derecha
+
+    def extraer_bloques_resultado(texto: str) -> list[tuple[str, str]]:
+        contenido = str(texto or "").strip()
+        if not contenido:
+            return []
+
+        if dd_tipo.value == "Solo versiculos" and not es_modo_chat:
+            return [("versiculos", contenido)]
+
+        lineas = contenido.splitlines()
+        etiquetas_versiculos = {
+            "versiculos seleccionados",
+            "versicles seleccionats",
+            "versets selectionnes",
+            "selected verses",
+        }
+        indice_etiqueta = next(
+            (
+                indice
+                for indice, linea in enumerate(lineas)
+                if normalizar_texto_resultado(limpiar_linea_markdown_resultado(linea)) in etiquetas_versiculos
+            ),
+            None,
+        )
+        if indice_etiqueta is None:
+            return [("comentario", contenido)]
+
+        fin_bloque_versiculos = len(lineas)
+        encontro_referencia = False
+        encontro_versiculos = False
+        for indice in range(indice_etiqueta + 1, len(lineas)):
+            linea = lineas[indice].strip()
+            if not linea:
+                continue
+            if not encontro_referencia and linea_parece_referencia_pasaje_resultado(linea):
+                encontro_referencia = True
+                continue
+            if linea_parece_versiculo_resultado(linea):
+                encontro_versiculos = True
+                continue
+            if encontro_versiculos and linea_parece_inicio_comentario_resultado(linea):
+                fin_bloque_versiculos = indice
+                break
+
+        inicio_bloque_versiculos = indice_etiqueta
+        while inicio_bloque_versiculos > 0:
+            linea_previa = lineas[inicio_bloque_versiculos - 1].strip()
+            if not linea_previa:
+                inicio_bloque_versiculos -= 1
+                continue
+            if linea_parece_titulo_comentario(linea_previa):
+                titulo_previo = normalizar_texto_resultado(limpiar_linea_markdown_resultado(linea_previa))
+                if titulo_previo in etiquetas_versiculos:
+                    inicio_bloque_versiculos -= 1
+                    continue
+            break
+
+        bloque_inicial = "\n".join(lineas[:inicio_bloque_versiculos]).strip()
+        bloque_versiculos = "\n".join(lineas[inicio_bloque_versiculos:fin_bloque_versiculos]).strip()
+        bloque_comentario = "\n".join(lineas[fin_bloque_versiculos:]).strip()
+        bloques: list[tuple[str, str]] = []
+        if bloque_inicial:
+            bloques.append(("comentario", bloque_inicial))
+        if bloque_versiculos:
+            bloque_versiculos, bloque_comentario_inline = separar_comentario_inline_de_versiculos(bloque_versiculos)
+            bloques.append(("versiculos", bloque_versiculos))
+            if bloque_comentario_inline:
+                bloque_comentario = f"{bloque_comentario_inline}\n\n{bloque_comentario}".strip() if bloque_comentario else bloque_comentario_inline
+        if bloque_comentario:
+            bloques.append(("comentario", bloque_comentario))
+        return bloques or [("comentario", contenido)]
+
+    def normalizar_markdown_bloque_versiculos(texto: str) -> str:
+        contenido = str(texto or "").strip()
+        if not contenido:
+            return ""
+        contenido = re.sub(r"^\s*```+\w*\s*", "", contenido)
+        contenido = re.sub(r"\s*```+\s*$", "", contenido)
+        lineas = contenido.splitlines()
+        lineas_normalizadas: list[str] = []
+        for linea in lineas:
+            linea_limpia = linea.rstrip()
+            if not linea_limpia.strip():
+                if lineas_normalizadas and lineas_normalizadas[-1] != "":
+                    lineas_normalizadas.append("")
+                continue
+            linea_limpia = linea_limpia.lstrip()
+            linea_limpia = re.sub(r"^(>+\s*)", "", linea_limpia)
+            if re.match(r"^\d{1,3}[.)]\s+", linea_limpia):
+                linea_limpia = re.sub(r"^\d{1,3}[.)]\s*", lambda m: m.group(0).replace(")", "."), linea_limpia)
+            lineas_normalizadas.append(linea_limpia)
+        contenido = "\n".join(lineas_normalizadas).strip()
+        contenido = re.sub(r"\n{3,}", "\n\n", contenido)
+        return contenido
+
+    def crear_bloque_resultado_markdown(texto: str, tipo: str) -> ft.Control:
+        es_bloque_versiculos = tipo == "versiculos"
+        color_fondo = theme["field_bg"] if es_bloque_versiculos else "#FFFFFF"
+        color_borde = theme["field_border"] if es_bloque_versiculos else "#E6E6E6"
+        markdown_texto = normalizar_markdown_bloque_versiculos(texto) if es_bloque_versiculos else texto
+        return ft.Container(
+            content=ft.Markdown(
+                value=markdown_texto,
+                selectable=True,
+                extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+            ),
+            padding=ft.padding.symmetric(horizontal=14, vertical=12),
+            bgcolor=color_fondo,
+            border_radius=14,
+            border=ft.border.all(2, color_borde),
+        )
+
+    def sincronizar_vista_resultado() -> None:
+        texto = str(result_md.value or "").strip()
+        if not texto:
+            contenido_resultado.controls = []
+            return
+        contenido_resultado.controls = [
+            crear_bloque_resultado_markdown(bloque_texto, tipo_bloque)
+            for tipo_bloque, bloque_texto in extraer_bloques_resultado(texto)
+        ]
 
     def limpiar_respuesta_chat_visible(texto: str) -> str:
         texto_limpio = limpiar_texto_generado_ia(texto)
@@ -7295,31 +7829,124 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "200": (180, 220),
         }.get(dd_tamano.value)
 
+    def hay_pasaje_exacto_actual() -> bool:
+        return bool(limpio(dd_libro.value) and limpio(dd_cap.value) and limpio(dd_ini.value) and limpio(dd_fin.value))
+
+    def respuesta_estudio_necesita_reintento(respuesta: str) -> bool:
+        texto = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(respuesta))
+        if not texto or texto.startswith("Error"):
+            return False
+
+        bloques = extraer_bloques_resultado(texto)
+        tiene_bloque_versiculos = any(tipo == "versiculos" and str(contenido or "").strip() for tipo, contenido in bloques)
+        tiene_bloque_comentario = any(tipo == "comentario" and str(contenido or "").strip() for tipo, contenido in bloques)
+
+        if dd_tipo.value == "Solo versiculos":
+            if not tiene_bloque_versiculos:
+                return True
+            bloque_versiculos = next((contenido for tipo, contenido in bloques if tipo == "versiculos"), "")
+            return not any(
+                linea_parece_versiculo_resultado(linea)
+                for linea in str(bloque_versiculos or "").splitlines()
+            )
+
+        if hay_pasaje_exacto_actual():
+            if not tiene_bloque_versiculos:
+                return True
+            bloque_versiculos = next((contenido for tipo, contenido in bloques if tipo == "versiculos"), "")
+            if not any(
+                linea_parece_versiculo_resultado(linea)
+                for linea in str(bloque_versiculos or "").splitlines()
+            ):
+                return True
+            if dd_tipo.value != "Solo versiculos" and not tiene_bloque_comentario:
+                return True
+
+        return False
+
+    def instruccion_reintento_estudio() -> str:
+        if dd_tipo.value == "Solo versiculos":
+            return (
+                "CORRECCIÓN: la respuesta anterior no quedó bien formateada. Reescribe desde cero mostrando únicamente los versículos, con su número real al principio y cada versículo en su propia línea."
+                if lang_code == "es" else
+                (
+                    "CORRECCIÓ: la resposta anterior no ha quedat ben formatada. Reescriu-la des de zero mostrant únicament els versicles, amb el seu número real al principi i cada versicle en la seva pròpia línia."
+                    if lang_code == "ca" else
+                    (
+                        "CORRECTION : la réponse précédente n'était pas bien formatée. Réécris-la entièrement depuis zéro en affichant uniquement les versets, avec leur vrai numéro au début et chaque verset sur sa propre ligne."
+                        if lang_code == "fr" else
+                        "CORRECTION: the previous answer was not formatted correctly. Rewrite it from scratch showing only the verses, with the real verse number at the beginning and each verse on its own line."
+                    )
+                )
+            )
+
+        return (
+            "CORRECCIÓN: la respuesta anterior no siguió bien la estructura pedida. Reescríbela desde cero. Si hay pasaje exacto, la primera sección debe ser 'Versículos seleccionados' con los versículos del pasaje, numerados y cada uno en su propia línea. Después deja una línea en blanco y añade el comentario o estudio en un bloque aparte."
+            if lang_code == "es" else
+            (
+                "CORRECCIÓ: la resposta anterior no ha seguit bé l'estructura demanada. Reescriu-la des de zero. Si hi ha un passatge exacte, la primera secció ha de ser 'Versicles seleccionats' amb els versicles del passatge, numerats i cadascun en la seva pròpia línia. Després deixa una línia en blanc i afegeix el comentari o estudi en un bloc a part."
+                if lang_code == "ca" else
+                (
+                    "CORRECTION : la réponse précédente n'a pas bien suivi la structure demandée. Réécris-la entièrement depuis zéro. S'il y a un passage exact, la première section doit être 'Versets sélectionnés' avec les versets du passage, numérotés et chacun sur sa propre ligne. Laisse ensuite une ligne vide et ajoute le commentaire ou l'étude dans un bloc séparé."
+                    if lang_code == "fr" else
+                    "CORRECTION: the previous answer did not follow the requested structure well. Rewrite it from scratch. If there is an exact passage, the first section must be 'Selected verses' with the passage verses, numbered and each on its own line. Then leave a blank line and add the commentary or study in a separate block."
+                )
+            )
+        )
+
+    def mejorar_respuesta_estudio_si_hace_falta(respuesta: str, prompt_base: str, mode: str) -> str:
+        respuesta_base = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(respuesta))
+        if not respuesta_base:
+            return mensaje_respuesta_incompleta()
+        if respuesta_base.startswith("Error"):
+            return respuesta_base
+
+        try:
+            respuesta_ajustada = asegurar_respuesta_legible(respuesta_base, prompt_base, mode)
+            if mode == "study" and respuesta_estudio_necesita_reintento(respuesta_ajustada):
+                prompt_reintento = f"{prompt_base}\n\n{instruccion_reintento_estudio()}"
+                segunda_respuesta = consultar_ia(prompt_reintento, lang_code=lang_code, mode=mode)
+                segunda_ajustada = asegurar_respuesta_legible(segunda_respuesta, prompt_reintento, mode)
+                if (
+                    segunda_ajustada.strip()
+                    and not segunda_ajustada.strip().startswith("Error")
+                    and not respuesta_estudio_necesita_reintento(segunda_ajustada)
+                ):
+                    respuesta_ajustada = segunda_ajustada
+            respuesta_final = reforzar_respuesta_si_no_respeta_longitud(respuesta_ajustada, prompt_base, mode)
+            if mode == "study" and respuesta_parece_demasiado_vacia(respuesta_final, mode):
+                return mensaje_respuesta_incompleta()
+            return respuesta_final
+        except Exception:
+            if mode == "study" and respuesta_parece_demasiado_vacia(respuesta_base, mode):
+                return mensaje_respuesta_incompleta()
+            return respuesta_base
+
     def reforzar_respuesta_si_no_respeta_longitud(respuesta: str, prompt_base: str, mode: str) -> str:
         respuesta = asegurar_respuesta_legible(respuesta, prompt_base, mode)
         rango = rango_palabras_actual()
         if not rango or not respuesta.strip() or respuesta.strip().startswith("Error"):
             return respuesta
 
-        total = contar_palabras(respuesta)
+        total = contar_palabras_resultado_sin_versiculos(respuesta) if mode == "study" else contar_palabras(respuesta)
         minimo, maximo = rango
         if minimo <= total <= maximo:
             return respuesta
 
         if mode == "study":
             instruccion_extra = (
-                f"CORRECCIÓN: intenta que el estudio final quede aproximadamente entre {minimo} y {maximo} palabras. "
-                f"La respuesta anterior tuvo {total} palabras aproximadas. Vuelve a escribirla completa acercándote de forma razonable a ese rango, sin obsesionarte con la exactitud."
+                f"CORRECCIÓN: intenta que la parte final de estudio, reflexión, comentario o aplicación quede aproximadamente entre {minimo} y {maximo} palabras, sin contar los versículos citados. "
+                f"La respuesta anterior tuvo {total} palabras aproximadas en esa parte. Vuelve a escribirla completa acercándote de forma razonable a ese rango, sin obsesionarte con la exactitud."
                 if lang_code == "es" else
                 (
-                    f"CORRECCIÓ: intenta que l'estudi final quedi aproximadament entre {minimo} i {maximo} paraules. "
-                    f"La resposta anterior tenia aproximadament {total} paraules. Torna'l a escriure complet acostant-te de manera raonable a aquest rang, sense obsessionar-te amb l'exactitud."
+                    f"CORRECCIÓ: intenta que la part final d'estudi, reflexió, comentari o aplicació quedi aproximadament entre {minimo} i {maximo} paraules, sense comptar els versicles citats. "
+                    f"La resposta anterior tenia aproximadament {total} paraules en aquesta part. Torna-la a escriure completa acostant-te de manera raonable a aquest rang, sense obsessionar-te amb l'exactitud."
                     if lang_code == "ca" else
                     (
-                        f"CORRECTION : essaie de faire en sorte que l'étude finale contienne approximativement entre {minimo} et {maximo} mots. "
-                        f"La réponse précédente comptait environ {total} mots. Réécris-la entièrement en te rapprochant raisonnablement de cette plage, sans rechercher une exactitude rigide."
+                        f"CORRECTION : fais en sorte que la partie finale d'étude, de réflexion, de commentaire ou d'application contienne approximativement entre {minimo} et {maximo} mots, sans compter les versets cités. "
+                        f"La réponse précédente comptait environ {total} mots dans cette partie. Réécris-la entièrement en te rapprochant raisonnablement de cette plage, sans rechercher une exactitude rigide."
                         if lang_code == "fr" else
-                        f"CORRECTION: try to keep the final study approximately between {minimo} and {maximo} words. The previous answer had about {total} words. Rewrite it completely while staying reasonably close to that range, without aiming for rigid precision."
+                        f"CORRECTION: try to keep the final study, reflection, commentary, or application portion approximately between {minimo} and {maximo} words, not counting the quoted verses. The previous answer had about {total} words in that portion. Rewrite it completely while staying reasonably close to that range, without aiming for rigid precision."
                     )
                 )
             )
@@ -7575,12 +8202,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         instruccion_estilo_bonito = (
             "Cuida mucho la presentación visual del texto. Usa un título bonito y reverente, subtítulos claros en Markdown y una maquetación agradable. "
             "Puedes usar algunos símbolos cristianos con moderación si encajan bien, pero evita caracteres raros o iconos que no se vean correctamente. "
-            "No abuses de ellos ni recargues la respuesta. "
+            "No abuses de ellos ni recargues la respuesta. No uses reglas horizontales repetidas ni separadores decorativos como ---, ***, ___ o similares. "
             if lang_code == "es" else
             (
                 "Cuida molt la presentació visual del text. Fes servir un títol bonic i reverent, subtítols clars en Markdown i una maquetació agradable. "
                 "Pots fer servir alguns símbols cristians amb moderació si encaixen bé, però evita caràcters estranys o icones que no es vegin correctament. "
-                "No n'abusis ni recarreguis la resposta. "
+                "No n'abusis ni recarreguis la resposta. No facis servir linies horitzontals repetides ni separadors decoratius com ---, ***, ___ o semblants. "
                 if lang_code == "ca" else
                 (
                     "Soigne beaucoup la présentation visuelle du texte. Utilise un beau titre révérencieux, des sous-titres clairs en Markdown et une mise en page agréable. "
@@ -7589,7 +8216,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                     if lang_code == "fr" else
                     "Pay close attention to the visual presentation of the text. Use a beautiful reverent title, clear Markdown subheadings, and pleasant formatting. "
                     "You may use a few Christian symbols in moderation when they fit naturally, but avoid unusual characters or icons that may render badly. "
-                    "Do not overuse them or make the response feel cluttered. "
+                    "Do not overuse them or make the response feel cluttered. Do not use repeated horizontal rules or decorative separators such as ---, ***, ___, or similar patterns. "
                 )
             )
         )
@@ -7713,6 +8340,91 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         else:
             instruccion_pasaje = ""
 
+        if pasaje_exacto:
+            instruccion_pasaje += (
+                " Revisa en silencio al menos dos veces libro, capitulo, versiculos y version antes de citar. "
+                "No mezcles versiones ni completes de memoria lo que no estes seguro. "
+                "Si no tienes certeza alta del texto literal, dilo con honestidad y limita la respuesta a referencias seguras o indica que conviene comprobarlo en una Biblia o web biblica fiable."
+                if lang_code == "es" else
+                (
+                    " Revisa en silenci almenys dues vegades llibre, capitol, versicles i versio abans de citar. "
+                    "No barreges versions ni completes de memoria allo que no estigues segur. "
+                    "Si no tens una certesa alta del text literal, digues-ho amb honestedat i limita la resposta a referencies segures o indica que convindria comprovar-ho en una Biblia o web biblica fiable."
+                    if lang_code == "ca" else
+                    (
+                        " Verifie silencieusement au moins deux fois le livre, le chapitre, les versets et la version avant de citer. "
+                        "Ne melange pas les versions et ne complete pas de memoire ce dont tu n'es pas sur. "
+                        "Si tu n'es pas tres sur du texte litteral, dis-le honnetement et limite la reponse a des references sures ou indique qu'il vaut mieux verifier cela dans une Bible ou sur un site biblique fiable."
+                        if lang_code == "fr" else
+                        " Silently verify the book, chapter, verses, and translation at least twice before quoting. "
+                        "Do not mix translations or fill uncertain wording from memory. "
+                        "If you are not highly certain of the literal wording, say so honestly and limit the answer to secure references or note that it should be checked in a trusted Bible or Bible website."
+                    )
+                )
+            )
+            instruccion_pasaje += (
+                " La primera seccion de la respuesta debe ser obligatoriamente 'Versiculos seleccionados' y debe contener los versiculos del pasaje antes de cualquier comentario, devocional, reflexion, aplicacion o analisis. "
+                "Si omites los versiculos al principio, la respuesta se considera incorrecta. "
+                " Separa obligatoriamente el bloque de versiculos y el comentario en bloques distintos. "
+                "Despues del ultimo versiculo deja una linea en blanco y empieza el comentario con un subtitulo nuevo en Markdown. "
+                "No mezcles versiculos y explicacion en el mismo parrafo ni en la misma linea. "
+                "Enumera cada versiculo de forma visible con su numero real al principio y escribe cada versiculo en su propia linea. "
+                "Cuando empiece el comentario, no sigas numerando como si fueran versiculos biblicos."
+                if lang_code == "es" else
+                (
+                    " La primera seccio de la resposta ha de ser obligatoriament 'Versicles seleccionats' i ha de contindre els versicles del passatge abans de qualsevol comentari, devocional, reflexio, aplicacio o analisi. "
+                    "Si omets els versicles al principi, la resposta es considera incorrecta. "
+                    " Separa obligatoriament el bloc de versicles i el comentari en blocs diferents. "
+                    "Despres de l'ultim versicle deixa una linia en blanc i comenca el comentari amb un subtitol nou en Markdown. "
+                    "No barregis versicles i explicacio en el mateix paragraf ni en la mateixa linia. "
+                    "Enumera cada versicle de manera visible amb el seu numero real al principi i escriu cada versicle en la seua propia linia. "
+                    "Quan comence el comentari, no continues numerant com si foren versicles biblics."
+                    if lang_code == "ca" else
+                    (
+                        " La premiere section de la reponse doit obligatoirement etre 'Versets selectionnes' et contenir les versets du passage avant tout commentaire, devotionnel, reflexion, application ou analyse. "
+                        "Si tu omets les versets au debut, la reponse est consideree comme incorrecte. "
+                        " Separe obligatoirement le bloc de versets et le commentaire en blocs differents. "
+                        "Apres le dernier verset, laisse une ligne vide et commence le commentaire avec un nouveau sous-titre en Markdown. "
+                        "Ne melange pas les versets et l'explication dans le meme paragraphe ni sur la meme ligne. "
+                        "Numérote chaque verset de maniere visible avec son numero reel au debut et ecris chaque verset sur sa propre ligne. "
+                        "Quand le commentaire commence, ne continue pas la numerotation comme s'il s'agissait encore de versets bibliques."
+                        if lang_code == "fr" else
+                        " The first section of the response must be 'Selected verses' and it must contain the passage verses before any commentary, devotional, reflection, application, or analysis. "
+                        "If you omit the verses at the beginning, the response is incorrect. "
+                        "You must separate the verse block and the commentary into different blocks. "
+                        "After the last verse, leave a blank line and start the commentary with a new Markdown subheading. "
+                        "Do not mix verses and explanation in the same paragraph or on the same line. "
+                        "Number each verse visibly with its real verse number at the beginning and write each verse on its own line. "
+                        "Once the commentary begins, do not continue numbering as if those were still Bible verses."
+                    )
+                )
+            )
+
+        instruccion_titulo_versiculos = (
+            " Antes de los versiculos, añade un titulo breve del pasaje en negrita, al estilo de los encabezados de muchas Biblias. "
+            "Si conoces con certeza alta el encabezado habitual de ese pasaje en la version pedida, puedes usarlo. "
+            "Si no, escribe un titulo descriptivo fiel al contenido sin presentarlo como titulo oficial de esa traduccion."
+            if lang_code == "es" else
+            (
+                " Abans dels versicles, afegeix un titol breu del passatge en negreta, a l'estil dels encapcalaments de moltes Biblies. "
+                "Si coneixes amb certesa alta l'encapcalament habitual d'aquest passatge en la versio demanada, el pots usar. "
+                "Si no, escriu un titol descriptiu fidel al contingut sense presentar-lo com a titol oficial d'aquella traduccio."
+                if lang_code == "ca" else
+                (
+                    " Avant les versets, ajoute un bref titre du passage en gras, dans le style des en-tetes de nombreuses Bibles. "
+                    "Si tu connais avec une forte certitude l'intitule habituel de ce passage dans la version demandee, tu peux l'utiliser. "
+                    "Sinon, ecris un titre descriptif fidele au contenu sans le presenter comme le titre officiel de cette traduction."
+                    if lang_code == "fr" else
+                    " Before the verses, add a short passage title in bold, in the style of headings used in many Bibles. "
+                    "If you know with high confidence the usual heading for that passage in the requested translation, you may use it. "
+                    "Otherwise, write a content-faithful descriptive title without presenting it as the official heading of that translation."
+                )
+            )
+        )
+
+        if pasaje_exacto:
+            instruccion_pasaje += instruccion_titulo_versiculos
+
         instruccion_tema_breve = ""
         if dd_tipo.value == "Estudio informativo" and tema_texto and tema_de_una_palabra:
             instruccion_tema_breve = (
@@ -7737,12 +8449,40 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 )
             )
 
+        refuerzo_solo_versiculos = (
+            " Revisa en silencio al menos dos veces cada cita antes de escribirla: libro, capitulo, versiculo y version. "
+            "No inventes versiculos ni mezcles versiones. "
+            "Enumera cada versiculo con su numero real al principio y pon cada versiculo en una linea separada. "
+            "Si no tienes certeza alta del texto literal, no lo rellenes de memoria: devuelve solo la referencia segura e indica brevemente que conviene comprobar el texto en una Biblia o web biblica fiable."
+            if lang_code == "es" else
+            (
+                " Revisa en silenci almenys dues vegades cada cita abans d'escriure-la: llibre, capitol, versicle i versio. "
+                "No inventis versicles ni barregis versions. "
+                "Enumera cada versicle amb el seu numero real al principi i posa cada versicle en una linia separada. "
+                "Si no tens una certesa alta del text literal, no l'omplis de memoria: torna nomes la referencia segura i indica breument que convindria comprovar el text en una Biblia o web biblica fiable."
+                if lang_code == "ca" else
+                (
+                    " Verifie silencieusement au moins deux fois chaque citation avant de l'ecrire : livre, chapitre, verset et version. "
+                    "N'invente pas de versets et ne melange pas les versions. "
+                    "Numérote chaque verset avec son numero reel au debut et mets chaque verset sur une ligne separee. "
+                    "Si tu n'es pas tres sur du texte litteral, ne le complete pas de memoire : donne seulement la reference sure et indique brievement qu'il vaut mieux verifier le texte dans une Bible ou sur un site biblique fiable."
+                    if lang_code == "fr" else
+                    " Silently verify each citation at least twice before writing it: book, chapter, verse, and translation. "
+                    "Do not invent verses or mix translations. "
+                    "Number each verse with its real verse number at the beginning and put each verse on a separate line. "
+                    "If you are not highly certain of the literal wording, do not fill it in from memory: return only the secure reference and briefly say that the wording should be checked in a trusted Bible or Bible website."
+                )
+            )
+        )
+
         if dd_tipo.value == "Solo versiculos":
             if lang_code == "es":
                 return (
                     f"Devuélveme únicamente los versículos exactos de {sujeto}{version_texto}.{enfoque_tema} "
                     "No generes comentarios, explicaciones ni interpretaciones. "
                     "No inventes versículos. "
+                    f"{instruccion_titulo_versiculos} "
+                    f"{refuerzo_solo_versiculos} "
                     "Formato: Markdown limpio."
                 )
             if lang_code == "ca":
@@ -7750,6 +8490,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                     f"Torna'm només els versicles exactes de {sujeto}{version_texto}.{enfoque_tema} "
                     "No generis comentaris, explicacions ni interpretacions. "
                     "No inventis versicles. "
+                    f"{instruccion_titulo_versiculos} "
+                    f"{refuerzo_solo_versiculos} "
                     "Format: Markdown net."
                 )
             if lang_code == "fr":
@@ -7757,12 +8499,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                     f"Donne-moi uniquement les versets exacts de {sujeto}{version_texto}.{enfoque_tema} "
                     "Ne génère ni commentaires, ni explications, ni interprétations. "
                     "N'invente pas de versets. "
+                    f"{instruccion_titulo_versiculos} "
+                    f"{refuerzo_solo_versiculos} "
                     "Format : Markdown propre."
                 )
             return (
                 f"Return only the exact verses about {sujeto}{version_texto}.{enfoque_tema} "
                 "Do not generate comments, explanations, or interpretations. "
                 "Do not invent verses. "
+                f"{instruccion_titulo_versiculos} "
+                f"{refuerzo_solo_versiculos} "
                 "Format: clean Markdown."
             )
 
@@ -8386,12 +9132,27 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 else f"Write about {dd_tamano.value} words."))
             )
 
+        aclaracion_longitud = (
+            "La cantidad de palabras es aproximada y cuenta solo la parte de comentario, estudio, reflexion o aplicacion. Los versiculos citados no forman parte de esa cantidad. "
+            if lang_code == "es" else
+            (
+                "La quantitat de paraules es aproximada i compta nomes la part de comentari, estudi, reflexio o aplicacio. Els versicles citats no formen part d'aquesta quantitat. "
+                if lang_code == "ca" else
+                (
+                    "La quantite de mots est approximative et compte seulement la partie commentaire, etude, reflexion ou application. Les versets cites ne font pas partie de cette quantite. "
+                    if lang_code == "fr" else
+                    "The word count is approximate and applies only to the commentary, study, reflection, or application portion. Quoted verses are not part of that total. "
+                )
+            )
+        )
+
         if lang_code == "es":
             return (
                 f"Genera un texto de {dd_tamano.value} palabras sobre {sujeto}{version_texto}.{enfoque_tema} "
                 f"Tipo solicitado: {localize_study_type(dd_tipo.value)}. "
                 f"{longitud_objetivo} "
                 f"{instruccion_pasaje}"
+                f"{aclaracion_longitud}"
                 "No hace falta que el número de palabras sea exacto; basta con que sea aproximado. "
                 "El contenido final debe estar escrito en español de España. "
                 "Debes responder con fidelidad al texto bíblico, sin inventar datos, citas ni versículos. "
@@ -8407,6 +9168,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 f"Tipus sol·licitat: {localize_study_type(dd_tipo.value)}. "
                 f"{longitud_objetivo} "
                 f"{instruccion_pasaje}"
+                f"{aclaracion_longitud}"
                 "No cal que el nombre de paraules sigui exacte; n'hi ha prou que sigui aproximat. "
                 "El contingut final ha d'estar escrit en català. "
                 "Has de respondre amb fidelitat al text bíblic, sense inventar dades, cites ni versicles. "
@@ -8422,6 +9184,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 f"Type demandé : {localize_study_type(dd_tipo.value)}. "
                 f"{longitud_objetivo} "
                 f"{instruccion_pasaje}"
+                f"{aclaracion_longitud}"
                 "Il n'est pas nécessaire que le nombre de mots soit exact ; il suffit qu'il reste approximatif. "
                 "Le contenu final doit être rédigé en français. "
                 "Tu dois répondre avec fidélité au texte biblique, sans inventer de faits, citations ou versets. "
@@ -8436,6 +9199,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             f"Requested type: {localize_study_type(dd_tipo.value)}. "
             f"{longitud_objetivo} "
             f"{instruccion_pasaje}"
+            f"{aclaracion_longitud}"
             "The word count does not need to be exact; being reasonably approximate is enough. "
             "The final content must be written in English. "
             "You must answer faithfully to the biblical text without inventing facts, citations, or verses. "
@@ -10095,14 +10859,17 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             nonlocal vista_resultado_completa
             try:
                 respuesta = consultar_ia(prompt, lang_code=lang_code, mode="study")
-                asignar_resultado_markdown(reforzar_respuesta_si_no_respeta_longitud(respuesta, prompt, "study"), limpiar=True)
+                asignar_resultado_markdown(mejorar_respuesta_estudio_si_hace_falta(respuesta, prompt, "study"), limpiar=True)
+            except Exception:
+                asignar_resultado_markdown(mensaje_error_generacion_interna(), limpiar=False)
             finally:
+                asegurar_resultado_visible_o_error()
                 pr.visible = False
                 pr_comportamiento.visible = False
                 pr_incredulo.visible = False
                 pr_cristianos.visible = False
                 pr_chat_consejero.visible = False
-                if result_md.value.strip():
+                if result_md.value.strip() and not resultado_es_placeholder_temporal():
                     vista_resultado_completa = True
                     if not result_md.value.strip().startswith("Error"):
                         panel_pasaje.visible = False
@@ -10138,14 +10905,17 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             nonlocal vista_resultado_completa
             try:
                 respuesta = consultar_ia(prompt, lang_code=lang_code, mode="study")
-                asignar_resultado_markdown(reforzar_respuesta_si_no_respeta_longitud(respuesta, prompt, "study"), limpiar=True)
+                asignar_resultado_markdown(mejorar_respuesta_estudio_si_hace_falta(respuesta, prompt, "study"), limpiar=True)
+            except Exception:
+                asignar_resultado_markdown(mensaje_error_generacion_interna(), limpiar=False)
             finally:
+                asegurar_resultado_visible_o_error()
                 pr.visible = False
                 pr_comportamiento.visible = False
                 pr_incredulo.visible = False
                 pr_cristianos.visible = False
                 pr_chat_consejero.visible = False
-                if result_md.value.strip():
+                if result_md.value.strip() and not resultado_es_placeholder_temporal():
                     vista_resultado_completa = True
                 cerrar_consulta_con_estado(textos_comportamiento["status_ready"])
                 actualizar_disposicion()
@@ -10178,14 +10948,17 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             nonlocal vista_resultado_completa
             try:
                 respuesta = consultar_ia(prompt, lang_code=lang_code, mode="study")
-                asignar_resultado_markdown(reforzar_respuesta_si_no_respeta_longitud(respuesta, prompt, "study"), limpiar=True)
+                asignar_resultado_markdown(mejorar_respuesta_estudio_si_hace_falta(respuesta, prompt, "study"), limpiar=True)
+            except Exception:
+                asignar_resultado_markdown(mensaje_error_generacion_interna(), limpiar=False)
             finally:
+                asegurar_resultado_visible_o_error()
                 pr.visible = False
                 pr_comportamiento.visible = False
                 pr_incredulo.visible = False
                 pr_cristianos.visible = False
                 pr_chat_consejero.visible = False
-                if result_md.value.strip():
+                if result_md.value.strip() and not resultado_es_placeholder_temporal():
                     vista_resultado_completa = True
                 cerrar_consulta_con_estado(textos_cristianos["status_ready"])
                 actualizar_disposicion()
@@ -10218,14 +10991,17 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             nonlocal vista_resultado_completa
             try:
                 respuesta = consultar_ia(prompt, lang_code=lang_code, mode="study")
-                asignar_resultado_markdown(reforzar_respuesta_si_no_respeta_longitud(respuesta, prompt, "study"), limpiar=True)
+                asignar_resultado_markdown(mejorar_respuesta_estudio_si_hace_falta(respuesta, prompt, "study"), limpiar=True)
+            except Exception:
+                asignar_resultado_markdown(mensaje_error_generacion_interna(), limpiar=False)
             finally:
+                asegurar_resultado_visible_o_error()
                 pr.visible = False
                 pr_comportamiento.visible = False
                 pr_incredulo.visible = False
                 pr_cristianos.visible = False
                 pr_chat_consejero.visible = False
-                if result_md.value.strip():
+                if result_md.value.strip() and not resultado_es_placeholder_temporal():
                     vista_resultado_completa = True
                 cerrar_consulta_con_estado(textos_incredulo["status_ready"])
                 actualizar_disposicion()
@@ -10251,8 +11027,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         def tarea():
             try:
                 respuesta = consultar_ia(ultimo_prompt_estudio, lang_code=lang_code, mode="study")
-                asignar_resultado_markdown(reforzar_respuesta_si_no_respeta_longitud(respuesta, ultimo_prompt_estudio, "study"), limpiar=True)
+                asignar_resultado_markdown(mejorar_respuesta_estudio_si_hace_falta(respuesta, ultimo_prompt_estudio, "study"), limpiar=True)
+            except Exception:
+                asignar_resultado_markdown(mensaje_error_generacion_interna(), limpiar=False)
             finally:
+                asegurar_resultado_visible_o_error()
                 pr.visible = False
                 pr_comportamiento.visible = False
                 pr_incredulo.visible = False
@@ -10270,7 +11049,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             mostrar_mensaje(page, ui["msg_write_question"])
             return
 
-        contexto_resultado = limpiar_texto_generado_ia(result_md.value.strip())
+        contexto_resultado = "" if resultado_es_placeholder_temporal() else limpiar_texto_generado_ia(result_md.value.strip())
         if contexto_resultado:
             bloque_contexto = (
                 f"Usa el siguiente resultado previo como contexto principal para responder la pregunta relacionada:\n\n{contexto_resultado}\n\n"
@@ -10288,6 +11067,28 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         else:
             bloque_contexto = ""
 
+        instruccion_precision_preguntas = (
+            "Si citas texto biblico literal, revisalo en silencio al menos dos veces y no mezcles versiones; si no tienes certeza alta del texto exacto, da solo la referencia o aclara que conviene comprobarlo en una Biblia o web biblica fiable. "
+            "Cuando des varios versiculos seguidos o un pasaje, pon antes un titulo breve del pasaje en negrita, estilo encabezado biblico; si no conoces con certeza alta el titulo habitual de esa version, usa uno descriptivo sin presentarlo como oficial. "
+            "Enumera cada versiculo con su numero real al principio y escribe cada versiculo en su propia linea. "
+            if lang_code == "es" else
+            (
+                "Si cites text biblic literal, revisa'l en silenci almenys dues vegades i no barregis versions; si no tens una certesa alta del text exacte, dona nomes la referencia o aclareix que convindria comprovar-ho en una Biblia o web biblica fiable. "
+                "Quan dones diversos versicles seguits o un passatge, posa abans un titol breu del passatge en negreta, estil encapcalament biblic; si no coneixes amb certesa alta el titol habitual d'aquella versio, fes-ne servir un de descriptiu sense presentar-lo com a oficial. "
+                "Enumera cada versicle amb el seu numero real al principi i escriu cada versicle en la seua propia linia. "
+                if lang_code == "ca" else
+                (
+                    "Si tu cites le texte biblique litteral, verifie-le silencieusement au moins deux fois et ne melange pas les versions ; si tu n'es pas tres sur du texte exact, donne seulement la reference ou precise qu'il vaut mieux le verifier dans une Bible ou sur un site biblique fiable. "
+                    "Quand tu donnes plusieurs versets suivis ou un passage, place d'abord un bref titre du passage en gras, style en-tete biblique ; si tu ne connais pas avec une forte certitude le titre habituel de cette version, utilise un titre descriptif sans le presenter comme officiel. "
+                    "Numérote chaque verset avec son numero reel au debut et ecris chaque verset sur sa propre ligne. "
+                    if lang_code == "fr" else
+                    "If you quote biblical wording literally, silently verify it at least twice and do not mix translations; if you are not highly certain of the exact wording, give only the reference or say that it should be checked in a trusted Bible or Bible website. "
+                    "When you provide several consecutive verses or a passage, place a short passage title in bold first, in a Bible-heading style; if you do not know the usual title for that translation with high confidence, use a descriptive one without presenting it as official. "
+                    "Number each verse with its real verse number at the beginning and write each verse on its own line. "
+                )
+            )
+        )
+
         if lang_code == "es":
             prompt = (
                 "Responde desde una perspectiva cristiana evangélica, con base bíblica, tono claro, pastoral y fiel a la Escritura. "
@@ -10297,6 +11098,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "No inventes versículos ni afirmaciones históricas. "
                 "La respuesta final debe estar escrita en español de España. "
                 "Al final indica, en mayúsculas, cursiva y negrita, que el contenido ha sido generado por IA y puede contener errores. "
+                f"{instruccion_precision_preguntas}"
                 f"{bloque_contexto}"
                 f"Pregunta: {pregunta}"
             )
@@ -10309,6 +11111,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "No inventis versicles ni afirmacions històriques. "
                 "La resposta final ha d'estar escrita en català. "
                 "Al final indica, en majúscules, cursiva i negreta, que el contingut ha estat generat per IA i pot contenir errors. "
+                f"{instruccion_precision_preguntas}"
                 f"{bloque_contexto}"
                 f"Pregunta: {pregunta}"
             )
@@ -10321,6 +11124,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "N'invente ni versets ni affirmations historiques. "
                 "La réponse finale doit être rédigée en français. "
                 "À la fin, indique en majuscules, italique et gras que le contenu a été généré par IA et peut contenir des erreurs. "
+                f"{instruccion_precision_preguntas}"
                 f"{bloque_contexto}"
                 f"Question: {pregunta}"
             )
@@ -10333,6 +11137,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Do not invent verses or historical claims. "
                 "The final response must be written in English. "
                 "At the end, state in uppercase, italic, and bold that the content was generated by AI and may contain errors. "
+                f"{instruccion_precision_preguntas}"
                 f"{bloque_contexto}"
                 f"Question: {pregunta}"
             )
@@ -10415,7 +11220,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             historial_chat_consejero.clear()
             memoria_chat_consejero = ""
             reiniciar_ritmo_chat_consejero()
-            result_md.value = ""
+            asignar_resultado_markdown("")
             asegurar_saludo_inicial_chat()
             pr.visible = False
             pr_comportamiento.visible = False
@@ -10458,7 +11263,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         historial_chat_consejero.clear()
         memoria_chat_consejero = ""
         reiniciar_ritmo_chat_consejero()
-        result_md.value = ""
+        asignar_resultado_markdown("")
         asegurar_saludo_inicial_chat()
         pr.visible = False
         pr_comportamiento.visible = False
@@ -11373,15 +12178,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
     )
 
-    contenido_resultado = ft.Column(
-        [result_md],
-        scroll=ft.ScrollMode.ALWAYS,
-    )
-
     caja_resultado = ft.Container(
         content=contenido_resultado,
         padding=14,
-        bgcolor=theme["accent"],
+        bgcolor="#FFFFFF",
         border_radius=18,
         border=ft.border.all(5, theme["panel_border"]),
         height=350,
@@ -11416,10 +12216,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         mostrar_solo_generacion = pasaje_completo() or (filtro_activo and not mostrar_filtros_por_vuelta["ok"])
         btn_volver_contextual.visible = mostrar_solo_generacion and not vista_resultado_completa
         panel_resultado.visible = True
-        vacio = not pr.visible and not pr_comportamiento.visible and not pr_incredulo.visible and not pr_cristianos.visible and not pr_chat_consejero.visible and not result_md.value.strip()
-        tf_resultado_vacio.visible = vacio
-        caja_resultado.visible = not vacio
-        mostrar_pregunta_resultado = not vacio
+        en_proceso_resultado = pr.visible or pr_comportamiento.visible or pr_incredulo.visible or pr_cristianos.visible or pr_chat_consejero.visible
+        hay_placeholder = resultado_es_placeholder_temporal()
+        mostrar_carga_resultado = en_proceso_resultado and hay_placeholder
+        hay_resultado_real = bool(result_md.value.strip()) and not hay_placeholder
+        vacio = not en_proceso_resultado and (not result_md.value.strip() or hay_placeholder)
+        tf_resultado_vacio.value = limpiar_texto_generado_ia(generating_text).strip("_") if mostrar_carga_resultado else ""
+        tf_resultado_vacio.hint_text = "" if mostrar_carga_resultado else ui["empty_result"]
+        tf_resultado_vacio.visible = vacio or mostrar_carga_resultado
+        caja_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
+        mostrar_pregunta_resultado = not vacio and not en_proceso_resultado and not hay_placeholder
         fila_pregunta_resultado.visible = mostrar_pregunta_resultado
         fila_acciones_resultado.visible = mostrar_pregunta_resultado
 
@@ -11432,11 +12238,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         if inicio_preferido == "comportamiento":
             situacion_lista = dd_comportamiento.value != "Ninguno"
             palabras_listas = dd_tamano_comportamiento.value != "Ninguno"
-            vacio = not pr.visible and not pr_comportamiento.visible and not pr_incredulo.visible and not pr_cristianos.visible and not pr_chat_consejero.visible and not result_md.value.strip()
-            tf_resultado_vacio.visible = vacio
-            caja_resultado.visible = not vacio
-            fila_pregunta_resultado.visible = not vacio
-            fila_acciones_resultado.visible = not vacio
+            vacio = not en_proceso_resultado and (not result_md.value.strip() or hay_placeholder)
+            tf_resultado_vacio.visible = vacio or mostrar_carga_resultado
+            caja_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
+            fila_pregunta_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
+            fila_acciones_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
             caja_resultado.height = 350 if vacio else None
             caja_resultado.expand = not vacio
             contenido_resultado.expand = not vacio
@@ -11453,7 +12259,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             contenedor_tamano_comportamiento.bgcolor = theme["accent"] if situacion_lista and not palabras_listas else theme["secondary"]
             contenedor_tamano_comportamiento.border = ft.border.all(6 if situacion_lista and not palabras_listas else 4, theme["panel_border"])
             btn_generar_comportamiento.visible = situacion_lista and palabras_listas
-            if vista_resultado_completa:
+            if vista_resultado_completa or mostrar_carga_resultado or hay_resultado_real:
                 contenedor_cuerpo.content = ft.Column([panel_comportamiento, panel_resultado], spacing=18, expand=True)
             else:
                 contenedor_cuerpo.content = ft.Column([panel_comportamiento], spacing=18, expand=True)
@@ -11462,11 +12268,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         if inicio_preferido == "incredulo":
             pregunta_lista = dd_incredulo.value != "Ninguno"
             palabras_listas = dd_tamano_incredulo.value != "Ninguno"
-            vacio = not pr.visible and not pr_comportamiento.visible and not pr_incredulo.visible and not pr_cristianos.visible and not pr_chat_consejero.visible and not result_md.value.strip()
-            tf_resultado_vacio.visible = vacio
-            caja_resultado.visible = not vacio
-            fila_pregunta_resultado.visible = not vacio
-            fila_acciones_resultado.visible = not vacio
+            vacio = not en_proceso_resultado and (not result_md.value.strip() or hay_placeholder)
+            tf_resultado_vacio.visible = vacio or mostrar_carga_resultado
+            caja_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
+            fila_pregunta_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
+            fila_acciones_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
             caja_resultado.height = 350 if vacio else None
             caja_resultado.expand = not vacio
             contenido_resultado.expand = not vacio
@@ -11485,7 +12291,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             contenedor_tamano_incredulo.bgcolor = theme["accent"] if pregunta_lista and not palabras_listas else theme["secondary"]
             contenedor_tamano_incredulo.border = ft.border.all(6 if pregunta_lista and not palabras_listas else 4, theme["panel_border"])
             btn_generar_incredulo.visible = pregunta_lista and palabras_listas
-            if vista_resultado_completa:
+            if vista_resultado_completa or mostrar_carga_resultado or hay_resultado_real:
                 contenedor_cuerpo.content = ft.Column([panel_incredulo, panel_resultado], spacing=18, expand=True)
             else:
                 contenedor_cuerpo.content = ft.Column([panel_incredulo], spacing=18, expand=True)
@@ -11494,11 +12300,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         if inicio_preferido == "cristianos":
             pregunta_lista = dd_cristianos.value != "Ninguno"
             palabras_listas = dd_tamano_cristianos.value != "Ninguno"
-            vacio = not pr.visible and not pr_comportamiento.visible and not pr_incredulo.visible and not pr_cristianos.visible and not pr_chat_consejero.visible and not result_md.value.strip()
-            tf_resultado_vacio.visible = vacio
-            caja_resultado.visible = not vacio
-            fila_pregunta_resultado.visible = not vacio
-            fila_acciones_resultado.visible = not vacio
+            vacio = not en_proceso_resultado and (not result_md.value.strip() or hay_placeholder)
+            tf_resultado_vacio.visible = vacio or mostrar_carga_resultado
+            caja_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
+            fila_pregunta_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
+            fila_acciones_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
             caja_resultado.height = 350 if vacio else None
             caja_resultado.expand = not vacio
             contenido_resultado.expand = not vacio
@@ -11517,7 +12323,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             contenedor_tamano_cristianos.bgcolor = theme["accent"] if pregunta_lista and not palabras_listas else theme["secondary"]
             contenedor_tamano_cristianos.border = ft.border.all(6 if pregunta_lista and not palabras_listas else 4, theme["panel_border"])
             btn_generar_cristianos.visible = pregunta_lista and palabras_listas
-            if vista_resultado_completa:
+            if vista_resultado_completa or mostrar_carga_resultado or hay_resultado_real:
                 contenedor_cuerpo.content = ft.Column([panel_cristianos, panel_resultado], spacing=18, expand=True)
             else:
                 contenedor_cuerpo.content = ft.Column([panel_cristianos], spacing=18, expand=True)
@@ -11542,9 +12348,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             if not historial_chat_consejero:
                 asegurar_saludo_inicial_chat()
             mensaje_listo = bool(tf_chat_consejero.value.strip())
-            vacio = not pr.visible and not pr_comportamiento.visible and not pr_incredulo.visible and not pr_cristianos.visible and not pr_chat_consejero.visible and not result_md.value.strip()
-            tf_resultado_vacio.visible = vacio
-            caja_resultado.visible = not vacio
+            vacio = not en_proceso_resultado and (not result_md.value.strip() or hay_placeholder)
+            tf_resultado_vacio.visible = vacio or mostrar_carga_resultado
+            caja_resultado.visible = not vacio and not en_proceso_resultado and not hay_placeholder
             fila_pregunta_resultado.visible = False
             fila_acciones_resultado.visible = False
             panel_resultado.visible = False
@@ -11578,7 +12384,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             if paso_actual == "generate":
                 btn_generar.style = estilo_boton_generar_resultado
 
-        if vista_resultado_completa:
+        if vista_resultado_completa or mostrar_carga_resultado or hay_resultado_real:
             caja_resultado.height = None if not vacio else 350
             caja_resultado.expand = not vacio
             contenido_resultado.expand = not vacio
