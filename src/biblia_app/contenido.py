@@ -654,7 +654,7 @@ femeninos = sorted({
 "María Magdalena: Seguidora de Jesús", "María de Cleofás: Presente en la crucifixión", "María: Madre de Juan Marcos", "Marta: Hermana de María y Lázaro", "Meriab: Otra forma del nombre Merab",
 "Mehetabel: Esposa de Hadad rey de Edom", "Merab: Hija de Saúl", "Mical: Esposa del rey David", "Milca: Pariente de Abraham", "Miriam: Hermana de Aarón y de Moisés", "Mujer cananea: Mostró gran fe ante Jesús",
 "Mujer de Job: Esposa de Job", "Mujer de Lot: Miró hacia atrás al salir de Sodoma", "Mujer de Manoa: Madre de Sansón", "Mujer de Potifar: Acusó falsamente a José", "Mujer encorvada: Sanada por Jesús",
-"Mujer samaritana: Habló con Jesús junto al pozo", "Mujer sirofenicia: Pidió misericordia para su hija", "Mujer sorprendida en adulterio: Llevada ante Jesús", "Mujer sunamita: Hospedó a Eliseo", "Mujer sabia de Abel: Evitó la destrucción de la ciudad",
+"Mujer samaritana: Habló con Jesús junto al pozo", "Mujer sirofenicia: Pidió misericordia para su hija", "Mujer sorprendida en adulterio: Llevada ante Jesús", "Mujer sunamita: Hospedó a Eliseo", "Mujer sabia de la ciudad de Abel: Evitó la destrucción de la ciudad",
 "Mujer sabia de Tecoa: Habló ante el rey David", "Mujer del flujo de sangre: Tocó el manto de Jesús", "Naama: Madre del rey Roboam", "Naara: Mujer mencionada en genealogías de Judá", "Noa: Hija de Zelofehad",
 "Noemí: Suegra de Rut", "Noadia: Falsa profetisa en tiempos de Nehemías", "Orfa: Cuñada de Rut", "Penina: Mujer de Elcaná", "Pérsida: Creyente elogiada por Pablo",
 "Priscila: Esposa de Aquila", "Púa: Una de las parteras hebreas", "Rahab: La mujer de Jericó", "Raquel: Esposa de Jacob", "Rebeca: Esposa de Isaac", "Reina del Sur: Visitó a Salomón para probar su sabiduría",
@@ -3646,6 +3646,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ft.dropdown.Option(key="50", text="50"),
             ft.dropdown.Option(key="100", text="100"),
             ft.dropdown.Option(key="200", text="200"),
+            ft.dropdown.Option(key="300", text="300"),
+            ft.dropdown.Option(key="400", text="400"),
         ],
         value="Ninguno",
         expand=True,
@@ -5685,6 +5687,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         text_align=ft.TextAlign.RIGHT,
         visible=False,
     )
+    texto_contador_resultado = ft.Text(
+        "",
+        color=theme["muted"],
+        size=11,
+        italic=True,
+        text_align=ft.TextAlign.RIGHT,
+        visible=False,
+    )
     texto_contexto_activo_titulo = ft.Text(
         contexto_activo_titulo,
         color=theme["primary"],
@@ -5741,6 +5751,18 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         color=theme["primary"],
         size=16,
         weight=ft.FontWeight.W_700,
+        text_align=ft.TextAlign.CENTER,
+    )
+    texto_ayuda_regenerar = ft.Text(
+        {
+            "es": "Si el resultado sale incompleto o raro a la primera, vuelve a pulsar. A veces el segundo intento sale mejor.",
+            "ca": "Si el resultat surt incomplet o estrany a la primera, torna a polsar. De vegades el segon intent surt millor.",
+            "fr": "Si le resultat sort incomplet ou etrange du premier coup, appuie a nouveau. Parfois, le second essai sort mieux.",
+            "en": "If the result looks incomplete or odd the first time, press again. Sometimes the second attempt works better.",
+        }.get(lang_code, "Si el resultado sale incompleto o raro a la primera, vuelve a pulsar. A veces el segundo intento sale mejor."),
+        color=theme["muted"],
+        size=12,
+        italic=True,
         text_align=ft.TextAlign.CENTER,
     )
     contenedor_aviso_generacion = ft.Container()
@@ -7052,7 +7074,31 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     def asignar_resultado_markdown(texto: str, limpiar: bool = False) -> None:
         result_md.value = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(texto)) if limpiar else texto
+        actualizar_contador_resultado()
         sincronizar_vista_resultado()
+
+    def actualizar_contador_resultado() -> None:
+        texto_actual = limpiar_texto_generado_ia(result_md.value or "").strip()
+        if (
+            not texto_actual
+            or texto_actual.startswith("Error")
+            or resultado_es_placeholder_temporal()
+            or dd_tipo.value == "Solo versiculos"
+            or dd_tamano.value in {"", "Ninguno", None}
+        ):
+            texto_contador_resultado.value = ""
+            texto_contador_resultado.visible = False
+            return
+
+        total = contar_palabras_resultado_sin_versiculos(texto_actual)
+        etiqueta = {
+            "es": f"Estudio aprox.: {total} palabras (sin versiculos)",
+            "ca": f"Estudi aprox.: {total} paraules (sense versicles)",
+            "fr": f"Etude approx. : {total} mots (sans versets)",
+            "en": f"Study approx.: {total} words (excluding verses)",
+        }.get(lang_code, f"Estudio aprox.: {total} palabras (sin versiculos)")
+        texto_contador_resultado.value = etiqueta
+        texto_contador_resultado.visible = True
 
     def resultado_es_placeholder_temporal() -> bool:
         texto = normalizar_texto_resultado(limpiar_texto_generado_ia(result_md.value or ""))
@@ -7998,10 +8044,30 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "50": (40, 60),
             "100": (90, 110),
             "200": (180, 220),
+            "300": (270, 330),
+            "400": (360, 440),
         }.get(dd_tamano.value)
 
+    def distancia_total_a_rango(total: int, rango: tuple[int, int] | None) -> int:
+        if not rango:
+            return 0
+        minimo, maximo = rango
+        if minimo <= total <= maximo:
+            return 0
+        if total < minimo:
+            return minimo - total
+        return total - maximo
+
     def hay_pasaje_exacto_actual() -> bool:
-        return bool(limpio(dd_libro.value) and limpio(dd_cap.value) and limpio(dd_ini.value) and limpio(dd_fin.value))
+        return all(
+            str(valor or "").strip()
+            for valor in (
+                getattr(dd_libro, "value", ""),
+                getattr(dd_cap, "value", ""),
+                getattr(dd_ini, "value", ""),
+                getattr(dd_fin, "value", ""),
+            )
+        )
 
     def respuesta_estudio_necesita_reintento(respuesta: str) -> bool:
         texto = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(respuesta))
@@ -8148,7 +8214,15 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         segunda_respuesta = consultar_ia(prompt_refuerzo, lang_code=lang_code, mode=mode)
         segunda_respuesta = asegurar_respuesta_legible(segunda_respuesta, prompt_refuerzo, mode)
         if segunda_respuesta.strip() and not segunda_respuesta.strip().startswith("Error"):
-            return limpiar_texto_generado_ia(segunda_respuesta)
+            respuesta_original_limpia = limpiar_texto_generado_ia(respuesta)
+            segunda_limpia = limpiar_texto_generado_ia(segunda_respuesta)
+            total_original = contar_palabras_resultado_sin_versiculos(respuesta_original_limpia) if mode == "study" else contar_palabras(respuesta_original_limpia)
+            total_segunda = contar_palabras_resultado_sin_versiculos(segunda_limpia) if mode == "study" else contar_palabras(segunda_limpia)
+            distancia_original = distancia_total_a_rango(total_original, rango)
+            distancia_segunda = distancia_total_a_rango(total_segunda, rango)
+            if distancia_segunda <= distancia_original:
+                return segunda_limpia
+            return respuesta_original_limpia
         return respuesta
 
     async def copiar_resultado(e=None):
@@ -9313,15 +9387,15 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             )
 
         aclaracion_longitud = (
-            "La cantidad de palabras es aproximada y cuenta solo la parte de comentario, estudio, reflexion o aplicacion. Los versiculos citados no forman parte de esa cantidad. "
+            "La cantidad de palabras es aproximada, pero intenta respetarla de forma razonable y quedar cerca del numero pedido. Cuenta solo la parte de comentario, estudio, reflexion o aplicacion. Los versiculos citados no forman parte de esa cantidad. "
             if lang_code == "es" else
             (
-                "La quantitat de paraules es aproximada i compta nomes la part de comentari, estudi, reflexio o aplicacio. Els versicles citats no formen part d'aquesta quantitat. "
+                "La quantitat de paraules es aproximada, pero intenta respectar-la de manera raonable i quedar a prop del nombre demanat. Compta nomes la part de comentari, estudi, reflexio o aplicacio. Els versicles citats no formen part d'aquesta quantitat. "
                 if lang_code == "ca" else
                 (
-                    "La quantite de mots est approximative et compte seulement la partie commentaire, etude, reflexion ou application. Les versets cites ne font pas partie de cette quantite. "
+                    "La quantite de mots est approximative, mais essaie de la respecter raisonnablement et de rester proche du nombre demande. Elle compte seulement la partie commentaire, etude, reflexion ou application. Les versets cites ne font pas partie de cette quantite. "
                     if lang_code == "fr" else
-                    "The word count is approximate and applies only to the commentary, study, reflection, or application portion. Quoted verses are not part of that total. "
+                    "The word count is approximate, but try to respect it reasonably and stay close to the requested number. It applies only to the commentary, study, reflection, or application portion. Quoted verses are not part of that total. "
                 )
             )
         )
@@ -12036,7 +12110,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         cabecera_resultado.content = (
             ft.Column(
-                [titulo_resultado, texto_consulta_resultado],
+                [titulo_resultado, texto_consulta_resultado, texto_contador_resultado],
                 spacing=6,
                 horizontal_alignment=ft.CrossAxisAlignment.START,
             )
@@ -12045,7 +12119,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 [
                     titulo_resultado,
                     ft.Container(
-                        content=texto_consulta_resultado,
+                        content=ft.Column(
+                            [texto_consulta_resultado, texto_contador_resultado],
+                            spacing=4,
+                            horizontal_alignment=ft.CrossAxisAlignment.END,
+                            tight=True,
+                        ),
                         expand=True,
                         alignment=ft.Alignment(1, 0),
                     ),
@@ -12346,6 +12425,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 ft.Text(f"{ui['study_type']} / {ui['words']}", weight="bold", size=18, color=theme["primary"]),
                 contenedor_tipo_tamano,
                 ft.Row([btn_generar]),
+                texto_ayuda_regenerar,
                 ft.Row([btn_volver_contextual]),
                 pr,
             ],
