@@ -498,10 +498,15 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
                         mensaje = detalle
                     mensaje_normalizado = str(mensaje).lower()
                     if exc.code == 413 or "request entity too large" in mensaje_normalizado or "payload too large" in mensaje_normalizado:
-                        if reintentos_tamano < 2:
+                        if reintentos_tamano < 3:
                             reintentos_tamano += 1
                             limite_base = QUESTION_PROMPT_RETRY_CHARS if mode == "question" else STUDY_PROMPT_RETRY_CHARS
-                            limite = limite_base if reintentos_tamano == 1 else max(1500, limite_base // 2)
+                            if reintentos_tamano == 1:
+                                limite = limite_base
+                            elif reintentos_tamano == 2:
+                                limite = max(1200, limite_base // 2)
+                            else:
+                                limite = max(700, limite_base // 3)
                             nuevo_prompt = compactar_prompt_para_groq(prompt_original, limite)
                             if nuevo_prompt != prompt_actual:
                                 prompt_actual = nuevo_prompt
@@ -509,7 +514,7 @@ def consultar_ia(prompt: str, lang_code: str = "es", mode: str = "study") -> str
                         if not usar_system_prompt_compacto:
                             usar_system_prompt_compacto = True
                             limite_base = QUESTION_PROMPT_RETRY_CHARS if mode == "question" else STUDY_PROMPT_RETRY_CHARS
-                            prompt_actual = compactar_prompt_para_groq(prompt_original, max(1500, limite_base // 2))
+                            prompt_actual = compactar_prompt_para_groq(prompt_original, max(700, limite_base // 3))
                             continue
                         return mensaje_prompt_demasiado_grande(lang_code)
                     ultimo_error = f"Error de IA (HTTP {exc.code}): {mensaje}"
@@ -6430,9 +6435,26 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         texto_limpio = re.sub(r"(?:(?<=\s)|^)\?{2,}(?=\s|$|[.,;:!?)])", "", texto)
         texto_limpio = re.sub(r"\s+\?{2,}(?=[.,;:!?)])", "", texto_limpio)
         texto_limpio = texto_limpio.replace("�", "")
+        texto_limpio = re.sub(r"(?is)<think>.*?</think>", " ", texto_limpio)
+        texto_limpio = re.sub(r"(?is)<thinking>.*?</thinking>", " ", texto_limpio)
+        texto_limpio = re.sub(r"(?is)^.*?</think>\s*", "", texto_limpio)
+        texto_limpio = re.sub(r"(?is)^.*?</thinking>\s*", "", texto_limpio)
         texto_limpio = re.sub(r"\s+([.,;:!?])", r"\1", texto_limpio)
         texto_limpio = re.sub(r"[ \t]{2,}", " ", texto_limpio)
         texto_limpio = re.sub(r"\n{3,}", "\n\n", texto_limpio)
+        inicio_filtrado = texto_limpio[:1600]
+        patron_prefacio = (
+            r"(?is)^(starting with|i need to|let me|first,|wait,|the user|also, the user|finally,)"
+            r".*?"
+            r"(vers[ií]culos seleccionados|versicles seleccionats|versets s[ée]lectionn[ée]s|selected verses|genesis\s+\d+:\d+(?:-\d+)?|g[eé]nesis\s+\d+:\d+(?:-\d+)?)"
+        )
+        if re.search(patron_prefacio, inicio_filtrado):
+            texto_limpio = re.sub(
+                r"(?is)^.*?(?=(vers[ií]culos seleccionados|versicles seleccionats|versets s[ée]lectionn[ée]s|selected verses|genesis\s+\d+:\d+(?:-\d+)?|g[eé]nesis\s+\d+:\d+(?:-\d+)?))",
+                "",
+                texto_limpio,
+                count=1,
+            )
         return texto_limpio.strip()
 
     def tokenizar_para_repeticion_estudio(texto: str) -> list[str]:
@@ -6946,9 +6968,45 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return True
         return False
 
+    def respuesta_versiculos_parece_aprovechable(texto: str) -> bool:
+        if dd_tipo.value != "Solo versiculos":
+            return False
+        respuesta = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(texto)).strip()
+        if not respuesta or respuesta.startswith("Error"):
+            return False
+
+        lineas = [linea.strip() for linea in respuesta.splitlines() if linea.strip()]
+        if not lineas:
+            return False
+
+        tiene_referencia = any(linea_parece_referencia_pasaje_resultado(linea) for linea in lineas)
+        total_versiculos = sum(1 for linea in lineas if linea_parece_versiculo_resultado(linea))
+        return total_versiculos >= 2 or (tiene_referencia and total_versiculos >= 1)
+
+    def respuesta_solo_versiculos_tolerable(texto: str, mode: str) -> bool:
+        if dd_tipo.value != "Solo versiculos":
+            return False
+        respuesta = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(texto)).strip()
+        if not respuesta or respuesta.startswith("Error"):
+            return False
+        if respuesta_parece_razonamiento_filtrado(respuesta) or respuesta_parece_fuera_de_idioma(respuesta):
+            return False
+        if respuesta_parece_demasiado_vacia(respuesta, mode):
+            return False
+        return contar_palabras(respuesta) >= 12 or bool(re.search(r"\b\d{1,3}:\d{1,3}(?:-\d{1,3})?\b", respuesta))
+
     def asegurar_respuesta_legible(respuesta: str, prompt_base: str, mode: str) -> str:
         respuesta_limpia = limpiar_repeticiones_estudio(limpiar_texto_generado_ia(respuesta))
         if not respuesta_limpia or respuesta_limpia.startswith("Error"):
+            return respuesta_limpia
+        if (
+            respuesta_versiculos_parece_aprovechable(respuesta_limpia)
+            and not respuesta_parece_razonamiento_filtrado(respuesta_limpia)
+            and not respuesta_parece_fuera_de_idioma(respuesta_limpia)
+            and not respuesta_parece_demasiado_vacia(respuesta_limpia, mode)
+        ):
+            return respuesta_limpia
+        if respuesta_solo_versiculos_tolerable(respuesta_limpia, mode):
             return respuesta_limpia
         if (
             not respuesta_parece_corrupta(respuesta_limpia)
@@ -6981,6 +7039,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             and not respuesta_parece_repetitiva(segunda_limpia)
             and not respuesta_parece_demasiado_vacia(segunda_limpia, mode)
         ):
+            return segunda_limpia
+        if respuesta_versiculos_parece_aprovechable(respuesta_limpia):
+            return respuesta_limpia
+        if respuesta_versiculos_parece_aprovechable(segunda_limpia):
+            return segunda_limpia
+        if respuesta_solo_versiculos_tolerable(respuesta_limpia, mode):
+            return respuesta_limpia
+        if respuesta_solo_versiculos_tolerable(segunda_limpia, mode):
             return segunda_limpia
         return mensaje_respuesta_corrupta()
 
@@ -7066,6 +7132,28 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return True
         return False
 
+    def linea_parece_parrafo_de_versiculos_resultado(linea: str) -> bool:
+        texto = str(linea or "").strip()
+        if not texto:
+            return False
+        if len(texto) < 120:
+            return False
+        if linea_parece_inicio_comentario_resultado(texto):
+            return False
+        normalizado = normalizar_texto_resultado(limpiar_linea_markdown_resultado(texto))
+        pistas_biblicas = (
+            "y dijo dios",
+            "y llamo dios",
+            "y fue la tarde y la manana",
+            "la tierra estaba",
+            "las tinieblas",
+            "el espiritu de dios",
+            "haya expansion",
+            "hizo dios",
+            "separo dios",
+        )
+        return sum(1 for pista in pistas_biblicas if pista in normalizado) >= 2
+
     def linea_parece_referencia_pasaje_resultado(linea: str) -> bool:
         texto = limpiar_linea_markdown_resultado(linea)
         if not texto:
@@ -7124,6 +7212,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         marcadores = (
             r"\bEstudio breve\b",
+            r"\bAnalisis exeg[eé]tico\b",
+            r"\bAn[aá]lisis exeg[eé]tico\b",
+            r"\bAnalisis hermeneutico\b",
+            r"\bAn[aá]lisis hermen[eé]utico\b",
+            r"\bDesarrollo homiletico\b",
+            r"\bDesarrollo homil[eé]tico\b",
             r"\bAplicacion practica\b",
             r"\bAplicación práctica\b",
             r"\bConclusion\b",
@@ -7163,6 +7257,65 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return contenido, ""
         return izquierda, derecha
 
+    def inferir_bloque_versiculos_sin_etiqueta(lineas: list[str]) -> tuple[int | None, int | None]:
+        tiene_pasaje_exacto = all(
+            str(valor or "").strip()
+            for valor in (
+                getattr(dd_libro, "value", ""),
+                getattr(dd_cap, "value", ""),
+                getattr(dd_ini, "value", ""),
+                getattr(dd_fin, "value", ""),
+            )
+        )
+        if not tiene_pasaje_exacto:
+            return None, None
+
+        inicio = None
+        encontro_referencia = False
+        encontro_versiculos = False
+        versos_consecutivos = 0
+
+        for indice, linea_original in enumerate(lineas):
+            linea = str(linea_original or "").strip()
+            if not linea:
+                continue
+
+            if inicio is None and linea_parece_titulo_comentario(linea):
+                continue
+
+            es_referencia = linea_parece_referencia_pasaje_resultado(linea)
+            es_versiculo = linea_parece_versiculo_resultado(linea)
+
+            if inicio is None:
+                if es_referencia or es_versiculo:
+                    inicio = indice
+                    encontro_referencia = es_referencia
+                    encontro_versiculos = es_versiculo
+                    versos_consecutivos = 1 if es_versiculo else 0
+                    continue
+                return None, None
+
+            if es_referencia:
+                encontro_referencia = True
+                continue
+
+            if es_versiculo:
+                encontro_versiculos = True
+                versos_consecutivos += 1
+                continue
+
+            if encontro_versiculos and linea_parece_inicio_comentario_resultado(linea):
+                return inicio, indice
+
+            if encontro_versiculos and (versos_consecutivos >= 2 or encontro_referencia):
+                return inicio, indice
+
+            return None, None
+
+        if inicio is not None and encontro_versiculos:
+            return inicio, len(lineas)
+        return None, None
+
     def extraer_bloques_resultado(texto: str) -> list[tuple[str, str]]:
         contenido = str(texto or "").strip()
         if not contenido:
@@ -7187,7 +7340,25 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             None,
         )
         if indice_etiqueta is None:
-            return [("comentario", contenido)]
+            inicio_inferido, fin_inferido = inferir_bloque_versiculos_sin_etiqueta(lineas)
+            if inicio_inferido is None or fin_inferido is None:
+                return [("comentario", contenido)]
+
+            bloque_inicial = "\n".join(lineas[:inicio_inferido]).strip()
+            bloque_versiculos = "\n".join(lineas[inicio_inferido:fin_inferido]).strip()
+            bloque_comentario = "\n".join(lineas[fin_inferido:]).strip()
+            bloques: list[tuple[str, str]] = []
+            if bloque_inicial:
+                bloques.append(("comentario", bloque_inicial))
+            if bloque_versiculos:
+                bloque_versiculos, bloque_comentario_inline = separar_comentario_inline_de_versiculos(bloque_versiculos)
+                if bloque_versiculos:
+                    bloques.append(("versiculos", bloque_versiculos))
+                if bloque_comentario_inline:
+                    bloque_comentario = f"{bloque_comentario_inline}\n\n{bloque_comentario}".strip() if bloque_comentario else bloque_comentario_inline
+            if bloque_comentario:
+                bloques.append(("comentario", bloque_comentario))
+            return bloques or [("comentario", contenido)]
 
         fin_bloque_versiculos = len(lineas)
         encontro_referencia = False
@@ -7199,7 +7370,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             if not encontro_referencia and linea_parece_referencia_pasaje_resultado(linea):
                 encontro_referencia = True
                 continue
-            if linea_parece_versiculo_resultado(linea):
+            if linea_parece_versiculo_resultado(linea) or linea_parece_parrafo_de_versiculos_resultado(linea):
                 encontro_versiculos = True
                 continue
             if encontro_versiculos and linea_parece_inicio_comentario_resultado(linea):
@@ -7881,15 +8052,15 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             )
 
         return (
-            "CORRECCIÓN: la respuesta anterior no siguió bien la estructura pedida. Reescríbela desde cero. Si hay pasaje exacto, la primera sección debe ser 'Versículos seleccionados' con los versículos del pasaje, numerados y cada uno en su propia línea. Después deja una línea en blanco y añade el comentario o estudio en un bloque aparte."
+            "CORRECCIÓN: la respuesta anterior no siguió bien la estructura pedida. Reescríbela desde cero. Si hay pasaje exacto, la primera sección debe ser 'Versículos seleccionados' con los versículos del pasaje, numerados y cada uno en su propia línea, con el mismo formato visual que usarías en 'Solo versiculos'. Después deja una línea en blanco y añade el comentario o estudio en un bloque aparte."
             if lang_code == "es" else
             (
-                "CORRECCIÓ: la resposta anterior no ha seguit bé l'estructura demanada. Reescriu-la des de zero. Si hi ha un passatge exacte, la primera secció ha de ser 'Versicles seleccionats' amb els versicles del passatge, numerats i cadascun en la seva pròpia línia. Després deixa una línia en blanc i afegeix el comentari o estudi en un bloc a part."
+                "CORRECCIÓ: la resposta anterior no ha seguit bé l'estructura demanada. Reescriu-la des de zero. Si hi ha un passatge exacte, la primera secció ha de ser 'Versicles seleccionats' amb els versicles del passatge, numerats i cadascun en la seva pròpia línia, amb el mateix format visual que faries servir a 'Solo versiculos'. Després deixa una línia en blanc i afegeix el comentari o estudi en un bloc a part."
                 if lang_code == "ca" else
                 (
-                    "CORRECTION : la réponse précédente n'a pas bien suivi la structure demandée. Réécris-la entièrement depuis zéro. S'il y a un passage exact, la première section doit être 'Versets sélectionnés' avec les versets du passage, numérotés et chacun sur sa propre ligne. Laisse ensuite une ligne vide et ajoute le commentaire ou l'étude dans un bloc séparé."
+                    "CORRECTION : la réponse précédente n'a pas bien suivi la structure demandée. Réécris-la entièrement depuis zéro. S'il y a un passage exact, la première section doit être 'Versets sélectionnés' avec les versets du passage, numérotés et chacun sur sa propre ligne, avec le même format visuel que dans 'Solo versiculos'. Laisse ensuite une ligne vide et ajoute le commentaire ou l'étude dans un bloc séparé."
                     if lang_code == "fr" else
-                    "CORRECTION: the previous answer did not follow the requested structure well. Rewrite it from scratch. If there is an exact passage, the first section must be 'Selected verses' with the passage verses, numbered and each on its own line. Then leave a blank line and add the commentary or study in a separate block."
+                    "CORRECTION: the previous answer did not follow the requested structure well. Rewrite it from scratch. If there is an exact passage, the first section must be 'Selected verses' with the passage verses, numbered and each on its own line, using the same visual format as 'Solo versiculos'. Then leave a blank line and add the commentary or study in a separate block."
                 )
             )
         )
@@ -7903,6 +8074,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         try:
             respuesta_ajustada = asegurar_respuesta_legible(respuesta_base, prompt_base, mode)
+            if (
+                respuesta_ajustada.strip().startswith("Error")
+                or (mode == "study" and respuesta_parece_demasiado_vacia(respuesta_ajustada, mode))
+            ):
+                respuesta_ajustada = respuesta_base
             if mode == "study" and respuesta_estudio_necesita_reintento(respuesta_ajustada):
                 prompt_reintento = f"{prompt_base}\n\n{instruccion_reintento_estudio()}"
                 segunda_respuesta = consultar_ia(prompt_reintento, lang_code=lang_code, mode=mode)
@@ -7915,7 +8091,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                     respuesta_ajustada = segunda_ajustada
             respuesta_final = reforzar_respuesta_si_no_respeta_longitud(respuesta_ajustada, prompt_base, mode)
             if mode == "study" and respuesta_parece_demasiado_vacia(respuesta_final, mode):
-                return mensaje_respuesta_incompleta()
+                return respuesta_base if not respuesta_parece_demasiado_vacia(respuesta_base, mode) else mensaje_respuesta_incompleta()
             return respuesta_final
         except Exception:
             if mode == "study" and respuesta_parece_demasiado_vacia(respuesta_base, mode):
@@ -8369,7 +8545,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Despues del ultimo versiculo deja una linea en blanco y empieza el comentario con un subtitulo nuevo en Markdown. "
                 "No mezcles versiculos y explicacion en el mismo parrafo ni en la misma linea. "
                 "Enumera cada versiculo de forma visible con su numero real al principio y escribe cada versiculo en su propia linea. "
-                "Cuando empiece el comentario, no sigas numerando como si fueran versiculos biblicos."
+                "Cuando empiece el comentario, no sigas numerando como si fueran versiculos biblicos. "
+                "Ese bloque inicial debe salir exactamente con el mismo estilo que usarias en el modo 'Solo versiculos': titulo breve en negrita y los versiculos completos del pasaje, uno por linea, antes de cualquier estudio."
                 if lang_code == "es" else
                 (
                     " La primera seccio de la resposta ha de ser obligatoriament 'Versicles seleccionats' i ha de contindre els versicles del passatge abans de qualsevol comentari, devocional, reflexio, aplicacio o analisi. "
@@ -8378,7 +8555,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                     "Despres de l'ultim versicle deixa una linia en blanc i comenca el comentari amb un subtitol nou en Markdown. "
                     "No barregis versicles i explicacio en el mateix paragraf ni en la mateixa linia. "
                     "Enumera cada versicle de manera visible amb el seu numero real al principi i escriu cada versicle en la seua propia linia. "
-                    "Quan comence el comentari, no continues numerant com si foren versicles biblics."
+                    "Quan comence el comentari, no continues numerant com si foren versicles biblics. "
+                    "Aquest bloc inicial ha de sortir exactament amb el mateix estil que al mode 'Solo versiculos': titol breu en negreta i els versicles complets del passatge, un per linia, abans de qualsevol estudi."
                     if lang_code == "ca" else
                     (
                         " La premiere section de la reponse doit obligatoirement etre 'Versets selectionnes' et contenir les versets du passage avant tout commentaire, devotionnel, reflexion, application ou analyse. "
@@ -8387,7 +8565,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                         "Apres le dernier verset, laisse une ligne vide et commence le commentaire avec un nouveau sous-titre en Markdown. "
                         "Ne melange pas les versets et l'explication dans le meme paragraphe ni sur la meme ligne. "
                         "Numérote chaque verset de maniere visible avec son numero reel au debut et ecris chaque verset sur sa propre ligne. "
-                        "Quand le commentaire commence, ne continue pas la numerotation comme s'il s'agissait encore de versets bibliques."
+                        "Quand le commentaire commence, ne continue pas la numerotation comme s'il s'agissait encore de versets bibliques. "
+                        "Ce bloc initial doit suivre exactement le meme style que dans le mode 'Solo versiculos' : bref titre en gras et versets complets du passage, un par ligne, avant toute etude."
                         if lang_code == "fr" else
                         " The first section of the response must be 'Selected verses' and it must contain the passage verses before any commentary, devotional, reflection, application, or analysis. "
                         "If you omit the verses at the beginning, the response is incorrect. "
@@ -8395,7 +8574,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                         "After the last verse, leave a blank line and start the commentary with a new Markdown subheading. "
                         "Do not mix verses and explanation in the same paragraph or on the same line. "
                         "Number each verse visibly with its real verse number at the beginning and write each verse on its own line. "
-                        "Once the commentary begins, do not continue numbering as if those were still Bible verses."
+                        "Once the commentary begins, do not continue numbering as if those were still Bible verses. "
+                        "That opening block must use exactly the same style as the 'Solo versiculos' mode: a short bold title and the full passage verses, one per line, before any study."
                     )
                 )
             )
