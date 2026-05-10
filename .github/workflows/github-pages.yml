@@ -60,6 +60,29 @@ jobs:
             --base-url "${{ steps.base_url.outputs.value }}" \
             --route-url-strategy hash
 
+      - name: Bust cached web assets
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          sha = "${{ github.sha }}"
+          index_path = Path("build/web/index.html")
+          html = index_path.read_text(encoding="utf-8")
+
+          replacements = {
+              'appPackageUrl: "assets/app/app.zip"': f'appPackageUrl: "assets/app/app.zip?v={sha}"',
+              '<script src="python.js"></script>': f'<script src="python.js?v={sha}"></script>',
+              '<script src="flutter_bootstrap.js" async></script>': f'<script src="flutter_bootstrap.js?v={sha}" async></script>',
+              '<script src="flutter_bootstrap.js" async=""></script>': f'<script src="flutter_bootstrap.js?v={sha}" async=""></script>',
+          }
+
+          for old, new in replacements.items():
+              html = html.replace(old, new)
+
+          index_path.write_text(html, encoding="utf-8")
+          PY
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
