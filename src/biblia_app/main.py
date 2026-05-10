@@ -40,6 +40,45 @@ from biblia_app.contenido import pantalla_principal, precalentar_contenido
 from biblia_app.http_client import HttpRequestError, http_request
 from biblia_app.idiomas import get_language_theme
 
+
+def _asegurar_compat_flet():
+    border_module = getattr(ft, "border", None)
+    if border_module is not None and not callable(getattr(border_module, "all", None)):
+        def _all(width, color):
+            side = ft.BorderSide(width, color)
+            try:
+                return ft.Border(top=side, right=side, bottom=side, left=side)
+            except TypeError:
+                return ft.Border(side, side, side, side)
+
+        setattr(border_module, "all", _all)
+
+    radius_module = getattr(ft, "border_radius", None)
+    if radius_module is not None and not callable(getattr(radius_module, "only", None)):
+        def _only(**corners):
+            radius = {
+                "top_left": 0,
+                "top_right": 0,
+                "bottom_left": 0,
+                "bottom_right": 0,
+            }
+            radius.update(corners)
+            try:
+                return ft.BorderRadius(
+                    radius["top_left"],
+                    radius["top_right"],
+                    radius["bottom_left"],
+                    radius["bottom_right"],
+                )
+            except TypeError:
+                return ft.BorderRadius(**radius)
+
+        setattr(radius_module, "only", _only)
+
+
+_asegurar_compat_flet()
+
+
 ANULAR_SEGUNDA_PAGINA_SALUDOS = False
 ANULAR_PAGINA_CONFIG_KEY = False
 WEB_API_KEY_STORAGE_KEY = "com.jmgalmedina.biblia_app.groq_api_key"
