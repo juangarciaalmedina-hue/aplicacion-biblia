@@ -66,6 +66,14 @@ CHAT_HISTORY_TOTAL_CHARS = _leer_entero_env("GROQ_CHAT_HISTORY_TOTAL_CHARS", 180
 CHAT_SUMMARY_MESSAGE_MAX_CHARS = _leer_entero_env("GROQ_CHAT_SUMMARY_MESSAGE_MAX_CHARS", 160, 50)
 CHAT_SUMMARY_TOTAL_CHARS = _leer_entero_env("GROQ_CHAT_SUMMARY_TOTAL_CHARS", 1200, 200)
 
+
+def _radius_esquinas(**corners):
+    only = getattr(getattr(ft, "border_radius", None), "only", None)
+    if callable(only):
+        return only(**corners)
+    return ft.BorderRadius(**corners)
+
+
 TEST_DONES_ESPIRITUALES = [
     {
         "key": "ayuda",
@@ -7957,9 +7965,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         alineacion = ft.MainAxisAlignment.END if es_usuario else ft.MainAxisAlignment.START
         ancho_burbuja = ancho_burbuja_chat_actual()
         radio = (
-            ft.border_radius.only(top_left=18, top_right=18, bottom_left=18, bottom_right=6)
+            _radius_esquinas(top_left=18, top_right=18, bottom_left=18, bottom_right=6)
             if es_usuario
-            else ft.border_radius.only(top_left=18, top_right=18, bottom_left=6, bottom_right=18)
+            else _radius_esquinas(top_left=18, top_right=18, bottom_left=6, bottom_right=18)
         )
 
         if control_mensaje is not None:
@@ -12088,7 +12096,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ),
             padding=ft.padding.symmetric(horizontal=10 if movil else 12, vertical=10),
             bgcolor=theme["primary"],
-            border_radius=ft.border_radius.only(top_left=18, top_right=18, bottom_left=12, bottom_right=12),
+            border_radius=_radius_esquinas(top_left=18, top_right=18, bottom_left=12, bottom_right=12),
             border=ft.border.all(3, theme["border"]),
         )
         avatar_chat_consejero.width = 42 if movil else 48

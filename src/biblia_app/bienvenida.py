@@ -13,6 +13,13 @@ _SALUDOS_PENDIENTES_POR_IDIOMA: dict[str, list[str]] = {}
 _ULTIMO_SALUDO_POR_IDIOMA: dict[str, str] = {}
 
 
+def _radius_esquinas(**corners):
+    only = getattr(getattr(ft, "border_radius", None), "only", None)
+    if callable(only):
+        return only(**corners)
+    return ft.BorderRadius(**corners)
+
+
 def _obtener_siguiente_saludo(language_code: str) -> str:
     saludos = list(get_language_config(language_code).get("welcome", {}).get("greetings", []))
     if not saludos:
@@ -37,9 +44,9 @@ def _crear_bandera(tipo: str) -> ft.Control:
         return ft.Container(
             content=ft.Column(
                 [
-                    ft.Container(height=10, bgcolor="#C60B1E", border_radius=ft.border_radius.only(top_left=6, top_right=6)),
+                    ft.Container(height=10, bgcolor="#C60B1E", border_radius=_radius_esquinas(top_left=6, top_right=6)),
                     ft.Container(height=14, bgcolor="#FFC400"),
-                    ft.Container(height=10, bgcolor="#C60B1E", border_radius=ft.border_radius.only(bottom_left=6, bottom_right=6)),
+                    ft.Container(height=10, bgcolor="#C60B1E", border_radius=_radius_esquinas(bottom_left=6, bottom_right=6)),
                 ],
                 spacing=0,
                 tight=True,
@@ -54,8 +61,8 @@ def _crear_bandera(tipo: str) -> ft.Control:
         colores = ["#F6D04D", "#C8102E"] * 4
         for color in colores:
             franjas.append(ft.Container(height=4, bgcolor=color))
-        franjas[0].border_radius = ft.border_radius.only(top_left=6, top_right=6)
-        franjas[-1].border_radius = ft.border_radius.only(bottom_left=6, bottom_right=6)
+        franjas[0].border_radius = _radius_esquinas(top_left=6, top_right=6)
+        franjas[-1].border_radius = _radius_esquinas(bottom_left=6, bottom_right=6)
         return ft.Container(
             content=ft.Column(franjas, spacing=0, tight=True),
             width=34,
