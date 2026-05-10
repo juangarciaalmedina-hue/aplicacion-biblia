@@ -17,7 +17,19 @@ def _radius_esquinas(**corners):
     only = getattr(getattr(ft, "border_radius", None), "only", None)
     if callable(only):
         return only(**corners)
-    return ft.BorderRadius(**corners)
+    radius = {
+        "top_left": 0,
+        "top_right": 0,
+        "bottom_left": 0,
+        "bottom_right": 0,
+    }
+    radius.update(corners)
+    return ft.BorderRadius(
+        radius["top_left"],
+        radius["top_right"],
+        radius["bottom_left"],
+        radius["bottom_right"],
+    )
 
 
 def _obtener_siguiente_saludo(language_code: str) -> str:
