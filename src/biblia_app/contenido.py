@@ -1,4 +1,4 @@
-import os
+﻿import os
 import asyncio
 import json
 import random
@@ -15,6 +15,14 @@ except Exception:
     subprocess = None
 
 import flet as ft
+
+def _border_all(width: float, color: str) -> ft.Border:
+    side = ft.BorderSide(width, color)
+    return ft.Border(left=side, top=side, right=side, bottom=side)
+
+
+def _padding_symmetric(horizontal: float = 0, vertical: float = 0) -> ft.Padding:
+    return ft.Padding(left=horizontal, top=vertical, right=horizontal, bottom=vertical)
 
 from biblia_app.http_client import HttpRequestError, http_request, ES_WEB_ASSEMBLY
 from biblia_app.idiomas import get_language_config, get_language_theme
@@ -66,69 +74,11 @@ CHAT_HISTORY_TOTAL_CHARS = _leer_entero_env("GROQ_CHAT_HISTORY_TOTAL_CHARS", 180
 CHAT_SUMMARY_MESSAGE_MAX_CHARS = _leer_entero_env("GROQ_CHAT_SUMMARY_MESSAGE_MAX_CHARS", 160, 50)
 CHAT_SUMMARY_TOTAL_CHARS = _leer_entero_env("GROQ_CHAT_SUMMARY_TOTAL_CHARS", 1200, 200)
 
-
-def _asegurar_compat_flet():
-    border_module = getattr(ft, "border", None)
-    if border_module is not None and not callable(getattr(border_module, "all", None)):
-        def _all(width, color):
-            side = ft.BorderSide(width, color)
-            try:
-                return ft.Border(top=side, right=side, bottom=side, left=side)
-            except TypeError:
-                return ft.Border(side, side, side, side)
-
-        setattr(border_module, "all", _all)
-
-    radius_module = getattr(ft, "border_radius", None)
-    if radius_module is not None and not callable(getattr(radius_module, "only", None)):
-        def _only(**corners):
-            radius = {
-                "top_left": 0,
-                "top_right": 0,
-                "bottom_left": 0,
-                "bottom_right": 0,
-            }
-            radius.update(corners)
-            try:
-                return ft.BorderRadius(
-                    radius["top_left"],
-                    radius["top_right"],
-                    radius["bottom_left"],
-                    radius["bottom_right"],
-                )
-            except TypeError:
-                return ft.BorderRadius(**radius)
-
-        setattr(radius_module, "only", _only)
-
-
-_asegurar_compat_flet()
-
-
-def _radius_esquinas(**corners):
-    only = getattr(getattr(ft, "border_radius", None), "only", None)
-    if callable(only):
-        return only(**corners)
-    radius = {
-        "top_left": 0,
-        "top_right": 0,
-        "bottom_left": 0,
-        "bottom_right": 0,
-    }
-    radius.update(corners)
-    return ft.BorderRadius(
-        radius["top_left"],
-        radius["top_right"],
-        radius["bottom_left"],
-        radius["bottom_right"],
-    )
-
-
 TEST_DONES_ESPIRITUALES = [
     {
         "key": "ayuda",
         "name": "Ayuda",
-        "summary": "Sueles fortalecer el trabajo de otros con apoyo práctico, estable y fiel.",
+        "summary": "Sueles fortalecer el trabajo de otros con apoyo prÃ¡ctico, estable y fiel.",
         "verses": "Marcos 15:40-41; Hechos 9:36; Romanos 16:1-2; 1 Corintios 12:28",
         "questions": [
             "Me alegra hacer tareas discretas que alivian la carga de otros ministerios.",
@@ -138,11 +88,11 @@ TEST_DONES_ESPIRITUALES = [
     {
         "key": "liderazgo",
         "name": "Liderazgo",
-        "summary": "Tiendes a marcar dirección, unir personas y mover grupos hacia una meta clara.",
+        "summary": "Tiendes a marcar direcciÃ³n, unir personas y mover grupos hacia una meta clara.",
         "verses": "Romanos 12:8; 1 Timoteo 3:1-13; 1 Timoteo 5:17; Hebreos 13:17",
         "questions": [
-            "Cuando un grupo no sabe por dónde seguir, suelo ayudar a ordenar el camino.",
-            "Me siento cómodo animando a otros para avanzar juntos hacia una meta concreta.",
+            "Cuando un grupo no sabe por dÃ³nde seguir, suelo ayudar a ordenar el camino.",
+            "Me siento cÃ³modo animando a otros para avanzar juntos hacia una meta concreta.",
         ],
     },
     {
@@ -158,16 +108,16 @@ TEST_DONES_ESPIRITUALES = [
     {
         "key": "servicio",
         "name": "Servicio",
-        "summary": "Respondes con acción práctica cuando aparece una necesidad concreta.",
-        "verses": "Hechos 6:1-7; Romanos 12:7; Tito 3:14; Gálatas 6:10",
+        "summary": "Respondes con acciÃ³n prÃ¡ctica cuando aparece una necesidad concreta.",
+        "verses": "Hechos 6:1-7; Romanos 12:7; Tito 3:14; GÃ¡latas 6:10",
         "questions": [
-            "Me activa más hacer algo útil que quedarme solo hablando del problema.",
-            "Puedo servir con alegría incluso en tareas pequeñas, repetitivas o poco visibles.",
+            "Me activa mÃ¡s hacer algo Ãºtil que quedarme solo hablando del problema.",
+            "Puedo servir con alegrÃ­a incluso en tareas pequeÃ±as, repetitivas o poco visibles.",
         ],
     },
     {
         "key": "administracion",
-        "name": "Administración",
+        "name": "AdministraciÃ³n",
         "summary": "Tienes facilidad para ordenar recursos, tiempos y personas con claridad.",
         "verses": "Lucas 14:28-30; Hechos 6:1-7; 1 Corintios 12:28",
         "questions": [
@@ -182,27 +132,27 @@ TEST_DONES_ESPIRITUALES = [
         "verses": "Mateo 16:21-23; Hechos 5:1-11; 1 Juan 4:1-6; 1 Corintios 12:10",
         "questions": [
             "Detecto con rapidez cuando una idea espiritual parece verdadera pero no lo es del todo.",
-            "Suelo captar intenciones, ambientes o influencias que otros tardan más en notar.",
+            "Suelo captar intenciones, ambientes o influencias que otros tardan mÃ¡s en notar.",
         ],
     },
     {
         "key": "fe",
         "name": "Fe",
-        "summary": "Te inclinas a confiar en Dios con firmeza aún cuando no ves soluciones claras.",
+        "summary": "Te inclinas a confiar en Dios con firmeza aÃºn cuando no ves soluciones claras.",
         "verses": "Hechos 11:22-24; Romanos 4:18-21; 1 Corintios 12:9; Hebreos 11",
         "questions": [
             "En tiempos inciertos, me resulta natural seguir confiando en la fidelidad de Dios.",
-            "Siento paz para creerle a Dios por cosas grandes incluso cuando la situación parece difícil.",
+            "Siento paz para creerle a Dios por cosas grandes incluso cuando la situaciÃ³n parece difÃ­cil.",
         ],
     },
     {
         "key": "generosidad",
         "name": "Generosidad",
-        "summary": "Compartes recursos con alegría y con deseo real de bendecir a otros.",
+        "summary": "Compartes recursos con alegrÃ­a y con deseo real de bendecir a otros.",
         "verses": "Marcos 12:41-44; Romanos 12:8; 2 Corintios 8:1-7; 2 Corintios 9:2-7",
         "questions": [
             "Dar de mis recursos para la obra de Dios o para una necesidad real me produce gozo.",
-            "Puedo simplificar mis gastos si eso permite ayudar más a otros.",
+            "Puedo simplificar mis gastos si eso permite ayudar mÃ¡s a otros.",
         ],
     },
     {
@@ -211,23 +161,23 @@ TEST_DONES_ESPIRITUALES = [
         "summary": "Te conmueven el dolor y la fragilidad ajena, y buscas aliviarla de forma cercana.",
         "verses": "Mateo 9:35-36; Marcos 9:41; Romanos 12:8; 1 Tesalonicenses 5:14",
         "questions": [
-            "Cuando alguien está herido o solo, siento deseo de acercarme y acompañarle.",
-            "No me cuesta dedicar tiempo a personas que están sufriendo para escuchar y sostener.",
+            "Cuando alguien estÃ¡ herido o solo, siento deseo de acercarme y acompaÃ±arle.",
+            "No me cuesta dedicar tiempo a personas que estÃ¡n sufriendo para escuchar y sostener.",
         ],
     },
     {
         "key": "sabiduria",
-        "name": "Sabiduría",
-        "summary": "Tiendes a aplicar la verdad bíblica con acierto en decisiones complejas y concretas.",
+        "name": "SabidurÃ­a",
+        "summary": "Tiendes a aplicar la verdad bÃ­blica con acierto en decisiones complejas y concretas.",
         "verses": "Hechos 6:3,10; 1 Corintios 2:6-13; 1 Corintios 12:8",
         "questions": [
-            "Las personas suelen buscarme cuando necesitan orientación en decisiones delicadas.",
-            "Me resulta natural unir verdad bíblica y realidad práctica para aclarar un camino.",
+            "Las personas suelen buscarme cuando necesitan orientaciÃ³n en decisiones delicadas.",
+            "Me resulta natural unir verdad bÃ­blica y realidad prÃ¡ctica para aclarar un camino.",
         ],
     },
     {
         "key": "exhortacion",
-        "name": "Exhortación",
+        "name": "ExhortaciÃ³n",
         "summary": "Sabes animar, corregir y levantar a otros de una forma que los impulsa a crecer.",
         "verses": "Hechos 14:22; Romanos 12:8; 1 Timoteo 4:13; Hebreos 10:24-25",
         "questions": [
@@ -237,18 +187,18 @@ TEST_DONES_ESPIRITUALES = [
     },
     {
         "key": "ensenanza",
-        "name": "Enseñanza",
+        "name": "EnseÃ±anza",
         "summary": "Te gusta estudiar, entender bien y explicar con claridad la Escritura.",
         "verses": "Hechos 18:24-28; Hechos 20:20-21; 1 Corintios 12:28; Efesios 4:11-14",
         "questions": [
             "Disfruto profundizar en la Biblia hasta comprender bien un pasaje o un tema.",
-            "Cuando explico la Escritura, suelo buscar orden, claridad y aplicación práctica.",
+            "Cuando explico la Escritura, suelo buscar orden, claridad y aplicaciÃ³n prÃ¡ctica.",
         ],
     },
     {
         "key": "pastoreo",
         "name": "Pastoreo",
-        "summary": "Llevas carga por el crecimiento espiritual de personas concretas y las acompañas.",
+        "summary": "Llevas carga por el crecimiento espiritual de personas concretas y las acompaÃ±as.",
         "verses": "Juan 10:1-18; Efesios 4:11-14; 1 Timoteo 3:1-7; 1 Pedro 5:1-3",
         "questions": [
             "Me preocupa de verdad el avance espiritual de ciertas personas y hago seguimiento.",
@@ -257,32 +207,32 @@ TEST_DONES_ESPIRITUALES = [
     },
     {
         "key": "apostolico",
-        "name": "Apostólico",
+        "name": "ApostÃ³lico",
         "summary": "Te ilusiona abrir camino, iniciar obra nueva y levantar estructuras sanas de ministerio.",
         "verses": "Hechos 15:22-35; 1 Corintios 12:28; Efesios 4:11-14; Galatas 2:7-10",
         "questions": [
-            "Me entusiasma iniciar proyectos ministeriales desde cero donde aún no hay nada consolidado.",
-            "Suelo pensar en cómo extender una obra para que crezca con base sólida y visión amplia.",
+            "Me entusiasma iniciar proyectos ministeriales desde cero donde aÃºn no hay nada consolidado.",
+            "Suelo pensar en cÃ³mo extender una obra para que crezca con base sÃ³lida y visiÃ³n amplia.",
         ],
     },
     {
         "key": "misionero",
         "name": "Misionero",
-        "summary": "Te adaptas con gusto a contextos distintos para servir a Cristo más allá de tu ambiente.",
+        "summary": "Te adaptas con gusto a contextos distintos para servir a Cristo mÃ¡s allÃ¡ de tu ambiente.",
         "verses": "Hechos 8:4; Hechos 13:2-3; Hechos 22:21; Romanos 10:15",
         "questions": [
-            "Servir a Dios entre personas de otra cultura, país o estilo de vida me atrae mucho.",
-            "Puedo adaptarme con relativa facilidad a ambientes muy distintos al mío para ministrar mejor.",
+            "Servir a Dios entre personas de otra cultura, paÃ­s o estilo de vida me atrae mucho.",
+            "Puedo adaptarme con relativa facilidad a ambientes muy distintos al mÃ­o para ministrar mejor.",
         ],
     },
     {
         "key": "profecia",
-        "name": "Profecía",
-        "summary": "Sientes carga por declarar la verdad de Dios con claridad, valentía y humildad.",
+        "name": "ProfecÃ­a",
+        "summary": "Sientes carga por declarar la verdad de Dios con claridad, valentÃ­a y humildad.",
         "verses": "Hechos 2:37-40; Hechos 7:51-53; 1 Tesalonicenses 1:5; 1 Corintios 14:1-4",
         "questions": [
-            "Me pesa hablar con claridad cuando una situación exige verdad bíblica y llamado al cambio.",
-            "No me resulta fácil callar cuando veo que hay que confrontar en amor lo que está mal.",
+            "Me pesa hablar con claridad cuando una situaciÃ³n exige verdad bÃ­blica y llamado al cambio.",
+            "No me resulta fÃ¡cil callar cuando veo que hay que confrontar en amor lo que estÃ¡ mal.",
         ],
     },
     {
@@ -291,18 +241,18 @@ TEST_DONES_ESPIRITUALES = [
         "summary": "Te nace compartir a Cristo con naturalidad, claridad y deseo de respuesta.",
         "verses": "Hechos 8:5-6; Hechos 8:26-40; Efesios 4:11-14; Hechos 21:8",
         "questions": [
-            "Me resulta natural hablar de Jesús con personas que todavía no creen.",
+            "Me resulta natural hablar de JesÃºs con personas que todavÃ­a no creen.",
             "Disfruto explicar el evangelio de forma sencilla e invitar a otros a responder a Cristo.",
         ],
     },
     {
         "key": "intercesion",
-        "name": "Intercesión",
+        "name": "IntercesiÃ³n",
         "summary": "Tienes constancia para orar por otros y cargar delante de Dios sus necesidades.",
         "verses": "Colosenses 1:9-12; Colosenses 4:12-13; Santiago 5:14-16",
         "questions": [
-            "Llevo con frecuencia personas, situaciones y ministerios a la oración durante bastante tiempo.",
-            "Siento carga espiritual por orar hasta que una necesidad quede realmente puesta delante del Señor.",
+            "Llevo con frecuencia personas, situaciones y ministerios a la oraciÃ³n durante bastante tiempo.",
+            "Siento carga espiritual por orar hasta que una necesidad quede realmente puesta delante del SeÃ±or.",
         ],
     },
 ]
@@ -670,57 +620,57 @@ libros_alfabeticos = [
 ]
 
 masculinos = sorted({
-"Aarón: El sumo sacerdote", "Abraham: El padre de la fe", "Absalón: Hijo de David", "Amós: El profeta", "Andrés: Hermano de Pedro", "Apolo: Judío elocuente y poderoso en las Escrituras", "Aquila: Esposo de Priscila",
-"Abiatar: Sacerdote en tiempos de David", "Abimelec: Rey filisteo mencionado con Abraham e Isaac", "Abner: General del ejército de Saúl", "Adonías: Hijo de David que quiso reinar", "Ahitofel: Consejero de David que apoyó a Absalón", "Asa: Rey de Judá", "Asaf: Cantor y salmista", "Aser: Hijo de Jacob", "Azarías: Nombre alternativo de Uzías, rey de Judá", "Azarías: Sacerdote que se opuso al orgullo del rey Uzías",
-"Bernabé: Compañero del apóstol Pablo", "Bartimeo: El ciego que recibió la vista", "Booz: Esposo de Rut",
-"Baruc: Escriba y compañero del profeta Jeremías", "Beltsasar: Rey de Babilonia en tiempos de Daniel", "Caín: Hijo de Adán y Eva", "Caleb: Uno de los doce espías", "Ciro: Rey persa que permitió el regreso del exilio", "Cornelio: Centurión romano piadoso", "Crispo: Principal de la sinagoga",
-"Daniel: El del pozo de los leones", "Demas: Colaborador mencionado por Pablo", "David: El rey David", "Ebed-melec: Siervo etíope que ayudó a Jeremías", "Efraín: Hijo de José", "Aod: Libertador de Israel", "Elcaná: Padre de Samuel", "Eleazar: Hijo de Aarón", "Elí: Sacerdote y juez de Israel",
-"Elías: El profeta", "Eliseo: Discípulo de Elías", "Enoc: Séptimo desde Adán", "Epafras: Colaborador de Pablo en Colosas", "Erasto: Colaborador de Pablo en Corinto", "Esdras: El sacerdote", "Eutico: Joven que cayó de una ventana mientras Pablo predicaba", "Ezequías: El rey de Judá", "Ezequiel: El profeta",
-"Felipe: Uno de los doce apóstoles", "Filemón: Colaborador de Pablo", "Finees: Nieto de Aarón", "Festo: Porcio Festo fue el procurador romano de Judea",
-"Gamaliel: Maestro de la Ley entre los fariseos", "Gedeón: Juez de Israel", "Goliat: Guerrero filisteo derrotado por David",
-"Habacuc: El profeta", "Hageo: El profeta", "Hananías: Uno de los compañeros de Daniel", "Hemán: Sabio y cantor", "Hermes: Creyente mencionado por Pablo", "Heber: Descendiente de Sem", "Icabod: Hijo de Finees, nacido en tiempo de desgracia", "Isaac: El hijo de Abraham", "Isacar: Hijo de Jacob", "Isaías: El profeta", "Ismael: Hijo de Abraham", "Itai: Gitita leal a David",
-"Jabes: Hombre de oración", "Jair: Juez de Israel", "Jared: Padre de Enoc", "Jefté: Juez de Israel", "Isaí: Padre de David", "Joab: General del ejército de David", "Joel: El profeta", "Jonadab: Sobrino de David", "Jonás: El profeta", "Jonatán: Hijo de Saúl", "Joram: Rey de Israel, hijo de Acab", "Joram: Rey de Judá, hijo de Josafat", "Josafat: Rey de Judá", "José: Hijo de Jacob, vendido a Egipto", "José: Esposo de María, padre legal de Jesús", "José de Arimatea: Discípulo secreto que dio su sepulcro a Jesús", "Josué: Hijo de Nun", "Juan: El apóstol y evangelista", "Juan: El Bautista, precursor de Jesús", "Justo: Creyente mencionado en Hechos",
-"Jetro: Suegro de Moisés y sacerdote de Madián", "Labán: Suegro de Jacob", "Lamec: Descendiente de Caín, esposo de Ada y Zila", "Lamec: Padre de Noé, descendiente de Set", "Lázaro: Hermano de Marta y María", "Leví: Hijo de Jacob", "Lot: Sobrino de Abraham", "Lucas: El evangelista",
-"Malaquías: El profeta", "Manasés: Hijo de José", "Marcos: El evangelista", "Mardoqueo: Primo de Ester", "Matías: Elegido entre los doce", "Mateo: El recaudador de impuestos", "Matusalén: Hombre longevo del Antiguo Testamento", "Melquisedec: Rey de Salem", "Mefiboset: Hijo de Jonatán", "Micaías: Profeta en tiempos de Acab", "Miqueas: El profeta", "Moisés: El de los diez mandamientos",
-"Manaén: Maestro y profeta en la iglesia de Antioquía", "Misael: Uno de los compañeros de Daniel", "Nahúm: El profeta", "Naamán: General sirio sanado de lepra", "Nabal: Hombre rico y necio de Carmel", "Natán: El profeta", "Natanael: Discípulo de Jesús", "Nehemías: Reconstruyó los muros de Jerusalén", "Ner: Padre de Abner", "Nicodemo: Fariseo, principal entre los judíos", "Noé: El del arca",
-"Obed: Abuelo de David", "Onésimo: Siervo mencionado por Pablo", "Oseas: El profeta", "Ozías: Rey de Judá",
-"Obadías: El profeta",
-"Pablo: Saulo de Tarso", "Pedro: El apóstol", "Poncio Pilato: Gobernador romano", "Procoro: Uno de los siete servidores",
-"Roboam: Hijo de Salomón", "Rubén: Hijo de Jacob",
-"Salomón: El rey Salomón", "Samuel: Hijo de Ana", "Sansón: El juez de Israel", "Saúl: El rey de Israel", "Sem: Hijo de Noé", "Set: Hijo de Adán", "Sila: Variante de Silas en algunas traducciones", "Silas: Acompañante del apóstol Pablo", "Simón de Cirene: Llevó la cruz de Jesús", "Simeón: Anciano que vio al Mesías en el templo", "Simeón: Hijo de Jacob y Lea", "Sóstenes: Colaborador mencionado por Pablo",
-"Tadeo: Uno de los doce apóstoles", "Tito: Colaborador del apóstol Pablo",
-"Tíquico: Colaborador del apóstol Pablo", "Timoteo: Discípulo del apóstol Pablo", "Tito Justo: Hombre temeroso de Dios", "Tobías: Nombre de varios personajes pos-exilio", "Tomás: El discípulo incrédulo",
-"Urías: Esposo de Betsabé", "Uziel: Nombre de varios levitas",
-"Zabulón: Hijo de Jacob", "Zaqueo: Jefe de publicanos", "Zebedeo: Padre de Jacobo y Juan", "Zorobabel: Gobernador de Judá", "Zacarías: Padre de Juan el Bautista", "Zacarías: Hijo de Joiada, asesinado en el templo", "Zacarías: El profeta del Antiguo Testamento",
+"AarÃ³n: El sumo sacerdote", "Abraham: El padre de la fe", "AbsalÃ³n: Hijo de David", "AmÃ³s: El profeta", "AndrÃ©s: Hermano de Pedro", "Apolo: JudÃ­o elocuente y poderoso en las Escrituras", "Aquila: Esposo de Priscila",
+"Abiatar: Sacerdote en tiempos de David", "Abimelec: Rey filisteo mencionado con Abraham e Isaac", "Abner: General del ejÃ©rcito de SaÃºl", "AdonÃ­as: Hijo de David que quiso reinar", "Ahitofel: Consejero de David que apoyÃ³ a AbsalÃ³n", "Asa: Rey de JudÃ¡", "Asaf: Cantor y salmista", "Aser: Hijo de Jacob", "AzarÃ­as: Nombre alternativo de UzÃ­as, rey de JudÃ¡", "AzarÃ­as: Sacerdote que se opuso al orgullo del rey UzÃ­as",
+"BernabÃ©: CompaÃ±ero del apÃ³stol Pablo", "Bartimeo: El ciego que recibiÃ³ la vista", "Booz: Esposo de Rut",
+"Baruc: Escriba y compaÃ±ero del profeta JeremÃ­as", "Beltsasar: Rey de Babilonia en tiempos de Daniel", "CaÃ­n: Hijo de AdÃ¡n y Eva", "Caleb: Uno de los doce espÃ­as", "Ciro: Rey persa que permitiÃ³ el regreso del exilio", "Cornelio: CenturiÃ³n romano piadoso", "Crispo: Principal de la sinagoga",
+"Daniel: El del pozo de los leones", "Demas: Colaborador mencionado por Pablo", "David: El rey David", "Ebed-melec: Siervo etÃ­ope que ayudÃ³ a JeremÃ­as", "EfraÃ­n: Hijo de JosÃ©", "Aod: Libertador de Israel", "ElcanÃ¡: Padre de Samuel", "Eleazar: Hijo de AarÃ³n", "ElÃ­: Sacerdote y juez de Israel",
+"ElÃ­as: El profeta", "Eliseo: DiscÃ­pulo de ElÃ­as", "Enoc: SÃ©ptimo desde AdÃ¡n", "Epafras: Colaborador de Pablo en Colosas", "Erasto: Colaborador de Pablo en Corinto", "Esdras: El sacerdote", "Eutico: Joven que cayÃ³ de una ventana mientras Pablo predicaba", "EzequÃ­as: El rey de JudÃ¡", "Ezequiel: El profeta",
+"Felipe: Uno de los doce apÃ³stoles", "FilemÃ³n: Colaborador de Pablo", "Finees: Nieto de AarÃ³n", "Festo: Porcio Festo fue el procurador romano de Judea",
+"Gamaliel: Maestro de la Ley entre los fariseos", "GedeÃ³n: Juez de Israel", "Goliat: Guerrero filisteo derrotado por David",
+"Habacuc: El profeta", "Hageo: El profeta", "HananÃ­as: Uno de los compaÃ±eros de Daniel", "HemÃ¡n: Sabio y cantor", "Hermes: Creyente mencionado por Pablo", "Heber: Descendiente de Sem", "Icabod: Hijo de Finees, nacido en tiempo de desgracia", "Isaac: El hijo de Abraham", "Isacar: Hijo de Jacob", "IsaÃ­as: El profeta", "Ismael: Hijo de Abraham", "Itai: Gitita leal a David",
+"Jabes: Hombre de oraciÃ³n", "Jair: Juez de Israel", "Jared: Padre de Enoc", "JeftÃ©: Juez de Israel", "IsaÃ­: Padre de David", "Joab: General del ejÃ©rcito de David", "Joel: El profeta", "Jonadab: Sobrino de David", "JonÃ¡s: El profeta", "JonatÃ¡n: Hijo de SaÃºl", "Joram: Rey de Israel, hijo de Acab", "Joram: Rey de JudÃ¡, hijo de Josafat", "Josafat: Rey de JudÃ¡", "JosÃ©: Hijo de Jacob, vendido a Egipto", "JosÃ©: Esposo de MarÃ­a, padre legal de JesÃºs", "JosÃ© de Arimatea: DiscÃ­pulo secreto que dio su sepulcro a JesÃºs", "JosuÃ©: Hijo de Nun", "Juan: El apÃ³stol y evangelista", "Juan: El Bautista, precursor de JesÃºs", "Justo: Creyente mencionado en Hechos",
+"Jetro: Suegro de MoisÃ©s y sacerdote de MadiÃ¡n", "LabÃ¡n: Suegro de Jacob", "Lamec: Descendiente de CaÃ­n, esposo de Ada y Zila", "Lamec: Padre de NoÃ©, descendiente de Set", "LÃ¡zaro: Hermano de Marta y MarÃ­a", "LevÃ­: Hijo de Jacob", "Lot: Sobrino de Abraham", "Lucas: El evangelista",
+"MalaquÃ­as: El profeta", "ManasÃ©s: Hijo de JosÃ©", "Marcos: El evangelista", "Mardoqueo: Primo de Ester", "MatÃ­as: Elegido entre los doce", "Mateo: El recaudador de impuestos", "MatusalÃ©n: Hombre longevo del Antiguo Testamento", "Melquisedec: Rey de Salem", "Mefiboset: Hijo de JonatÃ¡n", "MicaÃ­as: Profeta en tiempos de Acab", "Miqueas: El profeta", "MoisÃ©s: El de los diez mandamientos",
+"ManaÃ©n: Maestro y profeta en la iglesia de AntioquÃ­a", "Misael: Uno de los compaÃ±eros de Daniel", "NahÃºm: El profeta", "NaamÃ¡n: General sirio sanado de lepra", "Nabal: Hombre rico y necio de Carmel", "NatÃ¡n: El profeta", "Natanael: DiscÃ­pulo de JesÃºs", "NehemÃ­as: ReconstruyÃ³ los muros de JerusalÃ©n", "Ner: Padre de Abner", "Nicodemo: Fariseo, principal entre los judÃ­os", "NoÃ©: El del arca",
+"Obed: Abuelo de David", "OnÃ©simo: Siervo mencionado por Pablo", "Oseas: El profeta", "OzÃ­as: Rey de JudÃ¡",
+"ObadÃ­as: El profeta",
+"Pablo: Saulo de Tarso", "Pedro: El apÃ³stol", "Poncio Pilato: Gobernador romano", "Procoro: Uno de los siete servidores",
+"Roboam: Hijo de SalomÃ³n", "RubÃ©n: Hijo de Jacob",
+"SalomÃ³n: El rey SalomÃ³n", "Samuel: Hijo de Ana", "SansÃ³n: El juez de Israel", "SaÃºl: El rey de Israel", "Sem: Hijo de NoÃ©", "Set: Hijo de AdÃ¡n", "Sila: Variante de Silas en algunas traducciones", "Silas: AcompaÃ±ante del apÃ³stol Pablo", "SimÃ³n de Cirene: LlevÃ³ la cruz de JesÃºs", "SimeÃ³n: Anciano que vio al MesÃ­as en el templo", "SimeÃ³n: Hijo de Jacob y Lea", "SÃ³stenes: Colaborador mencionado por Pablo",
+"Tadeo: Uno de los doce apÃ³stoles", "Tito: Colaborador del apÃ³stol Pablo",
+"TÃ­quico: Colaborador del apÃ³stol Pablo", "Timoteo: DiscÃ­pulo del apÃ³stol Pablo", "Tito Justo: Hombre temeroso de Dios", "TobÃ­as: Nombre de varios personajes pos-exilio", "TomÃ¡s: El discÃ­pulo incrÃ©dulo",
+"UrÃ­as: Esposo de BetsabÃ©", "Uziel: Nombre de varios levitas",
+"ZabulÃ³n: Hijo de Jacob", "Zaqueo: Jefe de publicanos", "Zebedeo: Padre de Jacobo y Juan", "Zorobabel: Gobernador de JudÃ¡", "ZacarÃ­as: Padre de Juan el Bautista", "ZacarÃ­as: Hijo de Joiada, asesinado en el templo", "ZacarÃ­as: El profeta del Antiguo Testamento",
 })
 
 femeninos = sorted({
-"Abigail: Esposa del rey David", "Abisag: Joven que sirvió al rey David", "Abital: Una de las esposas de David", "Acsa: Hija de Caleb", "Ada: Esposa de Lamec, descendiente de Caín",
-"Evodia: Creyente de Filipos exhortada por Pablo", "Ahola: Figura simbólica en Ezequiel", "Aholiba: Figura simbólica en Ezequiel", "Ahinoam: Esposa de David", "Ana: Madre del profeta Samuel", "Ana: Profetisa, hija de Fanuel",
-"Apia: Creyente de la casa de Filemón", "Asenat: Esposa de José", "Atalía: Hija del rey Acab y de la reina Jezabel", "Atara: Esposa de Jerahmeel", "Azuba: Esposa de Caleb",
-"Basemat: Esposa de Esaú, hija de Elón hitita", "Basemat: Hija de Ismael y esposa de Esaú", "Betsabé: Esposa de Urías el heteo", "Berenice: Hermana de Agripa", "Bilha: Sierva de Raquel", "Bítia: Hija del faraón que tomó a Moisés", "Candace: Reina de Etiopía",
-"Claudia: Cristiana cercana a Pablo", "Cloe: Mujer de cuya casa llegaron noticias a Pablo", "Cozbi: Mujer madianita", "Dalila: Mujer de Sansón", "Dámaris: Creyente de Atenas",
-"Débora: Jueza de Israel", "Dina: Hija de Jacob", "Dorcas: Conocida como Tabita", "Drusila: Esposa del gobernador Félix", "Efrata: Esposa de Caleb mencionada en genealogías", "Eglá: Una de las esposas de David",
-"Elisabet: Madre de Juan el bautista", "Eliseba: Esposa de Aarón", "Ester: La reina Ester", "Eunice: Madre de Timoteo", "Eva: Esposa de Adán",
-"Esposa de Isaías: Mujer llamada profetisa en Isaías", "Esposa de Pilato: Mujer de Pilato que le advirtió sobre Jesús", "Febe: Diaconisa de la iglesia", "Gómer: Esposa del profeta Oseas", "Hadasa: Nombre hebreo de Ester", "Agar: Sierva de Sara", "Trifosa: Creyente trabajadora en el Señor", "Hamutal: Madre de reyes de Judá",
-"Hija de Faraón: Rescató a Moisés del río", "Hija de Jefté: Hija única de Jefté", "Hijas de Lot: Madres de Moab y Amón",
-"Herodías: Mujer vinculada a la muerte de Juan el Bautista", "Hepsiba: Esposa del rey Ezequías", "Hogla: Hija de Zelofehad", "Hulda: La profetisa", "Isca: Pariente de Abraham",
-"Jael: La que mató a Sísara", "Jedida: Madre del rey Josías", "Jehoseba: Hija del rey Joram", "Jemima: Hija de Job", "Jezabel: Esposa del rey Acab",
-"Jocabed: Madre de Moisés", "Julia: Creyente saludada por Pablo en Romanos", "Junia: Compañera de prisiones de Pablo", "Keren-hapuc: Hija de Job", "Cetura: Esposa de Abraham",
-"Lía: Esposa de Jacob", "Lidia: Vendedora de púrpura", "Loida: La abuela de Timoteo", "Lo-ruhama: Hija simbólica de Oseas", "Maaca: Esposa de David y madre de Absalón", "Maaca: Madre del rey Abías",
-"Mahalat: Hija de Ismael y esposa de Esaú", "Maala: Hija de Zelofehad", "Mara: Nombre que tomó Noemí en su amargura", "María: Madre de Jesús de Nazaret", "María: Hermana de Marta y Lázaro",
-"María Magdalena: Seguidora de Jesús", "María de Cleofás: Presente en la crucifixión", "María: Madre de Juan Marcos", "Marta: Hermana de María y Lázaro", "Meriab: Otra forma del nombre Merab",
-"Mehetabel: Esposa de Hadad rey de Edom", "Merab: Hija de Saúl", "Mical: Esposa del rey David", "Milca: Pariente de Abraham", "Miriam: Hermana de Aarón y de Moisés", "Mujer cananea: Mostró gran fe ante Jesús",
-"Mujer de Job: Esposa de Job", "Mujer de Lot: Miró hacia atrás al salir de Sodoma", "Mujer de Manoa: Madre de Sansón", "Mujer de Potifar: Acusó falsamente a José", "Mujer encorvada: Sanada por Jesús",
-"Mujer samaritana: Habló con Jesús junto al pozo", "Mujer sirofenicia: Pidió misericordia para su hija", "Mujer sorprendida en adulterio: Llevada ante Jesús", "Mujer sunamita: Hospedó a Eliseo", "Mujer sabia de la ciudad de Abel: Evitó la destrucción de la ciudad",
-"Mujer sabia de Tecoa: Habló ante el rey David", "Mujer del flujo de sangre: Tocó el manto de Jesús", "Naama: Madre del rey Roboam", "Naara: Mujer mencionada en genealogías de Judá", "Noa: Hija de Zelofehad",
-"Noemí: Suegra de Rut", "Noadia: Falsa profetisa en tiempos de Nehemías", "Orfa: Cuñada de Rut", "Penina: Mujer de Elcaná", "Pérsida: Creyente elogiada por Pablo",
-"Priscila: Esposa de Aquila", "Púa: Una de las parteras hebreas", "Rahab: La mujer de Jericó", "Raquel: Esposa de Jacob", "Rebeca: Esposa de Isaac", "Reina del Sur: Visitó a Salomón para probar su sabiduría",
-"Reina de Saba: Visitó al rey Salomón", "Reuma: Concubina de Nacor", "Rizpa: Concubina del rey Saúl", "Rode: Sierva que reconoció a Pedro", "Rut: Esposa de Booz",
-"Safira: Esposa de Ananías", "Salomé: Seguidora de Jesús", "Salomé: Hija de Herodías", "Sarai: Nombre anterior de Sara", "Sara: Esposa de Abraham", "Séfora: Esposa de Moisés",
-"Sifra: Una de las parteras hebreas", "Síntique: Creyente de Filipos exhortada a vivir en unidad", "Susana: Seguidora y servidora de Jesús", "Tabita: Dorcas", "Trifena: Creyente trabajadora en el Señor",
-"Sulamita: Amada descrita en el Cantar de los Cantares", "Tahpenes: Reina de Egipto", "Tamar: Nuera de Judá", "Tamar: Hija del rey David", "Tirsa: Una de las hijas de Zelofehad", "Vasti: Esposa del rey Asuero",
-"Viuda de Naín: Recibió la misericordia de Jesús", "Viuda de Sarepta: Alimentada en tiempos de Elías", "Viuda pobre del templo: Dio todo lo que tenía", "Zibia: Madre del rey Joás", "Zilpa: Sierva de Lía"
+"Abigail: Esposa del rey David", "Abisag: Joven que sirviÃ³ al rey David", "Abital: Una de las esposas de David", "Acsa: Hija de Caleb", "Ada: Esposa de Lamec, descendiente de CaÃ­n",
+"Evodia: Creyente de Filipos exhortada por Pablo", "Ahola: Figura simbÃ³lica en Ezequiel", "Aholiba: Figura simbÃ³lica en Ezequiel", "Ahinoam: Esposa de David", "Ana: Madre del profeta Samuel", "Ana: Profetisa, hija de Fanuel",
+"Apia: Creyente de la casa de FilemÃ³n", "Asenat: Esposa de JosÃ©", "AtalÃ­a: Hija del rey Acab y de la reina Jezabel", "Atara: Esposa de Jerahmeel", "Azuba: Esposa de Caleb",
+"Basemat: Esposa de EsaÃº, hija de ElÃ³n hitita", "Basemat: Hija de Ismael y esposa de EsaÃº", "BetsabÃ©: Esposa de UrÃ­as el heteo", "Berenice: Hermana de Agripa", "Bilha: Sierva de Raquel", "BÃ­tia: Hija del faraÃ³n que tomÃ³ a MoisÃ©s", "Candace: Reina de EtiopÃ­a",
+"Claudia: Cristiana cercana a Pablo", "Cloe: Mujer de cuya casa llegaron noticias a Pablo", "Cozbi: Mujer madianita", "Dalila: Mujer de SansÃ³n", "DÃ¡maris: Creyente de Atenas",
+"DÃ©bora: Jueza de Israel", "Dina: Hija de Jacob", "Dorcas: Conocida como Tabita", "Drusila: Esposa del gobernador FÃ©lix", "Efrata: Esposa de Caleb mencionada en genealogÃ­as", "EglÃ¡: Una de las esposas de David",
+"Elisabet: Madre de Juan el bautista", "Eliseba: Esposa de AarÃ³n", "Ester: La reina Ester", "Eunice: Madre de Timoteo", "Eva: Esposa de AdÃ¡n",
+"Esposa de IsaÃ­as: Mujer llamada profetisa en IsaÃ­as", "Esposa de Pilato: Mujer de Pilato que le advirtiÃ³ sobre JesÃºs", "Febe: Diaconisa de la iglesia", "GÃ³mer: Esposa del profeta Oseas", "Hadasa: Nombre hebreo de Ester", "Agar: Sierva de Sara", "Trifosa: Creyente trabajadora en el SeÃ±or", "Hamutal: Madre de reyes de JudÃ¡",
+"Hija de FaraÃ³n: RescatÃ³ a MoisÃ©s del rÃ­o", "Hija de JeftÃ©: Hija Ãºnica de JeftÃ©", "Hijas de Lot: Madres de Moab y AmÃ³n",
+"HerodÃ­as: Mujer vinculada a la muerte de Juan el Bautista", "Hepsiba: Esposa del rey EzequÃ­as", "Hogla: Hija de Zelofehad", "Hulda: La profetisa", "Isca: Pariente de Abraham",
+"Jael: La que matÃ³ a SÃ­sara", "Jedida: Madre del rey JosÃ­as", "Jehoseba: Hija del rey Joram", "Jemima: Hija de Job", "Jezabel: Esposa del rey Acab",
+"Jocabed: Madre de MoisÃ©s", "Julia: Creyente saludada por Pablo en Romanos", "Junia: CompaÃ±era de prisiones de Pablo", "Keren-hapuc: Hija de Job", "Cetura: Esposa de Abraham",
+"LÃ­a: Esposa de Jacob", "Lidia: Vendedora de pÃºrpura", "Loida: La abuela de Timoteo", "Lo-ruhama: Hija simbÃ³lica de Oseas", "Maaca: Esposa de David y madre de AbsalÃ³n", "Maaca: Madre del rey AbÃ­as",
+"Mahalat: Hija de Ismael y esposa de EsaÃº", "Maala: Hija de Zelofehad", "Mara: Nombre que tomÃ³ NoemÃ­ en su amargura", "MarÃ­a: Madre de JesÃºs de Nazaret", "MarÃ­a: Hermana de Marta y LÃ¡zaro",
+"MarÃ­a Magdalena: Seguidora de JesÃºs", "MarÃ­a de CleofÃ¡s: Presente en la crucifixiÃ³n", "MarÃ­a: Madre de Juan Marcos", "Marta: Hermana de MarÃ­a y LÃ¡zaro", "Meriab: Otra forma del nombre Merab",
+"Mehetabel: Esposa de Hadad rey de Edom", "Merab: Hija de SaÃºl", "Mical: Esposa del rey David", "Milca: Pariente de Abraham", "Miriam: Hermana de AarÃ³n y de MoisÃ©s", "Mujer cananea: MostrÃ³ gran fe ante JesÃºs",
+"Mujer de Job: Esposa de Job", "Mujer de Lot: MirÃ³ hacia atrÃ¡s al salir de Sodoma", "Mujer de Manoa: Madre de SansÃ³n", "Mujer de Potifar: AcusÃ³ falsamente a JosÃ©", "Mujer encorvada: Sanada por JesÃºs",
+"Mujer samaritana: HablÃ³ con JesÃºs junto al pozo", "Mujer sirofenicia: PidiÃ³ misericordia para su hija", "Mujer sorprendida en adulterio: Llevada ante JesÃºs", "Mujer sunamita: HospedÃ³ a Eliseo", "Mujer sabia de la ciudad de Abel: EvitÃ³ la destrucciÃ³n de la ciudad",
+"Mujer sabia de Tecoa: HablÃ³ ante el rey David", "Mujer del flujo de sangre: TocÃ³ el manto de JesÃºs", "Naama: Madre del rey Roboam", "Naara: Mujer mencionada en genealogÃ­as de JudÃ¡", "Noa: Hija de Zelofehad",
+"NoemÃ­: Suegra de Rut", "Noadia: Falsa profetisa en tiempos de NehemÃ­as", "Orfa: CuÃ±ada de Rut", "Penina: Mujer de ElcanÃ¡", "PÃ©rsida: Creyente elogiada por Pablo",
+"Priscila: Esposa de Aquila", "PÃºa: Una de las parteras hebreas", "Rahab: La mujer de JericÃ³", "Raquel: Esposa de Jacob", "Rebeca: Esposa de Isaac", "Reina del Sur: VisitÃ³ a SalomÃ³n para probar su sabidurÃ­a",
+"Reina de Saba: VisitÃ³ al rey SalomÃ³n", "Reuma: Concubina de Nacor", "Rizpa: Concubina del rey SaÃºl", "Rode: Sierva que reconociÃ³ a Pedro", "Rut: Esposa de Booz",
+"Safira: Esposa de AnanÃ­as", "SalomÃ©: Seguidora de JesÃºs", "SalomÃ©: Hija de HerodÃ­as", "Sarai: Nombre anterior de Sara", "Sara: Esposa de Abraham", "SÃ©fora: Esposa de MoisÃ©s",
+"Sifra: Una de las parteras hebreas", "SÃ­ntique: Creyente de Filipos exhortada a vivir en unidad", "Susana: Seguidora y servidora de JesÃºs", "Tabita: Dorcas", "Trifena: Creyente trabajadora en el SeÃ±or",
+"Sulamita: Amada descrita en el Cantar de los Cantares", "Tahpenes: Reina de Egipto", "Tamar: Nuera de JudÃ¡", "Tamar: Hija del rey David", "Tirsa: Una de las hijas de Zelofehad", "Vasti: Esposa del rey Asuero",
+"Viuda de NaÃ­n: RecibiÃ³ la misericordia de JesÃºs", "Viuda de Sarepta: Alimentada en tiempos de ElÃ­as", "Viuda pobre del templo: Dio todo lo que tenÃ­a", "Zibia: Madre del rey JoÃ¡s", "Zilpa: Sierva de LÃ­a"
 })
 
 pueblos = sorted({
@@ -733,140 +683,140 @@ pueblos = sorted({
 })
 
 lugares = sorted({
-    "Antioquia", "Ararat", "Atenas", "Babilonia", "Beerseba", "Belén", "Betania", "Betel", "Betesda",
-    "Cafarnaum", "Caldea", "Cana", "Canaán", "Carmelo", "Cesarea", "Cesarea de Filipo", "Corinto",
-    "Creta", "Damasco", "Decápolis", "Derbe", "Egipto", "Emaús", "Esmirna", "Filipos", "Galilea", "Gaza",
-    "Getsemaní", "Gólgota", "Gosén", "Hebrón", "Horeb", "Jericó", "Jerusalén", "Jope", "Jordán",
-    "Laodicea", "Listra", "Macedonia", "Magdala", "Madián", "Mileto", "Monte de los Olivos", "Nazaret", "Nínive",
-    "Patmos", "Penuel", "Persia", "Pisidia", "Ponto", "Ramá", "Ramesés", "Samaria", "Sardis",
-    "Sarepta", "Siquem", "Silo", "Sinaí", "Sión", "Siria", "Susa", "Tarsis", "Tiatira", "Tiro",
+    "Antioquia", "Ararat", "Atenas", "Babilonia", "Beerseba", "BelÃ©n", "Betania", "Betel", "Betesda",
+    "Cafarnaum", "Caldea", "Cana", "CanaÃ¡n", "Carmelo", "Cesarea", "Cesarea de Filipo", "Corinto",
+    "Creta", "Damasco", "DecÃ¡polis", "Derbe", "Egipto", "EmaÃºs", "Esmirna", "Filipos", "Galilea", "Gaza",
+    "GetsemanÃ­", "GÃ³lgota", "GosÃ©n", "HebrÃ³n", "Horeb", "JericÃ³", "JerusalÃ©n", "Jope", "JordÃ¡n",
+    "Laodicea", "Listra", "Macedonia", "Magdala", "MadiÃ¡n", "Mileto", "Monte de los Olivos", "Nazaret", "NÃ­nive",
+    "Patmos", "Penuel", "Persia", "Pisidia", "Ponto", "RamÃ¡", "RamesÃ©s", "Samaria", "Sardis",
+    "Sarepta", "Siquem", "Silo", "SinaÃ­", "SiÃ³n", "Siria", "Susa", "Tarsis", "Tiatira", "Tiro",
     "Troas", "Ur", "Zoar",
 })
 
 religiones_mundo = sorted({
     "Cristianismo: Fe basada en Jesucristo y el evangelio",
-    "Catolicismo: Rama principal del cristianismo con centro histórico en Roma",
+    "Catolicismo: Rama principal del cristianismo con centro histÃ³rico en Roma",
     "Protestantismo: Conjunto de iglesias cristianas surgidas de la Reforma",
-    "Ortodoxia oriental: Tradición cristiana histórica de las iglesias ortodoxas",
-    "Evangelicalismo: Corriente cristiana centrada en conversión, Biblia y evangelización",
-    "Pentecostalismo: Movimiento cristiano que enfatiza la obra del Espíritu Santo",
-    "Islam: Religión monoteísta fundada en las enseñanzas de Mahoma",
+    "Ortodoxia oriental: TradiciÃ³n cristiana histÃ³rica de las iglesias ortodoxas",
+    "Evangelicalismo: Corriente cristiana centrada en conversiÃ³n, Biblia y evangelizaciÃ³n",
+    "Pentecostalismo: Movimiento cristiano que enfatiza la obra del EspÃ­ritu Santo",
+    "Islam: ReligiÃ³n monoteÃ­sta fundada en las enseÃ±anzas de Mahoma",
     "Sunismo: Rama mayoritaria del islam",
-    "Chiismo: Rama principal del islam vinculada a la sucesión de Alí",
-    "Sufismo: Corriente mística dentro del islam",
-    "Judaísmo: Religión del pueblo judío basada en la Torá",
-    "Judaísmo ortodoxo: Corriente judía tradicional de estricta observancia",
-    "Judaísmo conservador: Corriente judía de continuidad y adaptación",
-    "Judaísmo reformista: Corriente judía de enfoque más liberal",
+    "Chiismo: Rama principal del islam vinculada a la sucesiÃ³n de AlÃ­",
+    "Sufismo: Corriente mÃ­stica dentro del islam",
+    "JudaÃ­smo: ReligiÃ³n del pueblo judÃ­o basada en la TorÃ¡",
+    "JudaÃ­smo ortodoxo: Corriente judÃ­a tradicional de estricta observancia",
+    "JudaÃ­smo conservador: Corriente judÃ­a de continuidad y adaptaciÃ³n",
+    "JudaÃ­smo reformista: Corriente judÃ­a de enfoque mÃ¡s liberal",
     "Hinduismo: Conjunto de tradiciones religiosas originadas en la India",
-    "Vaishnavismo: Corriente hindú centrada en Vishnu",
-    "Shaivismo: Corriente hindú centrada en Shiva",
-    "Shaktismo: Corriente hindú centrada en la diosa Shakti",
-    "Budismo: Tradición fundada a partir de las enseñanzas de Buda",
+    "Vaishnavismo: Corriente hindÃº centrada en Vishnu",
+    "Shaivismo: Corriente hindÃº centrada en Shiva",
+    "Shaktismo: Corriente hindÃº centrada en la diosa Shakti",
+    "Budismo: TradiciÃ³n fundada a partir de las enseÃ±anzas de Buda",
     "Budismo theravada: Rama budista extendida en el sur de Asia",
     "Budismo mahayana: Rama budista extendida en Asia oriental",
-    "Budismo vajrayana: Forma budista asociada al Tíbet y regiones cercanas",
-    "Sijismo: Religión monoteísta originada en el Punjab",
-    "Jainismo: Tradición india centrada en la no violencia y la disciplina",
-    "Zoroastrismo: Antigua religión persa vinculada a Zaratustra",
-    "Bahaismo: Religión monoteísta nacida en Persia con vocación universal",
-    "Confucianismo: Tradición filosófica y ética de origen chino",
-    "Taoismo: Tradición religiosa y filosófica china vinculada al Tao",
-    "Sintoismo: Religión tradicional de Japón",
-    "Animismo: Creencia en espíritus asociados a la naturaleza y los seres",
-    "Tradiciones chinas: Conjunto de prácticas religiosas populares de China",
+    "Budismo vajrayana: Forma budista asociada al TÃ­bet y regiones cercanas",
+    "Sijismo: ReligiÃ³n monoteÃ­sta originada en el Punjab",
+    "Jainismo: TradiciÃ³n india centrada en la no violencia y la disciplina",
+    "Zoroastrismo: Antigua religiÃ³n persa vinculada a Zaratustra",
+    "Bahaismo: ReligiÃ³n monoteÃ­sta nacida en Persia con vocaciÃ³n universal",
+    "Confucianismo: TradiciÃ³n filosÃ³fica y Ã©tica de origen chino",
+    "Taoismo: TradiciÃ³n religiosa y filosÃ³fica china vinculada al Tao",
+    "Sintoismo: ReligiÃ³n tradicional de JapÃ³n",
+    "Animismo: Creencia en espÃ­ritus asociados a la naturaleza y los seres",
+    "Tradiciones chinas: Conjunto de prÃ¡cticas religiosas populares de China",
     "Religiones africanas tradicionales: Sistemas religiosos aut?ctonos de ?frica",
-    "Religiones indígenas americanas: Tradiciones espirituales de pueblos originarios de América",
-    "Religiones indígenas australianas: Tradiciones espirituales de pueblos aborígenes",
-    "Caodaísmo: Religión vietnamita de carácter sincretista",
-    "Tenrikyo: Movimiento religioso japonés de origen moderno",
-    "Espiritismo: Corriente religiosa basada en comunicación con espíritus",
+    "Religiones indÃ­genas americanas: Tradiciones espirituales de pueblos originarios de AmÃ©rica",
+    "Religiones indÃ­genas australianas: Tradiciones espirituales de pueblos aborÃ­genes",
+    "CaodaÃ­smo: ReligiÃ³n vietnamita de carÃ¡cter sincretista",
+    "Tenrikyo: Movimiento religioso japonÃ©s de origen moderno",
+    "Espiritismo: Corriente religiosa basada en comunicaciÃ³n con espÃ­ritus",
     "Rastafarismo: Movimiento religioso surgido en Jamaica",
     "Unitarios universalistas: Movimiento religioso de enfoque pluralista",
-    "Mormonismo: Tradición cristiana vinculada a La Iglesia de Jesucristo de los Santos de los Últimos Días",
-    "Testigos de Jehová: Movimiento religioso de interpretación bíblica particular",
+    "Mormonismo: TradiciÃ³n cristiana vinculada a La Iglesia de Jesucristo de los Santos de los Ãšltimos DÃ­as",
+    "Testigos de JehovÃ¡: Movimiento religioso de interpretaciÃ³n bÃ­blica particular",
     "Ciencia Cristiana: Movimiento religioso fundado por Mary Baker Eddy",
-    "Nueva Era: Conjunto de espiritualidades modernas de carácter sincretista",
-    "Neopaganismo: Recuperación moderna de tradiciones religiosas precristianas",
-    "Wicca: Tradición neopagana de carácter ritual y dual",
-    "Ateismo: Postura de negación de la existencia de deidades",
+    "Nueva Era: Conjunto de espiritualidades modernas de carÃ¡cter sincretista",
+    "Neopaganismo: RecuperaciÃ³n moderna de tradiciones religiosas precristianas",
+    "Wicca: TradiciÃ³n neopagana de carÃ¡cter ritual y dual",
+    "Ateismo: Postura de negaciÃ³n de la existencia de deidades",
     "Agnosticismo: Postura sobre la imposibilidad o duda de conocer a Dios",
-    "Humanismo secular: Visión ética no religiosa centrada en el ser humano",
-    "Deismo: Creencia en un creador sin revelación religiosa particular",
-    "Sin afiliación religiosa: Personas que no se identifican con una religión concreta",
+    "Humanismo secular: VisiÃ³n Ã©tica no religiosa centrada en el ser humano",
+    "Deismo: Creencia en un creador sin revelaciÃ³n religiosa particular",
+    "Sin afiliaciÃ³n religiosa: Personas que no se identifican con una religiÃ³n concreta",
 })
 
 grupos_biblicos = sorted({
     "Adoradores: Personas entregadas a alabar y honrar a Dios",
     "Agarenos: Pueblo mencionado en conflictos del Antiguo Testamento",
-    "Amos de casa: Responsables del hogar en distintos relatos bíblicos",
-    "Arqueros: Guerreros armados con arco en batallas bíblicas",
+    "Amos de casa: Responsables del hogar en distintos relatos bÃ­blicos",
+    "Arqueros: Guerreros armados con arco en batallas bÃ­blicas",
     "Asambleas: Reuniones del pueblo para escuchar la Ley o adorar",
     "Cantores: Ministros dedicados al canto en el templo",
     "Carceleros: Encargados de prisiones, como en el libro de Hechos",
     "Centuriones: Oficiales romanos mencionados varias veces en el Nuevo Testamento",
-    "Concilios: Reuniones de líderes para tratar asuntos del pueblo o de la iglesia",
-    "Consejeros: Personas que orientaban a reyes o líderes",
+    "Concilios: Reuniones de lÃ­deres para tratar asuntos del pueblo o de la iglesia",
+    "Consejeros: Personas que orientaban a reyes o lÃ­deres",
     "Constructores: Obreros implicados en murallas, ciudades o el templo",
-    "Cortesanos: Servidores de palacio en reinos bíblicos",
+    "Cortesanos: Servidores de palacio en reinos bÃ­blicos",
     "Creyentes: Personas que han respondido con fe al mensaje de Dios",
     "Desterrados: Exiliados fuera de su tierra por juicio o guerra",
     "Doce tribus: Conjunto del pueblo de Israel descendiente de Jacob",
-    "Doctores de la Ley: Expertos en la interpretación de la Ley mosaica",
-    "Endemoniados: Personas oprimidas por espíritus malignos en los Evangelios",
-    "Enfermos: Grupo frecuentemente atendido con compasión y milagros",
-    "Exiliados: Pueblo llevado cautivo fuera de Israel y Judá",
+    "Doctores de la Ley: Expertos en la interpretaciÃ³n de la Ley mosaica",
+    "Endemoniados: Personas oprimidas por espÃ­ritus malignos en los Evangelios",
+    "Enfermos: Grupo frecuentemente atendido con compasiÃ³n y milagros",
+    "Exiliados: Pueblo llevado cautivo fuera de Israel y JudÃ¡",
     "Extranjeros: Personas de otras naciones presentes entre el pueblo",
     "Familias sacerdotales: Linajes apartados para el servicio del templo",
     "Guardianes de la puerta: Responsables del acceso y orden en el templo",
-    "Hijas de Sión: Expresión poética para referirse al pueblo de Jerusalén",
-    "Huérfanos: Grupo vulnerable protegido en la Ley y los profetas",
-    "Jefes de millares: Líderes militares y administrativos de Israel",
-    "Jóvenes: Grupo mencionado en exhortaciones, guerras y discipulado",
-    "Jueces: Líderes levantados por Dios para gobernar y liberar a Israel",
-    "Magos de Oriente: Sabios que visitaron a Jesús tras su nacimiento",
-    "Mercaderes: Comerciantes presentes en ciudades y rutas bíblicas",
-    "Mujeres estériles: Mujeres que vivieron la espera de un hijo con fe y dolor",
+    "Hijas de SiÃ³n: ExpresiÃ³n poÃ©tica para referirse al pueblo de JerusalÃ©n",
+    "HuÃ©rfanos: Grupo vulnerable protegido en la Ley y los profetas",
+    "Jefes de millares: LÃ­deres militares y administrativos de Israel",
+    "JÃ³venes: Grupo mencionado en exhortaciones, guerras y discipulado",
+    "Jueces: LÃ­deres levantados por Dios para gobernar y liberar a Israel",
+    "Magos de Oriente: Sabios que visitaron a JesÃºs tras su nacimiento",
+    "Mercaderes: Comerciantes presentes en ciudades y rutas bÃ­blicas",
+    "Mujeres estÃ©riles: Mujeres que vivieron la espera de un hijo con fe y dolor",
     "Murmuradores: Grupo que protesta contra Dios o sus siervos",
     "Nazareos: Personas consagradas a Dios mediante voto especial",
     "Nobles: Miembros influyentes del pueblo o de la corte",
-    "Obreros: Trabajadores del campo, la construcción o la mies espiritual",
+    "Obreros: Trabajadores del campo, la construcciÃ³n o la mies espiritual",
     "Ovejas perdidas: Imagen del pueblo descarriado necesitado de pastor",
-    "Pastoreadores: Encargados de cuidar rebaños en la vida cotidiana bíblica",
-    "Pecadores: Término frecuente para quienes necesitan arrepentimiento y gracia",
+    "Pastoreadores: Encargados de cuidar rebaÃ±os en la vida cotidiana bÃ­blica",
+    "Pecadores: TÃ©rmino frecuente para quienes necesitan arrepentimiento y gracia",
     "Peregrinos: Personas de paso o en viaje hacia lugares santos",
-    "Pescadores: Oficio común en Galilea y entre varios discípulos",
+    "Pescadores: Oficio comÃºn en Galilea y entre varios discÃ­pulos",
     "Porteros: Servidores asignados al cuidado de entradas y espacios sagrados",
     "Presos: Personas encarceladas por delitos, injusticia o causa del Evangelio",
-    "Prosélitos: Gentiles incorporados a la fe judía",
+    "ProsÃ©litos: Gentiles incorporados a la fe judÃ­a",
     "Recaudadores: Funcionarios que cobraban tributos e impuestos",
     "Rechazados: Personas marginadas social o religiosamente",
-    "Reyes de la tierra: Gobernantes de naciones en pasajes históricos y proféticos",
+    "Reyes de la tierra: Gobernantes de naciones en pasajes histÃ³ricos y profÃ©ticos",
     "Remanente: Grupo fiel preservado por Dios en tiempos de crisis",
-    "Samaritanos piadosos: Referencia a quienes actúan con misericordia inesperada",
+    "Samaritanos piadosos: Referencia a quienes actÃºan con misericordia inesperada",
     "Siervas: Mujeres al servicio de hogares o familias",
     "Soldados: Militares presentes en historias del Antiguo y Nuevo Testamento",
     "Trabajadores de la mies: Imagen de quienes sirven en la obra de Dios",
-    "Fariseos: Grupo religioso influyente en tiempos de Jesús",
-    "Saduceos: Grupo sacerdotal y político del judaísmo",
-    "Escribas: Intérpretes y maestros de la Ley",
+    "Fariseos: Grupo religioso influyente en tiempos de JesÃºs",
+    "Saduceos: Grupo sacerdotal y polÃ­tico del judaÃ­smo",
+    "Escribas: IntÃ©rpretes y maestros de la Ley",
     "Herodianos: Partidarios de la casa de Herodes",
-    "Celotes: Movimiento judío de fuerte fervor nacional",
-    "Esenios: Comunidad judía asociada a vida apartada",
+    "Celotes: Movimiento judÃ­o de fuerte fervor nacional",
+    "Esenios: Comunidad judÃ­a asociada a vida apartada",
     "Publicanos: Cobradores de impuestos en tiempos de Roma",
     "Levitas: Tribu dedicada al servicio del templo",
     "Sacerdotes: Encargados del culto en Israel",
-    "Sumos sacerdotes: Máxima autoridad sacerdotal",
-    "Sanedrin: Consejo religioso judío",
-    "Discípulos: Seguidores y aprendices de Jesús",
-    "Apóstoles: Enviados escogidos por Jesús",
+    "Sumos sacerdotes: MÃ¡xima autoridad sacerdotal",
+    "Sanedrin: Consejo religioso judÃ­o",
+    "DiscÃ­pulos: Seguidores y aprendices de JesÃºs",
+    "ApÃ³stoles: Enviados escogidos por JesÃºs",
     "Profetas: Portavoces del mensaje de Dios",
-    "Gentiles: Pueblos no judíos",
-    "Judios: Pueblo del pacto en tiempos bíblicos",
-    "Helenistas: Judíos de lengua griega mencionados en Hechos",
+    "Gentiles: Pueblos no judÃ­os",
+    "Judios: Pueblo del pacto en tiempos bÃ­blicos",
+    "Helenistas: JudÃ­os de lengua griega mencionados en Hechos",
     "Viudas: Grupo vulnerable atendido por la iglesia primitiva",
-    "Diáconos: Servidores escogidos en la iglesia primitiva",
-    "Ancianos: Líderes espirituales del pueblo o de la iglesia",
+    "DiÃ¡conos: Servidores escogidos en la iglesia primitiva",
+    "Ancianos: LÃ­deres espirituales del pueblo o de la iglesia",
 })
 
 
@@ -1009,9 +959,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         "en": "_Generating..._",
     }.get(lang_code, "_Generating..._")
     repeating_text = {
-        "es": "_Repitiendo última consulta..._",
-        "ca": "_Repetint l'última consulta..._",
-        "fr": "_Répétition de la dernière requête..._",
+        "es": "_Repitiendo Ãºltima consulta..._",
+        "ca": "_Repetint l'Ãºltima consulta..._",
+        "fr": "_RÃ©pÃ©tition de la derniÃ¨re requÃªte..._",
         "en": "_Repeating last query..._",
     }.get(lang_code, "_Repeating last query..._")
     asking_text = {
@@ -1033,7 +983,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         "en": "Active filter: topic suggestions",
     }.get(lang_code, "Active filter: topic suggestions")
     texto_filtro_pasaje = {
-        "es": "Filtro activo: pasaje bíblico",
+        "es": "Filtro activo: pasaje bÃ­blico",
         "ca": "Filtre actiu: passatge biblic",
         "fr": "Filtre actif : passage biblique",
         "en": "Active filter: Bible passage",
@@ -1045,9 +995,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         "en": "Active filter",
     }.get(lang_code, "Active filter")
     resumen_vacio = {
-        "es": "sin selección",
-        "ca": "sense selecció",
-        "fr": "sans sélection",
+        "es": "sin selecciÃ³n",
+        "ca": "sense selecciÃ³",
+        "fr": "sans sÃ©lection",
         "en": "no selection",
     }.get(lang_code, "no selection")
     resumen_prefijo = {
@@ -1131,87 +1081,87 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     study_type_descriptions = {
         "Ninguno": "",
         "Solo versiculos": {
-            "es": "Muestra solo el texto bíblico del pasaje, sin análisis ni aplicación.",
-            "ca": "Mostra només el text bíblic del passatge, sense anàlisi ni aplicació.",
+            "es": "Muestra solo el texto bÃ­blico del pasaje, sin anÃ¡lisis ni aplicaciÃ³n.",
+            "ca": "Mostra nomÃ©s el text bÃ­blic del passatge, sense anÃ lisi ni aplicaciÃ³.",
             "fr": "Affiche uniquement le texte biblique du passage, sans analyse ni application.",
             "en": "Shows only the Bible text of the passage, with no analysis or application.",
         }.get(lang_code, "Shows only the Bible text of the passage, with no analysis or application."),
         "Estudio informativo": {
-            "es": "Explica el pasaje con contexto, significado principal y enseñanzas clave.",
+            "es": "Explica el pasaje con contexto, significado principal y enseÃ±anzas clave.",
             "ca": "Explica el passatge amb context, significat principal i ensenyaments clau.",
             "fr": "Explique le passage avec son contexte, son sens principal et ses enseignements clefs.",
             "en": "Explains the passage with context, main meaning, and key teachings.",
         }.get(lang_code, "Explains the passage with context, main meaning, and key teachings."),
         "Estudio versiculos": {
-            "es": "Analiza versículo por versículo para destacar ideas, doctrina y aplicación.",
-            "ca": "Analitza versicle per versicle per destacar idees, doctrina i aplicació.",
+            "es": "Analiza versÃ­culo por versÃ­culo para destacar ideas, doctrina y aplicaciÃ³n.",
+            "ca": "Analitza versicle per versicle per destacar idees, doctrina i aplicaciÃ³.",
             "fr": "Analyse verset par verset pour souligner idees, doctrine et application.",
             "en": "Analyzes verse by verse to highlight ideas, doctrine, and application.",
         }.get(lang_code, "Analyzes verse by verse to highlight ideas, doctrine, and application."),
         "Reflexion biblica": {
-            "es": "Ofrece una reflexión espiritual breve para meditar y orar.",
-            "ca": "Ofereix una reflexió espiritual breu per meditar i pregar.",
-            "fr": "Propose une brève réflexion spirituelle pour méditer et prier.",
+            "es": "Ofrece una reflexiÃ³n espiritual breve para meditar y orar.",
+            "ca": "Ofereix una reflexiÃ³ espiritual breu per meditar i pregar.",
+            "fr": "Propose une brÃ¨ve rÃ©flexion spirituelle pour mÃ©diter et prier.",
             "en": "Offers a short spiritual reflection for meditation and prayer.",
         }.get(lang_code, "Offers a short spiritual reflection for meditation and prayer."),
         "Aplicacion practica": {
             "es": "Conecta el pasaje con decisiones y acciones concretas para hoy.",
             "ca": "Connecta el passatge amb decisions i accions concretes per avui.",
-            "fr": "Relie le passage à des décisions et actions concrètes pour aujourd'hui.",
+            "fr": "Relie le passage Ã  des dÃ©cisions et actions concrÃ¨tes pour aujourd'hui.",
             "en": "Connects the passage to concrete decisions and actions for today.",
         }.get(lang_code, "Connects the passage to concrete decisions and actions for today."),
         "Bosquejo para predicar": {
-            "es": "Genera un bosquejo de predicación con puntos, texto base y cierre.",
-            "ca": "Genera un esquema de predicació amb punts, text base i tancament.",
-            "fr": "Génère un plan de prédication avec points, texte de base et conclusion.",
+            "es": "Genera un bosquejo de predicaciÃ³n con puntos, texto base y cierre.",
+            "ca": "Genera un esquema de predicaciÃ³ amb punts, text base i tancament.",
+            "fr": "GÃ©nÃ¨re un plan de prÃ©dication avec points, texte de base et conclusion.",
             "en": "Generates a preaching outline with points, base text, and conclusion.",
         }.get(lang_code, "Generates a preaching outline with points, base text, and conclusion."),
         "Devocional breve": {
-            "es": "Crea un devocional corto con verdad central y aplicación personal.",
-            "ca": "Crea un devocional curt amb veritat central i aplicació personal.",
-            "fr": "Crée un court dévotionnel avec vérité centrale et application personnelle.",
+            "es": "Crea un devocional corto con verdad central y aplicaciÃ³n personal.",
+            "ca": "Crea un devocional curt amb veritat central i aplicaciÃ³ personal.",
+            "fr": "CrÃ©e un court dÃ©votionnel avec vÃ©ritÃ© centrale et application personnelle.",
             "en": "Creates a short devotional with a central truth and personal application.",
         }.get(lang_code, "Creates a short devotional with a central truth and personal application."),
         "Analisis exegetico": {
-            "es": "Estudia el sentido original del texto con enfoque histórico, literario y teológico.",
-            "ca": "Estudia el sentit original del text amb enfocament històric, literari i teològic.",
-            "fr": "Étudie le sens original du texte avec un angle historique, littéraire et théologique.",
+            "es": "Estudia el sentido original del texto con enfoque histÃ³rico, literario y teolÃ³gico.",
+            "ca": "Estudia el sentit original del text amb enfocament histÃ²ric, literari i teolÃ²gic.",
+            "fr": "Ã‰tudie le sens original du texte avec un angle historique, littÃ©raire et thÃ©ologique.",
             "en": "Studies the original meaning of the text with historical, literary, and theological focus.",
         }.get(lang_code, "Studies the original meaning of the text with historical, literary, and theological focus."),
         "Analisis hermeneutico": {
             "es": "Interpreta el texto desde su contexto y lo conecta correctamente con la actualidad.",
             "ca": "Interpreta el text des del seu context i el connecta correctament amb l'actualitat.",
-            "fr": "Interprète le texte depuis son contexte et le relie correctement à aujourd'hui.",
+            "fr": "InterprÃ¨te le texte depuis son contexte et le relie correctement Ã  aujourd'hui.",
             "en": "Interprets the text from its context and connects it properly to today.",
         }.get(lang_code, "Interprets the text from its context and connects it properly to today."),
         "Analisis literario": {
-            "es": "Examina estructura, género, recursos literarios y énfasis del autor.",
-            "ca": "Examina estructura, gènere, recursos literaris i èmfasi de l'autor.",
-            "fr": "Examine la structure, le genre, les ressources littéraires et l'emphase de l'auteur.",
+            "es": "Examina estructura, gÃ©nero, recursos literarios y Ã©nfasis del autor.",
+            "ca": "Examina estructura, gÃ¨nere, recursos literaris i Ã¨mfasi de l'autor.",
+            "fr": "Examine la structure, le genre, les ressources littÃ©raires et l'emphase de l'auteur.",
             "en": "Examines structure, genre, literary devices, and author emphasis.",
         }.get(lang_code, "Examines structure, genre, literary devices, and author emphasis."),
         "Analisis geografico politico": {
-            "es": "Analiza cómo geografía, poder político y contexto social influyen en el pasaje.",
-            "ca": "Analitza com geografia, poder polític i context social influeixen en el passatge.",
-            "fr": "Analyse comment la géographie, le pouvoir politique et le contexte social influencent le passage.",
+            "es": "Analiza cÃ³mo geografÃ­a, poder polÃ­tico y contexto social influyen en el pasaje.",
+            "ca": "Analitza com geografia, poder polÃ­tic i context social influeixen en el passatge.",
+            "fr": "Analyse comment la gÃ©ographie, le pouvoir politique et le contexte social influencent le passage.",
             "en": "Analyzes how geography, political power, and social context shape the passage.",
         }.get(lang_code, "Analyzes how geography, political power, and social context shape the passage."),
         "Analisis estructura social": {
-            "es": "Estudia jerarquías, honor/vergüenza, pureza ritual y relaciones sociales bíblicas.",
-            "ca": "Estudia jerarquies, honor/vergonya, puresa ritual i relacions socials bíbliques.",
-            "fr": "Étudie les hiérarchies, l'honneur/honte, la pureté rituelle et les relations sociales bibliques.",
+            "es": "Estudia jerarquÃ­as, honor/vergÃ¼enza, pureza ritual y relaciones sociales bÃ­blicas.",
+            "ca": "Estudia jerarquies, honor/vergonya, puresa ritual i relacions socials bÃ­bliques.",
+            "fr": "Ã‰tudie les hiÃ©rarchies, l'honneur/honte, la puretÃ© rituelle et les relations sociales bibliques.",
             "en": "Studies hierarchies, honor/shame, ritual purity, and biblical social relations.",
         }.get(lang_code, "Studies hierarchies, honor/shame, ritual purity, and biblical social relations."),
         "Analisis vida cotidiana": {
             "es": "Explica costumbres familiares, hospitalidad y vida diaria para entender mejor el texto.",
-            "ca": "Explica costums familiars, hospitalitat i vida diària per entendre millor el text.",
-            "fr": "Explique les coutumes familiales, l'hospitalité et la vie quotidienne pour mieux comprendre le texte.",
+            "ca": "Explica costums familiars, hospitalitat i vida diÃ ria per entendre millor el text.",
+            "fr": "Explique les coutumes familiales, l'hospitalitÃ© et la vie quotidienne pour mieux comprendre le texte.",
             "en": "Explains family customs, hospitality, and daily life to better understand the text.",
         }.get(lang_code, "Explains family customs, hospitality, and daily life to better understand the text."),
         "Analisis contexto": {
-            "es": "Profundiza en contexto histórico, literario y cultural antes de aplicar el pasaje.",
-            "ca": "Aprofundeix en context històric, literari i cultural abans d'aplicar el passatge.",
-            "fr": "Approfondit le contexte historique, littéraire et culturel avant d'appliquer le passage.",
+            "es": "Profundiza en contexto histÃ³rico, literario y cultural antes de aplicar el pasaje.",
+            "ca": "Aprofundeix en context histÃ²ric, literari i cultural abans d'aplicar el passatge.",
+            "fr": "Approfondit le contexte historique, littÃ©raire et culturel avant d'appliquer le passage.",
             "en": "Deepens historical, literary, and cultural context before applying the passage.",
         }.get(lang_code, "Deepens historical, literary, and cultural context before applying the passage."),
     }
@@ -1363,57 +1313,57 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("sierva de ", "serventa de "),
             ("discipulo de ", "deixeble de "),
             ("discipula de ", "deixebla de "),
-            ("compañero del apostol Pablo", "company de l'apostol Pau"),
+            ("compaÃ±ero del apostol Pablo", "company de l'apostol Pau"),
             ("colaborador del apostol Pablo", "col.laborador de l'apostol Pau"),
             ("colaborador de Pablo", "col.laborador de Pau"),
             ("el padre de la fe", "el pare de la fe"),
-            ("judío elocuente y poderoso en las Escrituras", "jueu eloqüent i poderós en les Escriptures"),
+            ("judÃ­o elocuente y poderoso en las Escrituras", "jueu eloqÃ¼ent i poderÃ³s en les Escriptures"),
             ("cantor y salmista", "cantor i salmista"),
-            ("nombre de varios personajes bíblicos", "nom de diversos personatges bíblics"),
-            ("el ciego que recibió la vista", "el cec que va recuperar la vista"),
-            ("uno de los doce espías", "un dels dotze espies"),
+            ("nombre de varios personajes bÃ­blicos", "nom de diversos personatges bÃ­blics"),
+            ("el ciego que recibiÃ³ la vista", "el cec que va recuperar la vista"),
+            ("uno de los doce espÃ­as", "un dels dotze espies"),
             ("principal de la sinagoga", "cap de la sinagoga"),
-            ("siervo etíope que ayudó a Jeremías", "servent etíop que va ajudar Jeremies"),
+            ("siervo etÃ­ope que ayudÃ³ a JeremÃ­as", "servent etÃ­op que va ajudar Jeremies"),
             ("libertador de Israel", "alliberador d'Israel"),
-            ("séptimo desde Adán", "setè des d'Adam"),
-            ("nieto de Aarón", "net d'Aaron"),
+            ("sÃ©ptimo desde AdÃ¡n", "setÃ¨ des d'Adam"),
+            ("nieto de AarÃ³n", "net d'Aaron"),
             ("maestro de la Ley entre los fariseos", "mestre de la Llei entre els fariseus"),
             ("sabio y cantor", "savi i cantor"),
             ("descendiente de Sem", "descendent de Sem"),
             ("gitita leal a David", "guitita fidel a David"),
-            ("hombre de oración", "home d'oració"),
-            ("general del ejército de David", "general de l'exèrcit de David"),
+            ("hombre de oraciÃ³n", "home d'oraciÃ³"),
+            ("general del ejÃ©rcito de David", "general de l'exÃ¨rcit de David"),
             ("sobrino de David", "nebot de David"),
-            ("nombre de varios reyes bíblicos", "nom de diversos reis bíblics"),
-            ("discípulo secreto que dio su sepulcro a Jesús", "deixeble secret que va cedir el seu sepulcre a Jesús"),
+            ("nombre de varios reyes bÃ­blicos", "nom de diversos reis bÃ­blics"),
+            ("discÃ­pulo secreto que dio su sepulcro a JesÃºs", "deixeble secret que va cedir el seu sepulcre a JesÃºs"),
             ("suegro de Jacob", "sogre de Jacob"),
             ("hombre longevo del Antiguo Testamento", "home longeu de l'Antic Testament"),
-            ("primo de Ester", "cosí d'Ester"),
+            ("primo de Ester", "cosÃ­ d'Ester"),
             ("elegido entre los doce", "escollit entre els dotze"),
-            ("porcio festo fue el procurador romano de Judea", "Porci Fest va ser el procurador romà de Judea"),
+            ("porcio festo fue el procurador romano de Judea", "Porci Fest va ser el procurador romÃ  de Judea"),
             ("profeta en tiempos de Acab", "profeta en temps d'Acab"),
-            ("reconstruyó los muros de Jerusalén", "va reconstruir les muralles de Jerusalem"),
-            ("fariseo, principal entre los judíos", "fariseu, principal entre els jueus"),
+            ("reconstruyÃ³ los muros de JerusalÃ©n", "va reconstruir les muralles de Jerusalem"),
+            ("fariseo, principal entre los judÃ­os", "fariseu, principal entre els jueus"),
             ("abuelo de David", "avi de David"),
             ("saulo de Tarso", "Saule de Tars"),
             ("uno de los siete servidores", "un dels set servidors"),
             ("variante de Silas en algunas traducciones", "variant de Silas en algunes traduccions"),
-            ("acompañante del apóstol Pablo", "company de l'apòstol Pau"),
-            ("llevó la cruz de Jesús", "va portar la creu de Jesús"),
-            ("anciano que vio al Mesías", "ancià que va veure el Messies"),
+            ("acompaÃ±ante del apÃ³stol Pablo", "company de l'apÃ²stol Pau"),
+            ("llevÃ³ la cruz de JesÃºs", "va portar la creu de JesÃºs"),
+            ("anciano que vio al MesÃ­as", "anciÃ  que va veure el Messies"),
             ("nombre de varios personajes pos-exilio", "nom de diversos personatges del postexili"),
-            ("el discípulo incrédulo", "el deixeble incrèdul"),
+            ("el discÃ­pulo incrÃ©dulo", "el deixeble incrÃ¨dul"),
             ("nombre de varios levitas", "nom de diversos levites"),
             ("creyente mencionada por Pablo", "creient esmentada per Pau"),
             ("creyente mencionado por Pablo", "creient esmentat per Pau"),
-            ("gobernador romano", "governador romà"),
-            ("centurion romano", "centurió romà"),
+            ("gobernador romano", "governador romÃ "),
+            ("centurion romano", "centuriÃ³ romÃ "),
             ("recaudador de impuestos", "recaptador d'impostos"),
             ("jefe de publicanos", "cap de publicans"),
-            ("descendiente de Adán", "descendent d'Adam"),
-            ("Descendiente de Adán", "Descendent d'Adam"),
-            ("el apóstol", "l'apòstol"),
-            ("El apóstol", "L'apòstol"),
+            ("descendiente de AdÃ¡n", "descendent d'Adam"),
+            ("Descendiente de AdÃ¡n", "Descendent d'Adam"),
+            ("el apÃ³stol", "l'apÃ²stol"),
+            ("El apÃ³stol", "L'apÃ²stol"),
             ("el bautista", "el Baptista"),
             ("El bautista", "El Baptista"),
             ("el de los diez mandamientos", "el dels deu manaments"),
@@ -1426,8 +1376,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("El evangelista", "L'evangelista"),
             ("el profeta", "profeta"),
             ("El profeta", "Profeta"),
-            ("gobernador de Judá", "governador de Judà"),
-            ("Gobernador de Judá", "Governador de Judà"),
+            ("gobernador de JudÃ¡", "governador de JudÃ "),
+            ("Gobernador de JudÃ¡", "Governador de JudÃ "),
             ("principal de la sinagoga", "cap de la sinagoga"),
             ("Principal de la sinagoga", "Cap de la sinagoga"),
             ("sobrino de Abraham", "nebot d'Abraham"),
@@ -1436,22 +1386,22 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("hombre temeroso de Dios", "home temorenc de Deu"),
             ("juez de Israel", "jutge d'Israel"),
             ("rey David", "rei David"),
-            ("rey Salomon", "rei Salomó"),
+            ("rey Salomon", "rei SalomÃ³"),
             ("profeta", "profeta"),
             ("evangelista", "evangelista"),
-            ("apostol", "apòstol"),
-            ("seguidora de Jesus", "deixebla de Jesús"),
-            ("seguidor de Jesus", "deixeble de Jesús"),
-            ("madre de Jesus", "mare de Jesús"),
+            ("apostol", "apÃ²stol"),
+            ("seguidora de Jesus", "deixebla de JesÃºs"),
+            ("seguidor de Jesus", "deixeble de JesÃºs"),
+            ("madre de Jesus", "mare de JesÃºs"),
             ("madre del profeta Samuel", "mare del profeta Samuel"),
             ("madre de Juan el bautista", "mare de Joan Baptista"),
             ("madre de Timoteo", "mare de Timoteu"),
-            ("madre de Moises", "mare de Moisès"),
+            ("madre de Moises", "mare de MoisÃ¨s"),
             ("esposa del rey David", "dona del rei David"),
             ("esposa del rey Acab", "dona del rei Acab"),
             ("esposa del rey Asuero", "dona del rei Assuer"),
             ("esposa del rey Ezequias", "dona del rei Ezequies"),
-            ("esposa del gobernador Felix", "dona del governador Fèlix"),
+            ("esposa del gobernador Felix", "dona del governador FÃ¨lix"),
             ("esposa del profeta Oseas", "dona del profeta Osees"),
             ("esposa de Aaron", "dona d'Aaron"),
             ("esposa de Jose", "dona de Josep"),
@@ -1466,24 +1416,24 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("esposa de Booz", "dona de Booz"),
             ("Esposa de Booz", "Dona de Booz"),
             ("esposa de Ananias", "dona d'Ananies"),
-            ("Esposa de Ananías", "Dona d'Ananies"),
+            ("Esposa de AnanÃ­as", "Dona d'Ananies"),
             ("esposa de Job", "dona de Job"),
             ("Esposa de Job", "Dona de Job"),
             ("esposa de Adan", "dona d'Adam"),
-            ("Esposa de Adán", "Dona d'Adam"),
+            ("Esposa de AdÃ¡n", "Dona d'Adam"),
             ("esposa de David", "dona de David"),
             ("Esposa de David", "Dona de David"),
             ("esposa de Lamec", "dona de Lamec"),
             ("Esposa de Lamec", "Dona de Lamec"),
-            ("esposa de Moises", "dona de Moisès"),
-            ("Esposa de Moisés", "Dona de Moisès"),
-            ("madre de Jesus de Nazaret", "mare de Jesús de Natzaret"),
+            ("esposa de Moises", "dona de MoisÃ¨s"),
+            ("Esposa de MoisÃ©s", "Dona de MoisÃ¨s"),
+            ("madre de Jesus de Nazaret", "mare de JesÃºs de Natzaret"),
             ("madre de Juan Marcos", "mare de Joan Marc"),
             ("madre del rey Josias", "mare del rei Josies"),
-            ("madre de Sanson", "mare de Samsó"),
+            ("madre de Sanson", "mare de SamsÃ³"),
             ("hija del rey Acab y de la reina Jezabel", "filla del rei Acab i de la reina Jezabel"),
             ("hija del rey Joram", "filla del rei Joram"),
-            ("hija de Saul", "filla de Saül"),
+            ("hija de Saul", "filla de SaÃ¼l"),
             ("hija de Jacob", "filla de Jacob"),
             ("hija de Caleb", "filla de Caleb"),
             ("hija de Job", "filla de Job"),
@@ -1491,82 +1441,82 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("una de las hijas de Zelofehad", "una de les filles de Selofhad"),
             ("hija de Herodias", "filla d'Herodies"),
             ("mujer madianita", "dona madianita"),
-            ("mujer de Sanson", "dona de Samsó"),
-            ("mujer de Elcana", "dona d'Elcanà"),
+            ("mujer de Sanson", "dona de SamsÃ³"),
+            ("mujer de Elcana", "dona d'ElcanÃ "),
             ("creyente de Atenas", "creient d'Atenes"),
             ("esposa de Urias el heteo", "dona d'Uries l'heteu"),
             ("una de las esposas de David", "una de les dones de David"),
-            ("figura simbolica en Ezequiel", "figura simbòlica a Ezequiel"),
+            ("figura simbolica en Ezequiel", "figura simbÃ²lica a Ezequiel"),
             ("una de las parteras hebreas", "una de les llevadores hebrees"),
             ("toco el manto de Jesus", "va tocar el mantell de Jesus"),
-            ("joven que sirvió al rey David", "jove que va servir el rei David"),
+            ("joven que sirviÃ³ al rey David", "jove que va servir el rei David"),
             ("la profetisa hija de Fanuel", "la profetessa, filla de Fanuel"),
             ("nombre de varias mujeres del Antiguo Testamento", "nom de diverses dones de l'Antic Testament"),
-            ("nombre de varias mujeres bíblicas", "nom de diverses dones bíbliques"),
+            ("nombre de varias mujeres bÃ­blicas", "nom de diverses dones bÃ­bliques"),
             ("cristiana cercana a Pablo", "cristiana propera a Pau"),
-            ("diaconisa de la iglesia", "diaconessa de l'església"),
+            ("diaconisa de la iglesia", "diaconessa de l'esglÃ©sia"),
             ("nombre hebreo de Ester", "nom hebreu d'Ester"),
-            ("madre de reyes de Judá", "mare de reis de Judà"),
-            ("reina de Etiopía", "reina d'Etiòpia"),
+            ("madre de reyes de JudÃ¡", "mare de reis de JudÃ "),
+            ("reina de EtiopÃ­a", "reina d'EtiÃ²pia"),
             ("mujer vinculada a la muerte de Juan el Bautista", "dona vinculada a la mort de Joan Baptista"),
             ("jueza de Israel", "jutgessa d'Israel"),
             ("conocida como Tabita", "coneguda com a Tabita"),
             ("pariente de Abraham", "parenta d'Abraham"),
-            ("la que mató a Sísara", "la que va matar Sísara"),
-            ("compañera de prisiones de Pablo", "companya de presó de Pau"),
-            ("vendedora de púrpura", "venedora de porpra"),
-            ("la abuela de Timoteo", "l'àvia de Timoteu"),
-            ("hija simbólica de Oseas", "filla simbòlica d'Osees"),
-            ("nombre que tomó Noemí en su amargura", "nom que Noemí va prendre en la seva amargor"),
-            ("presente en la crucifixión", "present en la crucifixió"),
+            ("la que matÃ³ a SÃ­sara", "la que va matar SÃ­sara"),
+            ("compaÃ±era de prisiones de Pablo", "companya de presÃ³ de Pau"),
+            ("vendedora de pÃºrpura", "venedora de porpra"),
+            ("la abuela de Timoteo", "l'Ã via de Timoteu"),
+            ("hija simbÃ³lica de Oseas", "filla simbÃ²lica d'Osees"),
+            ("nombre que tomÃ³ NoemÃ­ en su amargura", "nom que NoemÃ­ va prendre en la seva amargor"),
+            ("presente en la crucifixiÃ³n", "present en la crucifixiÃ³"),
             ("otra forma del nombre Merab", "una altra forma del nom Merab"),
-            ("mostró gran fe ante Jesús", "va mostrar una gran fe davant Jesús"),
-            ("miró hacia atrás al salir de Sodoma", "va mirar enrere en sortir de Sodoma"),
-            ("acusó falsamente a José", "va acusar falsament Josep"),
-            ("sanada por Jesús", "guarida per Jesús"),
-            ("habló con Jesús junto al pozo", "va parlar amb Jesús al costat del pou"),
-            ("pidió misericordia para su hija", "va demanar misericòrdia per a la seva filla"),
-            ("llevada ante Jesús", "portada davant Jesús"),
-            ("hospedó a Eliseo", "va acollir Eliseu"),
-            ("evitó la destrucción de la ciudad", "va evitar la destrucció de la ciutat"),
-            ("habló ante el rey David", "va parlar davant del rei David"),
-            ("sierva que reconoció a Pedro", "serventa que va reconèixer Pere"),
-            ("seguidora y servidora de Jesús", "deixebla i servidora de Jesús"),
-            ("recibió la misericordia de Jesús", "va rebre la misericòrdia de Jesús"),
-            ("alimentada en tiempos de Elías", "alimentada en temps d'Elies"),
-            ("dio todo lo que tenía", "ho va donar tot"),
-            ("falsa profetisa en tiempos de Nehemías", "falsa profetessa en temps de Nehemies"),
+            ("mostrÃ³ gran fe ante JesÃºs", "va mostrar una gran fe davant JesÃºs"),
+            ("mirÃ³ hacia atrÃ¡s al salir de Sodoma", "va mirar enrere en sortir de Sodoma"),
+            ("acusÃ³ falsamente a JosÃ©", "va acusar falsament Josep"),
+            ("sanada por JesÃºs", "guarida per JesÃºs"),
+            ("hablÃ³ con JesÃºs junto al pozo", "va parlar amb JesÃºs al costat del pou"),
+            ("pidiÃ³ misericordia para su hija", "va demanar misericÃ²rdia per a la seva filla"),
+            ("llevada ante JesÃºs", "portada davant JesÃºs"),
+            ("hospedÃ³ a Eliseo", "va acollir Eliseu"),
+            ("evitÃ³ la destrucciÃ³n de la ciudad", "va evitar la destrucciÃ³ de la ciutat"),
+            ("hablÃ³ ante el rey David", "va parlar davant del rei David"),
+            ("sierva que reconociÃ³ a Pedro", "serventa que va reconÃ¨ixer Pere"),
+            ("seguidora y servidora de JesÃºs", "deixebla i servidora de JesÃºs"),
+            ("recibiÃ³ la misericordia de JesÃºs", "va rebre la misericÃ²rdia de JesÃºs"),
+            ("alimentada en tiempos de ElÃ­as", "alimentada en temps d'Elies"),
+            ("dio todo lo que tenÃ­a", "ho va donar tot"),
+            ("falsa profetisa en tiempos de NehemÃ­as", "falsa profetessa en temps de Nehemies"),
             ("creyente elogiada por Pablo", "creient lloada per Pau"),
-            ("cuñada de Rut", "cunyada de Rut"),
-            ("Cuñada de Rut", "Cunyada de Rut"),
-            ("la mujer de Jericó", "la dona de Jericó"),
+            ("cuÃ±ada de Rut", "cunyada de Rut"),
+            ("CuÃ±ada de Rut", "Cunyada de Rut"),
+            ("la mujer de JericÃ³", "la dona de JericÃ³"),
             ("la reina Ester", "la reina Ester"),
             ("La reina Ester", "La reina Ester"),
-            ("la nuera de Judá", "la nora de Judà"),
-            ("La nuera de Judá", "La nora de Judà"),
-            ("seguidora de Jesús", "deixebla de Jesús"),
-            ("Seguidora de Jesús", "Deixebla de Jesús"),
+            ("la nuera de JudÃ¡", "la nora de JudÃ "),
+            ("La nuera de JudÃ¡", "La nora de JudÃ "),
+            ("seguidora de JesÃºs", "deixebla de JesÃºs"),
+            ("Seguidora de JesÃºs", "Deixebla de JesÃºs"),
             ("suegra de Rut", "sogra de Rut"),
             ("Suegra de Rut", "Sogra de Rut"),
-            ("visitó al rey Salomón", "va visitar el rei Salomó"),
-            ("Visitó al rey Salomón", "Va visitar el rei Salomó"),
+            ("visitÃ³ al rey SalomÃ³n", "va visitar el rei SalomÃ³"),
+            ("VisitÃ³ al rey SalomÃ³n", "Va visitar el rei SalomÃ³"),
             ("concubina de Nacor", "concubina de Nahor"),
             ("Concubina de Nacor", "Concubina de Nacor"),
-            ("concubina del rey Saúl", "concubina del rei Saül"),
-            ("Concubina del rey Saúl", "Concubina del rei Saül"),
+            ("concubina del rey SaÃºl", "concubina del rei SaÃ¼l"),
+            ("Concubina del rey SaÃºl", "Concubina del rei SaÃ¼l"),
             ("mujer mencionada en el Antiguo Testamento", "dona esmentada a l'Antic Testament"),
             ("de origen moderno", "d'origen modern"),
             ("con centro historico en", "amb centre historic a"),
-            ("de caracter sincretista", "de caràcter sincrètic"),
-            ("de interpretacion biblica particular", "d'interpretació bíblica particular"),
-            ("postura de negacion de la existencia de deidades", "postura de negació de l'existència de divinitats"),
-            ("postura sobre la imposibilidad o duda de conocer a Dios", "postura sobre la impossibilitat o el dubte de conèixer Déu"),
-            ("Vision etica no religiosa centrada en el ser humano", "Visió ètica no religiosa centrada en l'ésser humà"),
-            ("Creencia en un creador sin revelacion religiosa particular", "Creença en un creador sense revelació religiosa particular"),
-            ("Personas que no se identifican con una religion concreta", "Persones que no s'identifiquen amb una religió concreta"),
+            ("de caracter sincretista", "de carÃ cter sincrÃ¨tic"),
+            ("de interpretacion biblica particular", "d'interpretaciÃ³ bÃ­blica particular"),
+            ("postura de negacion de la existencia de deidades", "postura de negaciÃ³ de l'existÃ¨ncia de divinitats"),
+            ("postura sobre la imposibilidad o duda de conocer a Dios", "postura sobre la impossibilitat o el dubte de conÃ¨ixer DÃ©u"),
+            ("Vision etica no religiosa centrada en el ser humano", "VisiÃ³ Ã¨tica no religiosa centrada en l'Ã©sser humÃ "),
+            ("Creencia en un creador sin revelacion religiosa particular", "CreenÃ§a en un creador sense revelaciÃ³ religiosa particular"),
+            ("Personas que no se identifican con una religion concreta", "Persones que no s'identifiquen amb una religiÃ³ concreta"),
             ("Hijo de ", "Fill de "),
             ("Hija de ", "Filla de "),
-            ("Hermano de ", "Germà de "),
+            ("Hermano de ", "GermÃ  de "),
             ("Esposo de ", "Espos de "),
             ("Esposa de ", "Esposa de "),
             ("Madre de ", "Mare de "),
@@ -1582,132 +1532,132 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("Colaborador", "Col.laborador"),
             ("Companero", "Company"),
             ("Discipulo", "Deixeble"),
-            ("apostol", "apòstol"),
+            ("apostol", "apÃ²stol"),
             ("pueblo", "poble"),
-            ("iglesia", "església"),
-            ("mundo", "món"),
+            ("iglesia", "esglÃ©sia"),
+            ("mundo", "mÃ³n"),
         ],
         "fr": [
             ("Personas que ", "Personnes qui "),
             ("Persona que ", "Personne qui "),
-            ("sumo sacerdote", "grand prêtre"),
-            ("sacerdote", "prêtre"),
-            ("profetisa", "prophétesse"),
+            ("sumo sacerdote", "grand prÃªtre"),
+            ("sacerdote", "prÃªtre"),
+            ("profetisa", "prophÃ©tesse"),
             ("Movimiento religioso", "Mouvement religieux"),
             ("Religion ", "Religion "),
             ("Tradicion ", "Tradition "),
             ("Tradiciones ", "Traditions "),
             ("Corriente ", "Courant "),
             ("Conjunto de ", "Ensemble de "),
-            ("Fe basada en ", "Foi fondée sur "),
-            ("fundada en", "fondée en"),
-            ("fundado en", "fondé en"),
-            ("centrada en", "centrée sur"),
-            ("centrado en", "centré sur"),
-            ("originada en", "née en"),
-            ("originado en", "né en"),
+            ("Fe basada en ", "Foi fondÃ©e sur "),
+            ("fundada en", "fondÃ©e en"),
+            ("fundado en", "fondÃ© en"),
+            ("centrada en", "centrÃ©e sur"),
+            ("centrado en", "centrÃ© sur"),
+            ("originada en", "nÃ©e en"),
+            ("originado en", "nÃ© en"),
             ("hijo de ", "fils de "),
             ("hija de ", "fille de "),
-            ("hermano de ", "frère de "),
+            ("hermano de ", "frÃ¨re de "),
             ("hermana de ", "soeur de "),
-            ("esposa de ", "épouse de "),
-            ("esposo de ", "époux de "),
-            ("madre de ", "mère de "),
-            ("padre de ", "père de "),
+            ("esposa de ", "Ã©pouse de "),
+            ("esposo de ", "Ã©poux de "),
+            ("madre de ", "mÃ¨re de "),
+            ("padre de ", "pÃ¨re de "),
             ("rey de ", "roi de "),
             ("reina de ", "reine de "),
             ("siervo de ", "serviteur de "),
             ("sierva de ", "servante de "),
             ("discipulo de ", "disciple de "),
             ("discipula de ", "disciple de "),
-            ("compañero del apostol Pablo", "compagnon de l'apôtre Paul"),
-            ("colaborador del apostol Pablo", "collaborateur de l'apôtre Paul"),
+            ("compaÃ±ero del apostol Pablo", "compagnon de l'apÃ´tre Paul"),
+            ("colaborador del apostol Pablo", "collaborateur de l'apÃ´tre Paul"),
             ("colaborador de Pablo", "collaborateur de Paul"),
-            ("el padre de la fe", "le père de la foi"),
-            ("judío elocuente y poderoso en las Escrituras", "Juif éloquent et puissant dans les Écritures"),
+            ("el padre de la fe", "le pÃ¨re de la foi"),
+            ("judÃ­o elocuente y poderoso en las Escrituras", "Juif Ã©loquent et puissant dans les Ã‰critures"),
             ("cantor y salmista", "chantre et psalmiste"),
-            ("nombre de varios personajes bíblicos", "nom de plusieurs personnages bibliques"),
-            ("el ciego que recibió la vista", "l'aveugle qui recouvra la vue"),
-            ("uno de los doce espías", "l'un des douze espions"),
+            ("nombre de varios personajes bÃ­blicos", "nom de plusieurs personnages bibliques"),
+            ("el ciego que recibiÃ³ la vista", "l'aveugle qui recouvra la vue"),
+            ("uno de los doce espÃ­as", "l'un des douze espions"),
             ("principal de la sinagoga", "chef de la synagogue"),
-            ("siervo etíope que ayudó a Jeremías", "serviteur éthiopien qui aida Jérémie"),
-            ("libertador de Israel", "libérateur d'Israël"),
-            ("séptimo desde Adán", "septième depuis Adam"),
-            ("nieto de Aarón", "petit-fils d'Aaron"),
-            ("maestro de la Ley entre los fariseos", "maître de la Loi parmi les pharisiens"),
+            ("siervo etÃ­ope que ayudÃ³ a JeremÃ­as", "serviteur Ã©thiopien qui aida JÃ©rÃ©mie"),
+            ("libertador de Israel", "libÃ©rateur d'IsraÃ«l"),
+            ("sÃ©ptimo desde AdÃ¡n", "septiÃ¨me depuis Adam"),
+            ("nieto de AarÃ³n", "petit-fils d'Aaron"),
+            ("maestro de la Ley entre los fariseos", "maÃ®tre de la Loi parmi les pharisiens"),
             ("sabio y cantor", "sage et chantre"),
             ("descendiente de Sem", "descendant de Sem"),
-            ("gitita leal a David", "Guitthien fidèle à David"),
-            ("hombre de oración", "homme de prière"),
-            ("general del ejército de David", "général de l'armée de David"),
+            ("gitita leal a David", "Guitthien fidÃ¨le Ã  David"),
+            ("hombre de oraciÃ³n", "homme de priÃ¨re"),
+            ("general del ejÃ©rcito de David", "gÃ©nÃ©ral de l'armÃ©e de David"),
             ("sobrino de David", "neveu de David"),
-            ("nombre de varios reyes bíblicos", "nom de plusieurs rois bibliques"),
-            ("discípulo secreto que dio su sepulcro a Jesús", "disciple secret qui donna son sépulcre à Jésus"),
-            ("suegro de Jacob", "beau-père de Jacob"),
-            ("hombre longevo del Antiguo Testamento", "homme de grande longévité dans l'Ancien Testament"),
+            ("nombre de varios reyes bÃ­blicos", "nom de plusieurs rois bibliques"),
+            ("discÃ­pulo secreto que dio su sepulcro a JesÃºs", "disciple secret qui donna son sÃ©pulcre Ã  JÃ©sus"),
+            ("suegro de Jacob", "beau-pÃ¨re de Jacob"),
+            ("hombre longevo del Antiguo Testamento", "homme de grande longÃ©vitÃ© dans l'Ancien Testament"),
             ("primo de Ester", "cousin d'Esther"),
             ("elegido entre los doce", "choisi parmi les douze"),
-            ("porcio festo fue el procurador romano de Judea", "Porcius Festus fut le procurateur romain de Judée"),
-            ("profeta en tiempos de Acab", "prophète au temps d'Achab"),
-            ("reconstruyó los muros de Jerusalén", "reconstruisit les murailles de Jérusalem"),
-            ("fariseo, principal entre los judíos", "pharisien, chef parmi les Juifs"),
-            ("abuelo de David", "grand-père de David"),
+            ("porcio festo fue el procurador romano de Judea", "Porcius Festus fut le procurateur romain de JudÃ©e"),
+            ("profeta en tiempos de Acab", "prophÃ¨te au temps d'Achab"),
+            ("reconstruyÃ³ los muros de JerusalÃ©n", "reconstruisit les murailles de JÃ©rusalem"),
+            ("fariseo, principal entre los judÃ­os", "pharisien, chef parmi les Juifs"),
+            ("abuelo de David", "grand-pÃ¨re de David"),
             ("saulo de Tarso", "Saul de Tarse"),
             ("uno de los siete servidores", "l'un des sept serviteurs"),
             ("variante de Silas en algunas traducciones", "variante de Silas dans certaines traductions"),
-            ("acompañante del apóstol Pablo", "compagnon de l'apôtre Paul"),
-            ("llevó la cruz de Jesús", "porta la croix de Jésus"),
-            ("anciano que vio al Mesías", "vieillard qui vit le Messie"),
-            ("nombre de varios personajes pos-exilio", "nom de plusieurs personnages de l'après-exil"),
-            ("el discípulo incrédulo", "le disciple incrédule"),
-            ("nombre de varios levitas", "nom de plusieurs Lévites"),
-            ("creyente mencionada por Pablo", "croyante mentionnée par Paul"),
-            ("creyente mencionado por Pablo", "croyant mentionné par Paul"),
+            ("acompaÃ±ante del apÃ³stol Pablo", "compagnon de l'apÃ´tre Paul"),
+            ("llevÃ³ la cruz de JesÃºs", "porta la croix de JÃ©sus"),
+            ("anciano que vio al MesÃ­as", "vieillard qui vit le Messie"),
+            ("nombre de varios personajes pos-exilio", "nom de plusieurs personnages de l'aprÃ¨s-exil"),
+            ("el discÃ­pulo incrÃ©dulo", "le disciple incrÃ©dule"),
+            ("nombre de varios levitas", "nom de plusieurs LÃ©vites"),
+            ("creyente mencionada por Pablo", "croyante mentionnÃ©e par Paul"),
+            ("creyente mencionado por Pablo", "croyant mentionnÃ© par Paul"),
             ("gobernador romano", "gouverneur romain"),
             ("centurion romano", "centurion romain"),
-            ("recaudador de impuestos", "collecteur d'impôts"),
+            ("recaudador de impuestos", "collecteur d'impÃ´ts"),
             ("jefe de publicanos", "chef des publicains"),
-            ("descendiente de Adán", "descendant d'Adam"),
+            ("descendiente de AdÃ¡n", "descendant d'Adam"),
             ("el bautista", "le Baptiste"),
             ("el de los diez mandamientos", "celui des dix commandements"),
             ("el del arca", "celui de l'arche"),
             ("el del pozo de los leones", "celui de la fosse aux lions"),
-            ("gobernador de Judá", "gouverneur de Juda"),
+            ("gobernador de JudÃ¡", "gouverneur de Juda"),
             ("sobrino de Abraham", "neveu d'Abraham"),
-            ("mujer mencionada en genealogias", "femme mentionnée dans les généalogies"),
+            ("mujer mencionada en genealogias", "femme mentionnÃ©e dans les gÃ©nÃ©alogies"),
             ("hombre temeroso de Dios", "homme craignant Dieu"),
-            ("juez de Israel", "juge d'Israël"),
+            ("juez de Israel", "juge d'IsraÃ«l"),
             ("rey David", "roi David"),
             ("rey Salomon", "roi Salomon"),
-            ("profeta", "prophète"),
+            ("profeta", "prophÃ¨te"),
             ("evangelista", "evangeliste"),
-            ("apostol", "apôtre"),
-            ("seguidora de Jesus", "disciple de Jésus"),
-            ("seguidor de Jesus", "disciple de Jésus"),
-            ("madre de Jesus", "mère de Jésus"),
-            ("madre del profeta Samuel", "mère du prophète Samuel"),
-            ("madre de Juan el bautista", "mère de Jean-Baptiste"),
-            ("madre de Timoteo", "mère de Timothée"),
-            ("madre de Moises", "mère de Moïse"),
-            ("esposa del rey David", "épouse du roi David"),
-            ("esposa del rey Acab", "épouse du roi Achab"),
-            ("esposa del rey Ezequias", "épouse du roi Ézéchias"),
-            ("esposa del gobernador Felix", "épouse du gouverneur Félix"),
-            ("esposa del profeta Oseas", "épouse du prophète Osée"),
-            ("esposa de Aaron", "épouse d'Aaron"),
-            ("esposa de Jose", "épouse de Joseph"),
-            ("madre de Jesus de Nazaret", "mère de Jésus de Nazareth"),
+            ("apostol", "apÃ´tre"),
+            ("seguidora de Jesus", "disciple de JÃ©sus"),
+            ("seguidor de Jesus", "disciple de JÃ©sus"),
+            ("madre de Jesus", "mÃ¨re de JÃ©sus"),
+            ("madre del profeta Samuel", "mÃ¨re du prophÃ¨te Samuel"),
+            ("madre de Juan el bautista", "mÃ¨re de Jean-Baptiste"),
+            ("madre de Timoteo", "mÃ¨re de TimothÃ©e"),
+            ("madre de Moises", "mÃ¨re de MoÃ¯se"),
+            ("esposa del rey David", "Ã©pouse du roi David"),
+            ("esposa del rey Acab", "Ã©pouse du roi Achab"),
+            ("esposa del rey Ezequias", "Ã©pouse du roi Ã‰zÃ©chias"),
+            ("esposa del gobernador Felix", "Ã©pouse du gouverneur FÃ©lix"),
+            ("esposa del profeta Oseas", "Ã©pouse du prophÃ¨te OsÃ©e"),
+            ("esposa de Aaron", "Ã©pouse d'Aaron"),
+            ("esposa de Jose", "Ã©pouse de Joseph"),
+            ("madre de Jesus de Nazaret", "mÃ¨re de JÃ©sus de Nazareth"),
             ("madre de Juan Marcos", "mere de Jean-Marc"),
-            ("esposa de Abraham", "épouse d'Abraham"),
-            ("esposa de Isaac", "épouse d'Isaac"),
-            ("esposa de Jacob", "épouse de Jacob"),
-            ("esposa de Aquila", "épouse d'Aquilas"),
-            ("esposa de Booz", "épouse de Booz"),
-            ("esposa de Ananias", "épouse d'Ananias"),
-            ("esposa de Job", "épouse de Job"),
-            ("madre del rey Josias", "mère du roi Josias"),
-            ("madre de Sanson", "mère de Samson"),
-            ("hija del rey Acab y de la reina Jezabel", "fille du roi Achab et de la reine Jézabel"),
+            ("esposa de Abraham", "Ã©pouse d'Abraham"),
+            ("esposa de Isaac", "Ã©pouse d'Isaac"),
+            ("esposa de Jacob", "Ã©pouse de Jacob"),
+            ("esposa de Aquila", "Ã©pouse d'Aquilas"),
+            ("esposa de Booz", "Ã©pouse de Booz"),
+            ("esposa de Ananias", "Ã©pouse d'Ananias"),
+            ("esposa de Job", "Ã©pouse de Job"),
+            ("madre del rey Josias", "mÃ¨re du roi Josias"),
+            ("madre de Sanson", "mÃ¨re de Samson"),
+            ("hija del rey Acab y de la reina Jezabel", "fille du roi Achab et de la reine JÃ©zabel"),
             ("hija del rey Joram", "fille du roi Joram"),
             ("hija de Saul", "fille de Saul"),
             ("hija de Jacob", "fille de Jacob"),
@@ -1715,92 +1665,92 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("hija de Job", "fille de Job"),
             ("hija de Zelofehad", "fille de Tselophehad"),
             ("una de las hijas de Zelofehad", "l'une des filles de Tselophehad"),
-            ("hija de Herodias", "fille d'Hérodiade"),
+            ("hija de Herodias", "fille d'HÃ©rodiade"),
             ("mujer madianita", "femme madianite"),
             ("mujer de Sanson", "femme de Samson"),
             ("mujer de Elcana", "femme d'Elqana"),
-            ("creyente de Atenas", "croyante d'Athènes"),
-            ("esposa de Urias el heteo", "épouse d'Urie le Héthien"),
-            ("una de las esposas de David", "l'une des épouses de David"),
-            ("figura simbolica en Ezequiel", "figure symbolique dans Ézéchiel"),
-            ("una de las parteras hebreas", "l'une des sages-femmes hébreues"),
-            ("toco el manto de Jesus", "toucha le manteau de Jésus"),
-            ("joven que sirvió al rey David", "jeune femme qui servit le roi David"),
-            ("la profetisa hija de Fanuel", "la prophétesse, fille de Phanuel"),
-            ("nombre de varias mujeres del Antiguo Testamento", "nom porté par plusieurs femmes de l'Ancien Testament"),
-            ("nombre de varias mujeres bíblicas", "nom porté par plusieurs femmes bibliques"),
-            ("cristiana cercana a Pablo", "chrétienne proche de Paul"),
-            ("diaconisa de la iglesia", "diaconesse de l'Église"),
-            ("nombre hebreo de Ester", "nom hébreu d'Esther"),
-            ("madre de reyes de Judá", "mère de rois de Juda"),
-            ("reina de Etiopía", "reine d'Éthiopie"),
-            ("mujer vinculada a la muerte de Juan el Bautista", "femme liée à la mort de Jean-Baptiste"),
-            ("jueza de Israel", "juge d'Israël"),
+            ("creyente de Atenas", "croyante d'AthÃ¨nes"),
+            ("esposa de Urias el heteo", "Ã©pouse d'Urie le HÃ©thien"),
+            ("una de las esposas de David", "l'une des Ã©pouses de David"),
+            ("figura simbolica en Ezequiel", "figure symbolique dans Ã‰zÃ©chiel"),
+            ("una de las parteras hebreas", "l'une des sages-femmes hÃ©breues"),
+            ("toco el manto de Jesus", "toucha le manteau de JÃ©sus"),
+            ("joven que sirviÃ³ al rey David", "jeune femme qui servit le roi David"),
+            ("la profetisa hija de Fanuel", "la prophÃ©tesse, fille de Phanuel"),
+            ("nombre de varias mujeres del Antiguo Testamento", "nom portÃ© par plusieurs femmes de l'Ancien Testament"),
+            ("nombre de varias mujeres bÃ­blicas", "nom portÃ© par plusieurs femmes bibliques"),
+            ("cristiana cercana a Pablo", "chrÃ©tienne proche de Paul"),
+            ("diaconisa de la iglesia", "diaconesse de l'Ã‰glise"),
+            ("nombre hebreo de Ester", "nom hÃ©breu d'Esther"),
+            ("madre de reyes de JudÃ¡", "mÃ¨re de rois de Juda"),
+            ("reina de EtiopÃ­a", "reine d'Ã‰thiopie"),
+            ("mujer vinculada a la muerte de Juan el Bautista", "femme liÃ©e Ã  la mort de Jean-Baptiste"),
+            ("jueza de Israel", "juge d'IsraÃ«l"),
             ("conocida como Tabita", "connue sous le nom de Tabitha"),
             ("pariente de Abraham", "parente d'Abraham"),
-            ("la que mató a Sísara", "celle qui tua Sisera"),
-            ("compañera de prisiones de Pablo", "compagne d'emprisonnement de Paul"),
-            ("vendedora de púrpura", "marchande de pourpre"),
-            ("la abuela de Timoteo", "la grand-mère de Timothée"),
-            ("hija simbólica de Oseas", "fille symbolique dans Osée"),
-            ("nombre que tomó Noemí en su amargura", "nom que Noémi prit dans son amertume"),
-            ("presente en la crucifixión", "présente lors de la crucifixion"),
+            ("la que matÃ³ a SÃ­sara", "celle qui tua Sisera"),
+            ("compaÃ±era de prisiones de Pablo", "compagne d'emprisonnement de Paul"),
+            ("vendedora de pÃºrpura", "marchande de pourpre"),
+            ("la abuela de Timoteo", "la grand-mÃ¨re de TimothÃ©e"),
+            ("hija simbÃ³lica de Oseas", "fille symbolique dans OsÃ©e"),
+            ("nombre que tomÃ³ NoemÃ­ en su amargura", "nom que NoÃ©mi prit dans son amertume"),
+            ("presente en la crucifixiÃ³n", "prÃ©sente lors de la crucifixion"),
             ("otra forma del nombre Merab", "autre forme du nom Merab"),
-            ("mostró gran fe ante Jesús", "montra une grande foi devant Jésus"),
-            ("miró hacia atrás al salir de Sodoma", "regarda en arrière en quittant Sodome"),
-            ("acusó falsamente a José", "accusa faussement Joseph"),
-            ("sanada por Jesús", "guérie par Jésus"),
-            ("habló con Jesús junto al pozo", "parla avec Jésus près du puits"),
-            ("pidió misericordia para su hija", "demanda miséricorde pour sa fille"),
-            ("llevada ante Jesús", "amenée devant Jésus"),
-            ("hospedó a Eliseo", "accueillit Élisée"),
-            ("evitó la destrucción de la ciudad", "empêcha la destruction de la ville"),
-            ("habló ante el rey David", "parla devant le roi David"),
-            ("sierva que reconoció a Pedro", "servante qui reconnut Pierre"),
-            ("seguidora y servidora de Jesús", "disciple et soutien de Jésus"),
-            ("recibió la misericordia de Jesús", "reçut la miséricorde de Jésus"),
-            ("alimentada en tiempos de Elías", "nourrie au temps d'Élie"),
-            ("dio todo lo que tenía", "donna tout ce qu'elle avait"),
-            ("falsa profetisa en tiempos de Nehemías", "fausse prophétesse au temps de Néhémie"),
-            ("creyente elogiada por Pablo", "croyante louée par Paul"),
-            ("cuñada de Rut", "belle-soeur de Ruth"),
-            ("la mujer de Jericó", "la femme de Jéricho"),
+            ("mostrÃ³ gran fe ante JesÃºs", "montra une grande foi devant JÃ©sus"),
+            ("mirÃ³ hacia atrÃ¡s al salir de Sodoma", "regarda en arriÃ¨re en quittant Sodome"),
+            ("acusÃ³ falsamente a JosÃ©", "accusa faussement Joseph"),
+            ("sanada por JesÃºs", "guÃ©rie par JÃ©sus"),
+            ("hablÃ³ con JesÃºs junto al pozo", "parla avec JÃ©sus prÃ¨s du puits"),
+            ("pidiÃ³ misericordia para su hija", "demanda misÃ©ricorde pour sa fille"),
+            ("llevada ante JesÃºs", "amenÃ©e devant JÃ©sus"),
+            ("hospedÃ³ a Eliseo", "accueillit Ã‰lisÃ©e"),
+            ("evitÃ³ la destrucciÃ³n de la ciudad", "empÃªcha la destruction de la ville"),
+            ("hablÃ³ ante el rey David", "parla devant le roi David"),
+            ("sierva que reconociÃ³ a Pedro", "servante qui reconnut Pierre"),
+            ("seguidora y servidora de JesÃºs", "disciple et soutien de JÃ©sus"),
+            ("recibiÃ³ la misericordia de JesÃºs", "reÃ§ut la misÃ©ricorde de JÃ©sus"),
+            ("alimentada en tiempos de ElÃ­as", "nourrie au temps d'Ã‰lie"),
+            ("dio todo lo que tenÃ­a", "donna tout ce qu'elle avait"),
+            ("falsa profetisa en tiempos de NehemÃ­as", "fausse prophÃ©tesse au temps de NÃ©hÃ©mie"),
+            ("creyente elogiada por Pablo", "croyante louÃ©e par Paul"),
+            ("cuÃ±ada de Rut", "belle-soeur de Ruth"),
+            ("la mujer de JericÃ³", "la femme de JÃ©richo"),
             ("la reina Ester", "la reine Esther"),
-            ("la nuera de Judá", "la belle-fille de Juda"),
-            ("suegra de Rut", "belle-mère de Ruth"),
-            ("visitó al rey Salomón", "rendit visite au roi Salomon"),
+            ("la nuera de JudÃ¡", "la belle-fille de Juda"),
+            ("suegra de Rut", "belle-mÃ¨re de Ruth"),
+            ("visitÃ³ al rey SalomÃ³n", "rendit visite au roi Salomon"),
             ("concubina de Nacor", "concubine de Nahor"),
-            ("concubina del rey Saúl", "concubine du roi Saül"),
-            ("mujer mencionada en el Antiguo Testamento", "femme mentionnée dans l'Ancien Testament"),
+            ("concubina del rey SaÃºl", "concubine du roi SaÃ¼l"),
+            ("mujer mencionada en el Antiguo Testamento", "femme mentionnÃ©e dans l'Ancien Testament"),
             ("de origen moderno", "d'origine moderne"),
-            ("con centro historico en", "avec centre historique à"),
-            ("de caracter sincretista", "de caractère syncrétique"),
-            ("de interpretacion biblica particular", "à interprétation biblique particulière"),
-            ("postura de negacion de la existencia de deidades", "position niant l'existence de divinités"),
-            ("postura sobre la imposibilidad o duda de conocer a Dios", "position sur l'impossibilité ou le doute de connaître Dieu"),
-            ("Vision etica no religiosa centrada en el ser humano", "Vision éthique non religieuse centrée sur l'être humain"),
-            ("Creencia en un creador sin revelacion religiosa particular", "Croyance en un créateur sans révélation religieuse particulière"),
-            ("Personas que no se identifican con una religion concreta", "Personnes qui ne s'identifient à aucune religion précise"),
+            ("con centro historico en", "avec centre historique Ã "),
+            ("de caracter sincretista", "de caractÃ¨re syncrÃ©tique"),
+            ("de interpretacion biblica particular", "Ã  interprÃ©tation biblique particuliÃ¨re"),
+            ("postura de negacion de la existencia de deidades", "position niant l'existence de divinitÃ©s"),
+            ("postura sobre la imposibilidad o duda de conocer a Dios", "position sur l'impossibilitÃ© ou le doute de connaÃ®tre Dieu"),
+            ("Vision etica no religiosa centrada en el ser humano", "Vision Ã©thique non religieuse centrÃ©e sur l'Ãªtre humain"),
+            ("Creencia en un creador sin revelacion religiosa particular", "Croyance en un crÃ©ateur sans rÃ©vÃ©lation religieuse particuliÃ¨re"),
+            ("Personas que no se identifican con una religion concreta", "Personnes qui ne s'identifient Ã  aucune religion prÃ©cise"),
             ("Hijo de ", "Fils de "),
             ("Hija de ", "Fille de "),
             ("Hermano de ", "Frere de "),
-            ("Esposo de ", "Époux de "),
-            ("Esposa de ", "Épouse de "),
-            ("Madre de ", "Mère de "),
-            ("Padre de ", "Père de "),
+            ("Esposo de ", "Ã‰poux de "),
+            ("Esposa de ", "Ã‰pouse de "),
+            ("Madre de ", "MÃ¨re de "),
+            ("Padre de ", "PÃ¨re de "),
             ("Rey de ", "Roi de "),
             ("Reina de ", "Reine de "),
             ("Uno de los ", "Un des "),
             ("Una de las ", "Une des "),
             ("mencionado por Pablo", "mentionne par Paul"),
-            ("mencionada por Pablo", "mentionnée par Paul"),
+            ("mencionada por Pablo", "mentionnÃ©e par Paul"),
             ("mencionado en Hechos", "mentionne dans Actes"),
             ("Creyente", "Croyant"),
             ("Colaborador", "Collaborateur"),
             ("Companero", "Compagnon"),
             ("Discipulo", "Disciple"),
             ("pueblo", "peuple"),
-            ("iglesia", "église"),
+            ("iglesia", "Ã©glise"),
             ("mundo", "monde"),
         ],
         "en": [
@@ -1836,46 +1786,46 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("sierva de ", "female servant of "),
             ("discipulo de ", "disciple of "),
             ("discipula de ", "disciple of "),
-            ("compañero del apostol Pablo", "companion of the apostle Paul"),
+            ("compaÃ±ero del apostol Pablo", "companion of the apostle Paul"),
             ("colaborador del apostol Pablo", "coworker of the apostle Paul"),
             ("colaborador de Pablo", "coworker of Paul"),
             ("el padre de la fe", "the father of faith"),
-            ("judío elocuente y poderoso en las Escrituras", "eloquent Jew, mighty in the Scriptures"),
+            ("judÃ­o elocuente y poderoso en las Escrituras", "eloquent Jew, mighty in the Scriptures"),
             ("cantor y salmista", "singer and psalmist"),
-            ("nombre de varios personajes bíblicos", "name of several biblical figures"),
-            ("el ciego que recibió la vista", "the blind man who received his sight"),
-            ("uno de los doce espías", "one of the twelve spies"),
+            ("nombre de varios personajes bÃ­blicos", "name of several biblical figures"),
+            ("el ciego que recibiÃ³ la vista", "the blind man who received his sight"),
+            ("uno de los doce espÃ­as", "one of the twelve spies"),
             ("principal de la sinagoga", "leader of the synagogue"),
-            ("siervo etíope que ayudó a Jeremías", "Ethiopian servant who helped Jeremiah"),
+            ("siervo etÃ­ope que ayudÃ³ a JeremÃ­as", "Ethiopian servant who helped Jeremiah"),
             ("libertador de Israel", "deliverer of Israel"),
-            ("séptimo desde Adán", "seventh from Adam"),
-            ("nieto de Aarón", "grandson of Aaron"),
+            ("sÃ©ptimo desde AdÃ¡n", "seventh from Adam"),
+            ("nieto de AarÃ³n", "grandson of Aaron"),
             ("maestro de la Ley entre los fariseos", "teacher of the Law among the Pharisees"),
             ("sabio y cantor", "wise man and singer"),
             ("descendiente de Sem", "descendant of Shem"),
             ("gitita leal a David", "Gittite loyal to David"),
-            ("hombre de oración", "man of prayer"),
-            ("general del ejército de David", "general of David's army"),
+            ("hombre de oraciÃ³n", "man of prayer"),
+            ("general del ejÃ©rcito de David", "general of David's army"),
             ("sobrino de David", "nephew of David"),
-            ("nombre de varios reyes bíblicos", "name of several biblical kings"),
-            ("discípulo secreto que dio su sepulcro a Jesús", "secret disciple who gave his tomb to Jesus"),
+            ("nombre de varios reyes bÃ­blicos", "name of several biblical kings"),
+            ("discÃ­pulo secreto que dio su sepulcro a JesÃºs", "secret disciple who gave his tomb to Jesus"),
             ("suegro de Jacob", "father-in-law of Jacob"),
             ("hombre longevo del Antiguo Testamento", "long-lived man of the Old Testament"),
             ("primo de Ester", "cousin of Esther"),
             ("elegido entre los doce", "chosen among the twelve"),
             ("porcio festo fue el procurador romano de Judea", "Porcius Festus was the Roman procurator of Judea"),
             ("profeta en tiempos de Acab", "prophet in the days of Ahab"),
-            ("reconstruyó los muros de Jerusalén", "rebuilt the walls of Jerusalem"),
-            ("fariseo, principal entre los judíos", "Pharisee, a leader among the Jews"),
+            ("reconstruyÃ³ los muros de JerusalÃ©n", "rebuilt the walls of Jerusalem"),
+            ("fariseo, principal entre los judÃ­os", "Pharisee, a leader among the Jews"),
             ("abuelo de David", "grandfather of David"),
             ("saulo de Tarso", "Saul of Tarsus"),
             ("uno de los siete servidores", "one of the seven servants"),
             ("variante de Silas en algunas traducciones", "variant of Silas in some translations"),
-            ("acompañante del apóstol Pablo", "companion of the apostle Paul"),
-            ("llevó la cruz de Jesús", "carried the cross of Jesus"),
-            ("anciano que vio al Mesías", "elder who saw the Messiah"),
+            ("acompaÃ±ante del apÃ³stol Pablo", "companion of the apostle Paul"),
+            ("llevÃ³ la cruz de JesÃºs", "carried the cross of Jesus"),
+            ("anciano que vio al MesÃ­as", "elder who saw the Messiah"),
             ("nombre de varios personajes pos-exilio", "name of several post-exilic figures"),
-            ("el discípulo incrédulo", "the doubting disciple"),
+            ("el discÃ­pulo incrÃ©dulo", "the doubting disciple"),
             ("nombre de varios levitas", "name of several Levites"),
             ("creyente mencionada por Pablo", "believer mentioned by Paul"),
             ("creyente mencionado por Pablo", "believer mentioned by Paul"),
@@ -1883,7 +1833,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("centurion romano", "Roman centurion"),
             ("recaudador de impuestos", "tax collector"),
             ("jefe de publicanos", "chief tax collector"),
-            ("descendiente de Adán", "descendant of Adam"),
+            ("descendiente de AdÃ¡n", "descendant of Adam"),
             ("el bautista", "the Baptist"),
             ("el de los diez mandamientos", "the one of the Ten Commandments"),
             ("el del arca", "the one of the ark"),
@@ -1940,51 +1890,51 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("figura simbolica en Ezequiel", "symbolic figure in Ezekiel"),
             ("una de las parteras hebreas", "one of the Hebrew midwives"),
             ("toco el manto de Jesus", "touched the garment of Jesus"),
-            ("joven que sirvió al rey David", "young woman who served King David"),
+            ("joven que sirviÃ³ al rey David", "young woman who served King David"),
             ("la profetisa hija de Fanuel", "the prophetess, daughter of Phanuel"),
             ("nombre de varias mujeres del Antiguo Testamento", "name of several women in the Old Testament"),
-            ("nombre de varias mujeres bíblicas", "name of several biblical women"),
+            ("nombre de varias mujeres bÃ­blicas", "name of several biblical women"),
             ("cristiana cercana a Pablo", "Christian woman associated with Paul"),
             ("diaconisa de la iglesia", "deaconess of the church"),
             ("nombre hebreo de Ester", "Hebrew name of Esther"),
-            ("madre de reyes de Judá", "mother of kings of Judah"),
-            ("reina de Etiopía", "queen of Ethiopia"),
+            ("madre de reyes de JudÃ¡", "mother of kings of Judah"),
+            ("reina de EtiopÃ­a", "queen of Ethiopia"),
             ("mujer vinculada a la muerte de Juan el Bautista", "woman linked to the death of John the Baptist"),
             ("jueza de Israel", "judge of Israel"),
             ("conocida como Tabita", "also known as Tabitha"),
             ("pariente de Abraham", "relative of Abraham"),
-            ("la que mató a Sísara", "the woman who killed Sisera"),
-            ("compañera de prisiones de Pablo", "companion in imprisonment with Paul"),
-            ("vendedora de púrpura", "seller of purple cloth"),
+            ("la que matÃ³ a SÃ­sara", "the woman who killed Sisera"),
+            ("compaÃ±era de prisiones de Pablo", "companion in imprisonment with Paul"),
+            ("vendedora de pÃºrpura", "seller of purple cloth"),
             ("la abuela de Timoteo", "Timothy's grandmother"),
-            ("hija simbólica de Oseas", "symbolic daughter in Hosea"),
-            ("nombre que tomó Noemí en su amargura", "name Naomi took in her bitterness"),
-            ("presente en la crucifixión", "present at the crucifixion"),
+            ("hija simbÃ³lica de Oseas", "symbolic daughter in Hosea"),
+            ("nombre que tomÃ³ NoemÃ­ en su amargura", "name Naomi took in her bitterness"),
+            ("presente en la crucifixiÃ³n", "present at the crucifixion"),
             ("otra forma del nombre Merab", "alternate form of the name Merab"),
-            ("mostró gran fe ante Jesús", "showed great faith before Jesus"),
-            ("miró hacia atrás al salir de Sodoma", "looked back while leaving Sodom"),
-            ("acusó falsamente a José", "falsely accused Joseph"),
-            ("sanada por Jesús", "healed by Jesus"),
-            ("habló con Jesús junto al pozo", "spoke with Jesus at the well"),
-            ("pidió misericordia para su hija", "asked for mercy for her daughter"),
-            ("llevada ante Jesús", "brought before Jesus"),
-            ("hospedó a Eliseo", "hosted Elisha"),
-            ("evitó la destrucción de la ciudad", "prevented the destruction of the city"),
-            ("habló ante el rey David", "spoke before King David"),
-            ("sierva que reconoció a Pedro", "servant girl who recognized Peter"),
-            ("seguidora y servidora de Jesús", "follower and supporter of Jesus"),
-            ("recibió la misericordia de Jesús", "received the mercy of Jesus"),
-            ("alimentada en tiempos de Elías", "fed in the days of Elijah"),
-            ("dio todo lo que tenía", "gave all she had"),
-            ("falsa profetisa en tiempos de Nehemías", "false prophetess in the time of Nehemiah"),
+            ("mostrÃ³ gran fe ante JesÃºs", "showed great faith before Jesus"),
+            ("mirÃ³ hacia atrÃ¡s al salir de Sodoma", "looked back while leaving Sodom"),
+            ("acusÃ³ falsamente a JosÃ©", "falsely accused Joseph"),
+            ("sanada por JesÃºs", "healed by Jesus"),
+            ("hablÃ³ con JesÃºs junto al pozo", "spoke with Jesus at the well"),
+            ("pidiÃ³ misericordia para su hija", "asked for mercy for her daughter"),
+            ("llevada ante JesÃºs", "brought before Jesus"),
+            ("hospedÃ³ a Eliseo", "hosted Elisha"),
+            ("evitÃ³ la destrucciÃ³n de la ciudad", "prevented the destruction of the city"),
+            ("hablÃ³ ante el rey David", "spoke before King David"),
+            ("sierva que reconociÃ³ a Pedro", "servant girl who recognized Peter"),
+            ("seguidora y servidora de JesÃºs", "follower and supporter of Jesus"),
+            ("recibiÃ³ la misericordia de JesÃºs", "received the mercy of Jesus"),
+            ("alimentada en tiempos de ElÃ­as", "fed in the days of Elijah"),
+            ("dio todo lo que tenÃ­a", "gave all she had"),
+            ("falsa profetisa en tiempos de NehemÃ­as", "false prophetess in the time of Nehemiah"),
             ("creyente elogiada por Pablo", "believer commended by Paul"),
-            ("cuñada de Rut", "sister-in-law of Ruth"),
-            ("la mujer de Jericó", "the woman from Jericho"),
+            ("cuÃ±ada de Rut", "sister-in-law of Ruth"),
+            ("la mujer de JericÃ³", "the woman from Jericho"),
             ("la reina Ester", "Queen Esther"),
             ("suegra de Rut", "mother-in-law of Ruth"),
-            ("visitó al rey Salomón", "visited King Solomon"),
+            ("visitÃ³ al rey SalomÃ³n", "visited King Solomon"),
             ("concubina de Nacor", "concubine of Nahor"),
-            ("concubina del rey Saúl", "concubine of King Saul"),
+            ("concubina del rey SaÃºl", "concubine of King Saul"),
             ("mujer mencionada en el Antiguo Testamento", "woman mentioned in the Old Testament"),
             ("de origen moderno", "of modern origin"),
             ("con centro historico en", "with historical center in"),
@@ -2036,7 +1986,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Murmuradores": "Murmuradors", "Nazareos": "Nazireus", "Nobles": "Nobles", "Obreros": "Obrers",
             "Ovejas perdidas": "Ovelles perdudes", "Pastoreadores": "Pastors", "Pecadores": "Pecadors",
             "Peregrinos": "Pelegrins", "Pescadores": "Pescadors", "Porteros": "Porters", "Presos": "Presos",
-            "Profetas": "Profetes", "Prosélitos": "Proselyts", "Publicanos": "Publicans", "Recaudadores": "Recaptadors",
+            "Profetas": "Profetes", "ProsÃ©litos": "Proselyts", "Publicanos": "Publicans", "Recaudadores": "Recaptadors",
             "Rechazados": "Rebutjats", "Remanente": "Romanent", "Reyes de la tierra": "Reis de la terra",
             "Sacerdotes": "Sacerdots", "Saduceos": "Saduceus", "Samaritanos piadosos": "Samaritans pietosos",
             "Sanedrin": "Sanedri", "Siervas": "Serventes", "Soldados": "Soldats", "Sumos sacerdotes": "Summes sacerdots",
@@ -2052,10 +2002,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Ninivitas": "Ninivites", "Partos": "Parts", "Persas": "Perses", "Romanos": "Romans",
             "Samaritanos": "Samaritans", "Sidonios": "Sidonis", "Sirios": "Siris", "Sumerios": "Sumeris",
             "Tarsenses": "Tarsencs", "Tribus de Israel": "Tribus d'Israel",
-            "Ararat": "Ararat", "Atenas": "Atenes", "Beerseba": "Beerxeba", "Belén": "Betlem", "Betania": "Betania",
-            "Betel": "Betel", "Betesda": "Betesda", "Cana": "Cana", "Canaán": "Canaan", "Carmelo": "Carmel",
+            "Ararat": "Ararat", "Atenas": "Atenes", "Beerseba": "Beerxeba", "BelÃ©n": "Betlem", "Betania": "Betania",
+            "Betel": "Betel", "Betesda": "Betesda", "Cana": "Cana", "CanaÃ¡n": "Canaan", "Carmelo": "Carmel",
             "Cesarea": "Cesarea", "Cesarea de Filipo": "Cesarea de Filip", "Corinto": "Corint", "Creta": "Creta",
-            "Damasco": "Damasc", "Decápolis": "Decapolis", "Emaús": "Emmaus", "Esmirna": "Esmirna",
+            "Damasco": "Damasc", "DecÃ¡polis": "Decapolis", "EmaÃºs": "Emmaus", "Esmirna": "Esmirna",
             "Filipos": "Filips", "Getsemani": "Getsemani", "Golgota": "Golgota", "Gosen": "Goixen", "Hebron": "Hebron",
             "Horeb": "Horeb", "Jordan": "Jorda", "Laodicea": "Laodicea", "Listra": "Listra", "Magdala": "Magdala",
             "Madian": "Madian", "Monte de los Olivos": "Muntanya de les Oliveres", "Nazaret": "Nazaret",
@@ -2064,194 +2014,194 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Sinai": "Sinai", "Sion": "Sio", "Siria": "Siria", "Susa": "Susa", "Tarsis": "Tarsis",
             "Tiatira": "Tiatira", "Tiro": "Tir", "Troas": "Troas", "Ur": "Ur", "Zoar": "Soar",
             "Budismo mahayana": "Budisme mahayana", "Budismo theravada": "Budisme theravada", "Budismo vajrayana": "Budisme vajrayana",
-            "Chiismo": "Xiisme", "Evangelicalismo": "Evangelicalisme", "Judaísmo conservador": "Judaisme conservador",
-            "Judaísmo ortodoxo": "Judaisme ortodox", "Judaísmo reformista": "Judaisme reformista",
-            "Ortodoxia oriental": "Ortodòxia oriental", "Pentecostalismo": "Pentecostalisme", "Shaivismo": "Saivisme",
+            "Chiismo": "Xiisme", "Evangelicalismo": "Evangelicalisme", "JudaÃ­smo conservador": "Judaisme conservador",
+            "JudaÃ­smo ortodoxo": "Judaisme ortodox", "JudaÃ­smo reformista": "Judaisme reformista",
+            "Ortodoxia oriental": "OrtodÃ²xia oriental", "Pentecostalismo": "Pentecostalisme", "Shaivismo": "Saivisme",
             "Shaktismo": "Xaktisme", "Sufismo": "Sufisme", "Sunismo": "Sunnisme", "Tenrikyo": "Tenrikyo",
             "Testigos de Jehova": "Testimonis de Jehova", "Tradiciones chinas": "Tradicions xineses",
             "Unitarios universalistas": "Unitaris universalistes", "Vaishnavismo": "Vaixnavisme", "Wicca": "Wicca",
-            "Bahaismo": "Bahaisme", "Caodaísmo": "Caodaisme", "Religiones africanas tradicionales": "Religions africanes tradicionals",
-            "Religiones indígenas americanas": "Religions indigenes americanes", "Religiones indígenas australianas": "Religions indigenes australianes",
+            "Bahaismo": "Bahaisme", "CaodaÃ­smo": "Caodaisme", "Religiones africanas tradicionales": "Religions africanes tradicionals",
+            "Religiones indÃ­genas americanas": "Religions indigenes americanes", "Religiones indÃ­genas australianas": "Religions indigenes australianes",
             "Abigail": "Abigail", "Abisag": "Abisag", "Abital": "Abital", "Acsa": "Acsa", "Ada": "Ada",
-            "Ana": "Anna", "Apphia": "Àpfia", "Asenat": "Asenat", "Atalia": "Atalia", "Batseba": "Betsabé",
+            "Ana": "Anna", "Apphia": "Ã€pfia", "Asenat": "Asenat", "Atalia": "Atalia", "Batseba": "BetsabÃ©",
             "Candace": "Candace", "Claudia": "Claudia", "Cloe": "Cloe", "Dalila": "Dalila", "Damaris": "Damaris",
             "Dorcas": "Dorques", "Elisabet": "Elisabet", "Eunice": "Eunice", "Febe": "Febe", "Hagar": "Agar",
             "Herodias": "Herodies", "Hulda": "Hulda", "Jael": "Jael", "Jezabel": "Jezabel", "Jocabed": "Jocabed",
             "Julia": "Julia", "Junia": "Junia", "Keturah": "Quetura", "Lia": "Lia", "Loida": "Loida",
-            "Maria de Cleofas": "Maria de Cleofàs", "Merab": "Merab", "Mical": "Mical", "Milca": "Milca",
-            "Noemi": "Noemí", "Orfa": "Orfa", "Penina": "Peninna", "Persida": "Pèrsida", "Priscila": "Priscil·la",
-            "Pua": "Pua", "Rahab": "Rahab", "Reina de Saba": "Reina de Saba", "Rizpa": "Rispà", "Rode": "Rode",
-            "Safira": "Safira", "Salome": "Salomé", "Sara": "Sara", "Sefora": "Sèfora", "Sifra": "Xifrà",
+            "Maria de Cleofas": "Maria de CleofÃ s", "Merab": "Merab", "Mical": "Mical", "Milca": "Milca",
+            "Noemi": "NoemÃ­", "Orfa": "Orfa", "Penina": "Peninna", "Persida": "PÃ¨rsida", "Priscila": "PriscilÂ·la",
+            "Pua": "Pua", "Rahab": "Rahab", "Reina de Saba": "Reina de Saba", "Rizpa": "RispÃ ", "Rode": "Rode",
+            "Safira": "Safira", "Salome": "SalomÃ©", "Sara": "Sara", "Sefora": "SÃ¨fora", "Sifra": "XifrÃ ",
             "Susana": "Susanna", "Tabita": "Tabita", "Tamar": "Tamar", "Vasti": "Vasti", "Mujer cananea": "Dona cananea",
             "Mujer samaritana": "Dona samaritana", "Mujer sirofenicia": "Dona sirofenicia", "Mujer de Lot": "Dona de Lot",
             "Mujer de Job": "Dona de Job", "Mujer de Manoa": "Dona de Manoa", "Mujer de Potifar": "Dona de Potifar",
-            "Mujer encorvada": "Dona encorbada", "Mujer del flujo de sangre": "Dona amb hemorràgies",
-            "Mujer sabia de Abel": "Dona sàvia d'Abel", "Mujer sabia de Tecoa": "Dona sàvia de Tecoa",
+            "Mujer encorvada": "Dona encorbada", "Mujer del flujo de sangre": "Dona amb hemorrÃ gies",
+            "Mujer sabia de Abel": "Dona sÃ via d'Abel", "Mujer sabia de Tecoa": "Dona sÃ via de Tecoa",
             "Mujer sorprendida en adulterio": "Dona sorpresa en adulteri", "Mujer sunamita": "Dona sunamita",
-            "Viuda de Nain": "Vídua de Naïm", "Viuda de Sarepta": "Vídua de Sarepta", "Viuda pobre del templo": "Vídua pobra del temple",
+            "Viuda de Nain": "VÃ­dua de NaÃ¯m", "Viuda de Sarepta": "VÃ­dua de Sarepta", "Viuda pobre del templo": "VÃ­dua pobra del temple",
             "El profeta": "Profeta", "Principal de la sinagoga": "Cap de la sinagoga",
             "Mujer vinculada a la muerte de Juan el Bautista": "Dona vinculada a la mort de Joan Baptista",
-            "Compañera de prisiones de Pablo": "Companya de presó de Pau",
-            "Hija simbólica de Oseas": "Filla simbòlica d'Osees",
-            "Sierva que reconoció a Pedro": "Serventa que va reconèixer Pere",
-            "Alimentada en tiempos de Elías": "Alimentada en temps d'Elies",
-            "Judío elocuente y poderoso en las Escrituras": "Jueu eloqüent i poderós en les Escriptures",
-            "Judio elocuente y poderoso en las Escrituras": "Jueu eloqüent i poderós en les Escriptures",
+            "CompaÃ±era de prisiones de Pablo": "Companya de presÃ³ de Pau",
+            "Hija simbÃ³lica de Oseas": "Filla simbÃ²lica d'Osees",
+            "Sierva que reconociÃ³ a Pedro": "Serventa que va reconÃ¨ixer Pere",
+            "Alimentada en tiempos de ElÃ­as": "Alimentada en temps d'Elies",
+            "JudÃ­o elocuente y poderoso en las Escrituras": "Jueu eloqÃ¼ent i poderÃ³s en les Escriptures",
+            "Judio elocuente y poderoso en las Escrituras": "Jueu eloqÃ¼ent i poderÃ³s en les Escriptures",
             "Maestro de la Ley entre los fariseos": "Mestre de la Llei entre els fariseus",
-            "Reconstruyó los muros de Jerusalén": "Va reconstruir les muralles de Jerusalem",
-            "Reconstruyo los muros de Jerusalén": "Va reconstruir les muralles de Jerusalem",
-            "Reconstruyó los muros de Jerusalen": "Va reconstruir les muralles de Jerusalem",
+            "ReconstruyÃ³ los muros de JerusalÃ©n": "Va reconstruir les muralles de Jerusalem",
+            "Reconstruyo los muros de JerusalÃ©n": "Va reconstruir les muralles de Jerusalem",
+            "ReconstruyÃ³ los muros de Jerusalen": "Va reconstruir les muralles de Jerusalem",
             "Reconstruyo los muros de Jerusalen": "Va reconstruir les muralles de Jerusalem",
             "Siervo mencionado por Pablo": "Servent esmentat per Pau",
-            "Siervo etíope que ayudó a Jeremías": "Servent etíop que va ajudar Jeremies",
-            "Siervo etiope que ayudó a Jeremías": "Servent etíop que va ajudar Jeremies",
-            "Siervo etíope que ayudo a Jeremías": "Servent etíop que va ajudar Jeremies",
-            "Siervo etiope que ayudo a Jeremías": "Servent etíop que va ajudar Jeremies",
-            "Siervo etíope que ayudó a Jeremias": "Servent etíop que va ajudar Jeremies",
-            "Siervo etiope que ayudó a Jeremias": "Servent etíop que va ajudar Jeremies",
-            "Siervo etíope que ayudo a Jeremias": "Servent etíop que va ajudar Jeremies",
-            "Siervo etiope que ayudo a Jeremias": "Servent etíop que va ajudar Jeremies",
-            "Concubina de Nacor": "Concubina de Nahor", "Esposa de Urías el heteo": "Dona d'Uries l'heteu",
+            "Siervo etÃ­ope que ayudÃ³ a JeremÃ­as": "Servent etÃ­op que va ajudar Jeremies",
+            "Siervo etiope que ayudÃ³ a JeremÃ­as": "Servent etÃ­op que va ajudar Jeremies",
+            "Siervo etÃ­ope que ayudo a JeremÃ­as": "Servent etÃ­op que va ajudar Jeremies",
+            "Siervo etiope que ayudo a JeremÃ­as": "Servent etÃ­op que va ajudar Jeremies",
+            "Siervo etÃ­ope que ayudÃ³ a Jeremias": "Servent etÃ­op que va ajudar Jeremies",
+            "Siervo etiope que ayudÃ³ a Jeremias": "Servent etÃ­op que va ajudar Jeremies",
+            "Siervo etÃ­ope que ayudo a Jeremias": "Servent etÃ­op que va ajudar Jeremies",
+            "Siervo etiope que ayudo a Jeremias": "Servent etÃ­op que va ajudar Jeremies",
+            "Concubina de Nacor": "Concubina de Nahor", "Esposa de UrÃ­as el heteo": "Dona d'Uries l'heteu",
             "Una de las esposas de David": "Una de les dones de David", "Esposa del rey Asuero": "Dona del rei Assuer",
-            "Seguidora y servidora de Jesús": "Deixebla i servidora de Jesús", "Esposa de Booz": "Dona de Booz",
+            "Seguidora y servidora de JesÃºs": "Deixebla i servidora de JesÃºs", "Esposa de Booz": "Dona de Booz",
             "Esposa de David": "Dona de David", "Esposa de Jacob": "Dona de Jacob", "Esposa de Job": "Dona de Job",
-            "Esposa de Lamec": "Dona de Lamec", "Esposa de Moisés": "Dona de Moisès",
-            "La reina Ester": "La reina Ester", "Seguidora de Jesús": "Deixebla de Jesús",
-            "Personas entregadas a alabar y honrar a Dios": "Gent lliurada a lloar i honorar Déu",
+            "Esposa de Lamec": "Dona de Lamec", "Esposa de MoisÃ©s": "Dona de MoisÃ¨s",
+            "La reina Ester": "La reina Ester", "Seguidora de JesÃºs": "Deixebla de JesÃºs",
+            "Personas entregadas a alabar y honrar a Dios": "Gent lliurada a lloar i honorar DÃ©u",
             "Pueblo mencionado en conflictos del Antiguo Testamento": "Poble citat en conflictes de l'Antic Testament",
-            "Responsables del hogar en distintos relatos bíblicos": "Caps de casa en diversos relats bíblics",
-            "Guerreros armados con arco en batallas bíblicas": "Guerrers armats amb arc en batalles bíbliques",
+            "Responsables del hogar en distintos relatos bÃ­blicos": "Caps de casa en diversos relats bÃ­blics",
+            "Guerreros armados con arco en batallas bÃ­blicas": "Guerrers armats amb arc en batalles bÃ­bliques",
             "Reuniones del pueblo para escuchar la Ley o adorar": "Trobades del poble per escoltar la Llei o adorar",
             "Ministros dedicados al canto en el templo": "Ministres dedicats al cant al temple",
-            "Encargados de prisiones, como en el libro de Hechos": "Guardes de la presó, com al llibre dels Fets",
+            "Encargados de prisiones, como en el libro de Hechos": "Guardes de la presÃ³, com al llibre dels Fets",
             "Oficiales romanos mencionados varias veces en el Nuevo Testamento": "Oficials romans citats diverses vegades al Nou Testament",
-            "Reuniones de líderes para tratar asuntos del pueblo o de la iglesia": "Trobades de dirigents per tractar afers del poble o de l'església",
-            "Personas que orientaban a reyes o líderes": "Gent que aconsellava reis o dirigents",
+            "Reuniones de lÃ­deres para tratar asuntos del pueblo o de la iglesia": "Trobades de dirigents per tractar afers del poble o de l'esglÃ©sia",
+            "Personas que orientaban a reyes o lÃ­deres": "Gent que aconsellava reis o dirigents",
             "Obreros implicados en murallas, ciudades o el templo": "Obrers implicats en muralles, ciutats o el temple",
-            "Servidores de palacio en reinos bíblicos": "Servidors de palau en regnes bíblics",
-            "Personas que han respondido con fe al mensaje de Dios": "Gent que ha respost amb fe al missatge de Déu",
+            "Servidores de palacio en reinos bÃ­blicos": "Servidors de palau en regnes bÃ­blics",
+            "Personas que han respondido con fe al mensaje de Dios": "Gent que ha respost amb fe al missatge de DÃ©u",
             "Exiliados fuera de su tierra por juicio o guerra": "Exiliats fora de la seva terra per judici o guerra",
             "Conjunto del pueblo de Israel descendiente de Jacob": "Conjunt del poble d'Israel descendent de Jacob",
-            "Expertos en la interpretación de la Ley mosaica": "Experts en la interpretació de la Llei mosaica",
-            "Personas oprimidas por espíritus malignos en los Evangelios": "Gent oprimida per esperits malignes als Evangelis",
-            "Grupo frecuentemente atendido con compasión y milagros": "Col·lectiu atès sovint amb compassió i miracles",
-            "Pueblo llevado cautivo fuera de Israel y Judá": "Poble portat captiu fora d'Israel i Judà",
+            "Expertos en la interpretaciÃ³n de la Ley mosaica": "Experts en la interpretaciÃ³ de la Llei mosaica",
+            "Personas oprimidas por espÃ­ritus malignos en los Evangelios": "Gent oprimida per esperits malignes als Evangelis",
+            "Grupo frecuentemente atendido con compasiÃ³n y milagros": "ColÂ·lectiu atÃ¨s sovint amb compassiÃ³ i miracles",
+            "Pueblo llevado cautivo fuera de Israel y JudÃ¡": "Poble portat captiu fora d'Israel i JudÃ ",
             "Personas de otras naciones presentes entre el pueblo": "Gent d'altres nacions present entre el poble",
             "Linajes apartados para el servicio del templo": "Nissagues reservades al servei del temple",
-            "Responsables del acceso y orden en el templo": "Guardes de l'accés i l'ordre del temple",
-            "Expresión poética para referirse al pueblo de Jerusalén": "Expressió poètica per referir-se al poble de Jerusalem",
-            "Grupo vulnerable protegido en la Ley y los profetas": "Col·lectiu vulnerable protegit a la Llei i als profetes",
-            "Líderes militares y administrativos de Israel": "Líders militars i administratius d'Israel",
-            "Grupo mencionado en exhortaciones, guerras y discipulado": "Col·lectiu esmentat en exhortacions, guerres i discipulat",
-            "Líderes levantados por Dios para gobernar y liberar a Israel": "Líders aixecats per Déu per governar i alliberar Israel",
-            "Sabios que visitaron a Jesús tras su nacimiento": "Savs que van visitar Jesús després del seu naixement",
-            "Comerciantes presentes en ciudades y rutas bíblicas": "Comerciants presents en ciutats i rutes bíbliques",
+            "Responsables del acceso y orden en el templo": "Guardes de l'accÃ©s i l'ordre del temple",
+            "ExpresiÃ³n poÃ©tica para referirse al pueblo de JerusalÃ©n": "ExpressiÃ³ poÃ¨tica per referir-se al poble de Jerusalem",
+            "Grupo vulnerable protegido en la Ley y los profetas": "ColÂ·lectiu vulnerable protegit a la Llei i als profetes",
+            "LÃ­deres militares y administrativos de Israel": "LÃ­ders militars i administratius d'Israel",
+            "Grupo mencionado en exhortaciones, guerras y discipulado": "ColÂ·lectiu esmentat en exhortacions, guerres i discipulat",
+            "LÃ­deres levantados por Dios para gobernar y liberar a Israel": "LÃ­ders aixecats per DÃ©u per governar i alliberar Israel",
+            "Sabios que visitaron a JesÃºs tras su nacimiento": "Savs que van visitar JesÃºs desprÃ©s del seu naixement",
+            "Comerciantes presentes en ciudades y rutas bÃ­blicas": "Comerciants presents en ciutats i rutes bÃ­bliques",
             "Mujeres que vivieron la espera de un hijo con fe y dolor": "Dones que van viure l'espera d'un fill amb fe i dolor",
-            "Grupo que protesta contra Dios o sus siervos": "Col·lectiu que protesta contra Déu o els seus servents",
-            "Personas consagradas a Dios mediante voto especial": "Persones consagrades a Déu mitjançant un vot especial",
+            "Grupo que protesta contra Dios o sus siervos": "ColÂ·lectiu que protesta contra DÃ©u o els seus servents",
+            "Personas consagradas a Dios mediante voto especial": "Persones consagrades a DÃ©u mitjanÃ§ant un vot especial",
             "Miembros influyentes del pueblo o de la corte": "Personatges influents del poble o de la cort",
-            "Trabajadores del campo, la construcción o la mies espiritual": "Treballadors del camp, de la construcció o de la sega espiritual",
+            "Trabajadores del campo, la construcciÃ³n o la mies espiritual": "Treballadors del camp, de la construcciÃ³ o de la sega espiritual",
             "Imagen del pueblo descarriado necesitado de pastor": "Figura del poble esgarriat que necessita pastor",
-            "Encargados de cuidar rebaños en la vida cotidiana bíblica": "Responsables de tenir cura dels ramats en la vida quotidiana bíblica",
-            "Término frecuente para quienes necesitan arrepentimiento y gracia": "Terme freqüent per als qui necessiten penediment i gràcia",
-            "Personas de paso o en viaje hacia lugares santos": "Gent de pas o en camí cap a llocs sants",
-            "Oficio común en Galilea y entre varios discípulos": "Ofici comú a Galilea i entre diversos deixebles",
+            "Encargados de cuidar rebaÃ±os en la vida cotidiana bÃ­blica": "Responsables de tenir cura dels ramats en la vida quotidiana bÃ­blica",
+            "TÃ©rmino frecuente para quienes necesitan arrepentimiento y gracia": "Terme freqÃ¼ent per als qui necessiten penediment i grÃ cia",
+            "Personas de paso o en viaje hacia lugares santos": "Gent de pas o en camÃ­ cap a llocs sants",
+            "Oficio comÃºn en Galilea y entre varios discÃ­pulos": "Ofici comÃº a Galilea i entre diversos deixebles",
             "Servidores asignados al cuidado de entradas y espacios sagrados": "Servidors encarregats de vetllar per les entrades i els espais sagrats",
-            "Personas encarceladas por delitos, injusticia o causa del Evangelio": "Gent empresonada per delictes, injustícia o per causa de l'Evangeli",
-            "Gentiles incorporados a la fe judía": "Gentils incorporats a la fe jueva",
+            "Personas encarceladas por delitos, injusticia o causa del Evangelio": "Gent empresonada per delictes, injustÃ­cia o per causa de l'Evangeli",
+            "Gentiles incorporados a la fe judÃ­a": "Gentils incorporats a la fe jueva",
             "Funcionarios que cobraban tributos e impuestos": "Cobradors de tributs i impostos",
             "Personas marginadas social o religiosamente": "Gent marginada socialment o religiosament",
-            "Gobernantes de naciones en pasajes históricos y proféticos": "Sobirans de nacions en passatges històrics i profètics",
-            "Grupo fiel preservado por Dios en tiempos de crisis": "Col·lectiu fidel preservat per Déu en temps de crisi",
-            "Referencia a quienes actúan con misericordia inesperada": "Referència als qui actuen amb misericòrdia inesperada",
-            "Mujeres al servicio de hogares o familias": "Dones al servei de llars o famílies",
-            "Militares presentes en historias del Antiguo y Nuevo Testamento": "Militars presents en històries de l'Antic i del Nou Testament",
-            "Imagen de quienes sirven en la obra de Dios": "Figura dels qui serveixen en l'obra de Déu",
-            "Grupo religioso influyente en tiempos de Jesús": "Col·lectiu religiós influent en temps de Jesús",
-            "Grupo sacerdotal y político del judaísmo": "Col·lectiu sacerdotal i polític del judaisme",
-            "Intérpretes y maestros de la Ley": "Intèrprets i mestres de la Llei",
+            "Gobernantes de naciones en pasajes histÃ³ricos y profÃ©ticos": "Sobirans de nacions en passatges histÃ²rics i profÃ¨tics",
+            "Grupo fiel preservado por Dios en tiempos de crisis": "ColÂ·lectiu fidel preservat per DÃ©u en temps de crisi",
+            "Referencia a quienes actÃºan con misericordia inesperada": "ReferÃ¨ncia als qui actuen amb misericÃ²rdia inesperada",
+            "Mujeres al servicio de hogares o familias": "Dones al servei de llars o famÃ­lies",
+            "Militares presentes en historias del Antiguo y Nuevo Testamento": "Militars presents en histÃ²ries de l'Antic i del Nou Testament",
+            "Imagen de quienes sirven en la obra de Dios": "Figura dels qui serveixen en l'obra de DÃ©u",
+            "Grupo religioso influyente en tiempos de JesÃºs": "ColÂ·lectiu religiÃ³s influent en temps de JesÃºs",
+            "Grupo sacerdotal y polÃ­tico del judaÃ­smo": "ColÂ·lectiu sacerdotal i polÃ­tic del judaisme",
+            "IntÃ©rpretes y maestros de la Ley": "IntÃ¨rprets i mestres de la Llei",
             "Partidarios de la casa de Herodes": "Partidaris de la casa d'Herodes",
-            "Movimiento judío de fuerte fervor nacional": "Corrent jueu de fort zel nacional",
-            "Comunidad judía asociada a vida apartada": "Comunitat jueva associada a una vida apartada",
+            "Movimiento judÃ­o de fuerte fervor nacional": "Corrent jueu de fort zel nacional",
+            "Comunidad judÃ­a asociada a vida apartada": "Comunitat jueva associada a una vida apartada",
             "Cobradores de impuestos en tiempos de Roma": "Cobradores d'impostos en temps de Roma",
             "Tribu dedicada al servicio del templo": "Tribu dedicada al servei del temple",
             "Encargados del culto en Israel": "Responsables del culte a Israel",
-            "Máxima autoridad sacerdotal": "Màxima autoritat sacerdotal",
-            "Consejo religioso judío": "Consell religiós jueu",
-            "Seguidores y aprendices de Jesús": "Seguidors i aprenents de Jesús",
-            "Enviados escogidos por Jesús": "Enviats escollits per Jesús",
-            "Portavoces del mensaje de Dios": "Portaveus del missatge de Déu",
-            "Pueblos no judíos": "Pobles no jueus",
-            "Pueblo del pacto en tiempos bíblicos": "Poble del pacte en temps bíblics",
-            "Judíos de lengua griega mencionados en Hechos": "Jueus de llengua grega esmentats als Fets",
-            "Grupo vulnerable atendido por la iglesia primitiva": "Col·lectiu vulnerable atès per l'església primitiva",
-            "Servidores escogidos en la iglesia primitiva": "Servidors escollits a l'església primitiva",
-            "Líderes espirituales del pueblo o de la iglesia": "Referents espirituals del poble o de l'església",
+            "MÃ¡xima autoridad sacerdotal": "MÃ xima autoritat sacerdotal",
+            "Consejo religioso judÃ­o": "Consell religiÃ³s jueu",
+            "Seguidores y aprendices de JesÃºs": "Seguidors i aprenents de JesÃºs",
+            "Enviados escogidos por JesÃºs": "Enviats escollits per JesÃºs",
+            "Portavoces del mensaje de Dios": "Portaveus del missatge de DÃ©u",
+            "Pueblos no judÃ­os": "Pobles no jueus",
+            "Pueblo del pacto en tiempos bÃ­blicos": "Poble del pacte en temps bÃ­blics",
+            "JudÃ­os de lengua griega mencionados en Hechos": "Jueus de llengua grega esmentats als Fets",
+            "Grupo vulnerable atendido por la iglesia primitiva": "ColÂ·lectiu vulnerable atÃ¨s per l'esglÃ©sia primitiva",
+            "Servidores escogidos en la iglesia primitiva": "Servidors escollits a l'esglÃ©sia primitiva",
+            "LÃ­deres espirituales del pueblo o de la iglesia": "Referents espirituals del poble o de l'esglÃ©sia",
             "Fe basada en Jesucristo y el evangelio": "Fe arrelada en Jesucrist i l'evangeli",
-            "Rama principal del cristianismo con centro histórico en Roma": "Tronc principal del cristianisme amb centre històric a Roma",
-            "Conjunto de iglesias cristianas surgidas de la Reforma": "Aplec d'esglésies cristianes nascudes de la Reforma",
-            "Tradición cristiana histórica de las iglesias ortodoxas": "Herència cristiana històrica de les esglésies ortodoxes",
-            "Corriente cristiana centrada en conversión, Biblia y evangelización": "Corrent cristià focalitzat en la conversió, la Bíblia i l'evangelització",
-            "Movimiento cristiano que enfatiza la obra del Espíritu Santo": "Corrent cristià que posa l'accent en l'obra de l'Esperit Sant",
-            "Religión monoteísta fundada en las enseñanzas de Mahoma": "Religió monoteista fundada en els ensenyaments de Mahoma",
-            "Rama mayoritaria del islam": "Branca majoritària de l'islam",
-            "Rama principal del islam vinculada a la sucesión de Alí": "Branca principal de l'islam vinculada a la successió d'Alí",
-            "Corriente mística dentro del islam": "Corrent mística dins de l'islam",
-            "Religión del pueblo judío basada en la Torá": "Religió del poble jueu basada en la Torà",
-            "Corriente judía tradicional de estricta observancia": "Corrent jueva tradicional d'estricta observança",
-            "Corriente judía de continuidad y adaptación": "Corrent jueva de continuïtat i adaptació",
-            "Corriente judía de enfoque más liberal": "Corrent jueu de caire més liberal",
+            "Rama principal del cristianismo con centro histÃ³rico en Roma": "Tronc principal del cristianisme amb centre histÃ²ric a Roma",
+            "Conjunto de iglesias cristianas surgidas de la Reforma": "Aplec d'esglÃ©sies cristianes nascudes de la Reforma",
+            "TradiciÃ³n cristiana histÃ³rica de las iglesias ortodoxas": "HerÃ¨ncia cristiana histÃ²rica de les esglÃ©sies ortodoxes",
+            "Corriente cristiana centrada en conversiÃ³n, Biblia y evangelizaciÃ³n": "Corrent cristiÃ  focalitzat en la conversiÃ³, la BÃ­blia i l'evangelitzaciÃ³",
+            "Movimiento cristiano que enfatiza la obra del EspÃ­ritu Santo": "Corrent cristiÃ  que posa l'accent en l'obra de l'Esperit Sant",
+            "ReligiÃ³n monoteÃ­sta fundada en las enseÃ±anzas de Mahoma": "ReligiÃ³ monoteista fundada en els ensenyaments de Mahoma",
+            "Rama mayoritaria del islam": "Branca majoritÃ ria de l'islam",
+            "Rama principal del islam vinculada a la sucesiÃ³n de AlÃ­": "Branca principal de l'islam vinculada a la successiÃ³ d'AlÃ­",
+            "Corriente mÃ­stica dentro del islam": "Corrent mÃ­stica dins de l'islam",
+            "ReligiÃ³n del pueblo judÃ­o basada en la TorÃ¡": "ReligiÃ³ del poble jueu basada en la TorÃ ",
+            "Corriente judÃ­a tradicional de estricta observancia": "Corrent jueva tradicional d'estricta observanÃ§a",
+            "Corriente judÃ­a de continuidad y adaptaciÃ³n": "Corrent jueva de continuÃ¯tat i adaptaciÃ³",
+            "Corriente judÃ­a de enfoque mÃ¡s liberal": "Corrent jueu de caire mÃ©s liberal",
             "Conjunto de tradiciones religiosas originadas en la India": "Aplec de tradicions religioses originades a l'?ndia",
-            "Corriente hindú centrada en Vishnu": "Corrent hindú centrada en Vixnu",
-            "Corriente hindú centrada en Shiva": "Corrent hindú centrada en Xiva",
-            "Corriente hindú centrada en la diosa Shakti": "Corrent hindú centrada en la deessa Shakti",
-            "Tradición fundada a partir de las enseñanzas de Buda": "Camí espiritual nascut dels ensenyaments de Buda",
-            "Rama budista extendida en el sur de Asia": "Branca budista estesa al sud d'Àsia",
-            "Rama budista extendida en Asia oriental": "Branca budista estesa a l'Àsia oriental",
-            "Forma budista asociada al Tíbet y regiones cercanas": "Forma budista associada al Tibet i a regions properes",
-            "Religión monoteísta originada en el Punjab": "Religió monoteista originada al Panjab",
-            "Tradición india centrada en la no violencia y la disciplina": "Tradició índia centrada en la no-violència i la disciplina",
-            "Antigua religión persa vinculada a Zaratustra": "Antiga religió persa vinculada a Zaratustra",
-            "Religión monoteísta nacida en Persia con vocación universal": "Religió monoteista nascuda a Pèrsia amb vocació universal",
-            "Tradición filosófica y ética de origen chino": "Tradició filosòfica i ètica d'origen xinès",
-            "Tradición religiosa y filosófica china vinculada al Tao": "Corrent religiosa i filosòfica xinesa vinculada al Tao",
-            "Religión tradicional de Japón": "Religió tradicional del Japó",
-            "Creencia en espíritus asociados a la naturaleza y los seres": "Creença en esperits associats a la natura i als éssers",
-            "Conjunto de prácticas religiosas populares de China": "Conjunt de pràctiques religioses populars de la Xina",
+            "Corriente hindÃº centrada en Vishnu": "Corrent hindÃº centrada en Vixnu",
+            "Corriente hindÃº centrada en Shiva": "Corrent hindÃº centrada en Xiva",
+            "Corriente hindÃº centrada en la diosa Shakti": "Corrent hindÃº centrada en la deessa Shakti",
+            "TradiciÃ³n fundada a partir de las enseÃ±anzas de Buda": "CamÃ­ espiritual nascut dels ensenyaments de Buda",
+            "Rama budista extendida en el sur de Asia": "Branca budista estesa al sud d'Ã€sia",
+            "Rama budista extendida en Asia oriental": "Branca budista estesa a l'Ã€sia oriental",
+            "Forma budista asociada al TÃ­bet y regiones cercanas": "Forma budista associada al Tibet i a regions properes",
+            "ReligiÃ³n monoteÃ­sta originada en el Punjab": "ReligiÃ³ monoteista originada al Panjab",
+            "TradiciÃ³n india centrada en la no violencia y la disciplina": "TradiciÃ³ Ã­ndia centrada en la no-violÃ¨ncia i la disciplina",
+            "Antigua religiÃ³n persa vinculada a Zaratustra": "Antiga religiÃ³ persa vinculada a Zaratustra",
+            "ReligiÃ³n monoteÃ­sta nacida en Persia con vocaciÃ³n universal": "ReligiÃ³ monoteista nascuda a PÃ¨rsia amb vocaciÃ³ universal",
+            "TradiciÃ³n filosÃ³fica y Ã©tica de origen chino": "TradiciÃ³ filosÃ²fica i Ã¨tica d'origen xinÃ¨s",
+            "TradiciÃ³n religiosa y filosÃ³fica china vinculada al Tao": "Corrent religiosa i filosÃ²fica xinesa vinculada al Tao",
+            "ReligiÃ³n tradicional de JapÃ³n": "ReligiÃ³ tradicional del JapÃ³",
+            "Creencia en espÃ­ritus asociados a la naturaleza y los seres": "CreenÃ§a en esperits associats a la natura i als Ã©ssers",
+            "Conjunto de prÃ¡cticas religiosas populares de China": "Conjunt de prÃ ctiques religioses populars de la Xina",
             "Sistemas religiosos aut?ctonos de ?frica": "Sistemes religiosos aut?ctons de l'?frica",
-            "Tradiciones espirituales de pueblos originarios de América": "Tradicions espirituals de pobles originaris d'Amèrica",
-            "Tradiciones espirituales de pueblos aborígenes": "Tradicions espirituals de pobles aborígens",
-            "Religión vietnamita de carácter sincretista": "Religió vietnamita de caràcter sincrètic",
-            "Movimiento religioso japonés de origen moderno": "Corrent religiós japonès d'origen modern",
-            "Corriente religiosa basada en comunicación con espíritus": "Corrent religiós basat en la comunicació amb esperits",
-            "Movimiento religioso surgido en Jamaica": "Corrent religiós sorgit a Jamaica",
-            "Movimiento religioso de enfoque pluralista": "Corrent religiós de tarannà pluralista",
-            "Tradición cristiana vinculada a La Iglesia de Jesucristo de los Santos de los Últimos Días": "Tradició cristiana vinculada a l'Església de Jesucrist dels Sants dels Últims Dies",
-            "Movimiento religioso de interpretación bíblica particular": "Corrent religiós amb una interpretació bíblica particular",
-            "Movimiento religioso fundado por Mary Baker Eddy": "Corrent religiós fundat per Mary Baker Eddy",
-            "Conjunto de espiritualidades modernas de carácter sincretista": "Conjunt d'espiritualitats modernes de caràcter sincrètic",
-            "Recuperación moderna de tradiciones religiosas precristianas": "Recuperació moderna de tradicions religioses precristianes",
-            "Tradición neopagana de carácter ritual y dual": "Via neopagana de caràcter ritual i dual",
-            "Postura de negación de la existencia de deidades": "Postura de negació de l'existència de divinitats",
-            "Postura sobre la imposibilidad o duda de conocer a Dios": "Postura sobre la impossibilitat o el dubte de conèixer Déu",
-            "Visión ética no religiosa centrada en el ser humano": "Visió ètica no religiosa centrada en l'ésser humà",
-            "Creencia en un creador sin revelación religiosa particular": "Creença en un creador sense revelació religiosa particular",
-            "Personas que no se identifican con una religión concreta": "Gent que no s'identifica amb cap religió concreta",
-            "Barnabas": "Bernabe", "Boaz": "Booz", "Cain": "Cai¨n", "Cornelio": "Corneli", "Crispo": "Crisp",
-            "Efrain": "Efrai¨m", "Elcanah": "Elcana", "Eleazar": "Eleazar", "Eli": "Eli", "Enoc": "Henoc",
+            "Tradiciones espirituales de pueblos originarios de AmÃ©rica": "Tradicions espirituals de pobles originaris d'AmÃ¨rica",
+            "Tradiciones espirituales de pueblos aborÃ­genes": "Tradicions espirituals de pobles aborÃ­gens",
+            "ReligiÃ³n vietnamita de carÃ¡cter sincretista": "ReligiÃ³ vietnamita de carÃ cter sincrÃ¨tic",
+            "Movimiento religioso japonÃ©s de origen moderno": "Corrent religiÃ³s japonÃ¨s d'origen modern",
+            "Corriente religiosa basada en comunicaciÃ³n con espÃ­ritus": "Corrent religiÃ³s basat en la comunicaciÃ³ amb esperits",
+            "Movimiento religioso surgido en Jamaica": "Corrent religiÃ³s sorgit a Jamaica",
+            "Movimiento religioso de enfoque pluralista": "Corrent religiÃ³s de tarannÃ  pluralista",
+            "TradiciÃ³n cristiana vinculada a La Iglesia de Jesucristo de los Santos de los Ãšltimos DÃ­as": "TradiciÃ³ cristiana vinculada a l'EsglÃ©sia de Jesucrist dels Sants dels Ãšltims Dies",
+            "Movimiento religioso de interpretaciÃ³n bÃ­blica particular": "Corrent religiÃ³s amb una interpretaciÃ³ bÃ­blica particular",
+            "Movimiento religioso fundado por Mary Baker Eddy": "Corrent religiÃ³s fundat per Mary Baker Eddy",
+            "Conjunto de espiritualidades modernas de carÃ¡cter sincretista": "Conjunt d'espiritualitats modernes de carÃ cter sincrÃ¨tic",
+            "RecuperaciÃ³n moderna de tradiciones religiosas precristianas": "RecuperaciÃ³ moderna de tradicions religioses precristianes",
+            "TradiciÃ³n neopagana de carÃ¡cter ritual y dual": "Via neopagana de carÃ cter ritual i dual",
+            "Postura de negaciÃ³n de la existencia de deidades": "Postura de negaciÃ³ de l'existÃ¨ncia de divinitats",
+            "Postura sobre la imposibilidad o duda de conocer a Dios": "Postura sobre la impossibilitat o el dubte de conÃ¨ixer DÃ©u",
+            "VisiÃ³n Ã©tica no religiosa centrada en el ser humano": "VisiÃ³ Ã¨tica no religiosa centrada en l'Ã©sser humÃ ",
+            "Creencia en un creador sin revelaciÃ³n religiosa particular": "CreenÃ§a en un creador sense revelaciÃ³ religiosa particular",
+            "Personas que no se identifican con una religiÃ³n concreta": "Gent que no s'identifica amb cap religiÃ³ concreta",
+            "Barnabas": "Bernabe", "Boaz": "Booz", "Cain": "CaiÂ¨n", "Cornelio": "Corneli", "Crispo": "Crisp",
+            "Efrain": "EfraiÂ¨m", "Elcanah": "Elcana", "Eleazar": "Eleazar", "Eli": "Eli", "Enoc": "Henoc",
             "Ezequias": "Ezequies", "Festo": "Festus", "Filemon": "Filemo", "Finees": "Finees", "Gamaliel": "Gamaliel",
             "Gedeon": "Gedeo", "Heber": "Heber", "Heman": "Heman", "Hermes": "Hermes", "Isacar": "Issacar",
             "Ismael": "Ismael", "Jair": "Jair", "Jefte": "Jefte", "Jesse": "Jesse", "Joab": "Joab",
             "Jonadab": "Jonadab", "Jonathan": "Jonatan", "Josafat": "Josafat", "Justo": "Just", "Laban": "Laban",
-            "Lamec": "Lamec", "Lazaro": "Llàtzer", "Levi": "Levi", "Lot": "Lot", "Manases": "Manasses",
+            "Lamec": "Lamec", "Lazaro": "LlÃ tzer", "Levi": "Levi", "Lot": "Lot", "Manases": "Manasses",
             "Mardoqueo": "Mardoqueu", "Matias": "Maties", "Matusalen": "Matusalem", "Mefiboset": "Mefiboset",
-            "Micaias": "Micàie`s", "Nahum": "Nahum", "Natan": "Natan", "Natanael": "Natanael", "Nehemias": "Nehemies",
+            "Micaias": "MicÃ ie`s", "Nahum": "Nahum", "Natan": "Natan", "Natanael": "Natanael", "Nehemias": "Nehemies",
             "Ner": "Ner", "Nicodemo": "Nicodem", "Noe": "Noe", "Obed": "Obed", "Onesimo": "Onesim",
-            "Ozias": "Ozies", "Poncio Pilato": "Ponç Pilat", "Procoro": "Procor", "Roboam": "Roboam",
-            "Ruben": "Rube`n", "Saul": "Sau¨l", "Sem": "Sem", "Set": "Set", "Sila": "Siles",
-            "Silas": "Silas", "Simon de Cirene": "Simo´ de Cirene", "Simeon": "Simeo´", "Sosthenes": "Sostenes",
+            "Ozias": "Ozies", "Poncio Pilato": "PonÃ§ Pilat", "Procoro": "Procor", "Roboam": "Roboam",
+            "Ruben": "Rube`n", "Saul": "SauÂ¨l", "Sem": "Sem", "Set": "Set", "Sila": "Siles",
+            "Silas": "Silas", "Simon de Cirene": "SimoÂ´ de Cirene", "Simeon": "SimeoÂ´", "Sosthenes": "Sostenes",
             "Tadeo": "Tadeu", "Tiquico": "Tiquic", "Tito Justo": "Titus Just", "Tobias": "Tobies",
-            "Urias": "Uries", "Uziel": "Uziel", "Zabulon": "Zabulo´", "Zaqueo": "Zaqueu", "Zebedeo": "Zebedeu",
+            "Urias": "Uries", "Uziel": "Uziel", "Zabulon": "ZabuloÂ´", "Zaqueo": "Zaqueu", "Zebedeo": "Zebedeu",
             "Zorobabel": "Zorobabel",
             "Abraham": "Abraham", "Isaac": "Isaac", "Jacob": "Jacob", "Jose": "Josep", "Moises": "Moises",
             "Aaron": "Aaron", "Josue": "Josue", "Samuel": "Samuel", "David": "David", "Salomon": "Salomo",
@@ -2280,7 +2230,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Catolicismo": "Catolicisme",
             "Protestantismo": "Protestantisme",
             "Islam": "Islam",
-            "Judaísmo": "Judaisme",
+            "JudaÃ­smo": "Judaisme",
             "Hinduismo": "Hinduisme",
             "Budismo": "Budisme",
             "Sijismo": "Sikhisme",
@@ -2293,7 +2243,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Espiritismo": "Espiritisme",
             "Rastafarismo": "Rastafarisme",
             "Mormonismo": "Mormonisme",
-            "Ciencia Cristiana": "Ciència Cristiana",
+            "Ciencia Cristiana": "CiÃ¨ncia Cristiana",
             "Nueva Era": "Nova Era",
             "Neopaganismo": "Neopaganisme",
             "Ateismo": "Ateisme",
@@ -2304,7 +2254,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         },
         "fr": {
             "Adoradores": "Adorateurs", "Agarenos": "Agareniens", "Amos de casa": "Chefs de maison", "Ancianos": "Anciens",
-            "Apostoles": "Apôtres", "Arqueros": "Archers", "Asambleas": "Assemblees", "Cantores": "Chantres",
+            "Apostoles": "ApÃ´tres", "Arqueros": "Archers", "Asambleas": "Assemblees", "Cantores": "Chantres",
             "Carceleros": "Geoliers", "Celotes": "Zelotes", "Centuriones": "Centurions", "Concilios": "Conciles",
             "Consejeros": "Conseillers", "Constructores": "Constructeurs", "Cortesanos": "Courtisans", "Creyentes": "Croyants",
             "Desterrados": "Bannis", "Diaconos": "Diacres", "Discipulos": "Disciples", "Doce tribus": "Douze tribus",
@@ -2318,7 +2268,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Murmuradores": "Murmurateurs", "Nazareos": "Nazireens", "Nobles": "Nobles", "Obreros": "Ouvriers",
             "Ovejas perdidas": "Brebis perdues", "Pastoreadores": "Bergers", "Pecadores": "Pecheurs",
             "Peregrinos": "Pelerins", "Pescadores": "Pecheurs", "Porteros": "Portiers", "Presos": "Prisonniers",
-            "Profetas": "Prophetes", "Prosélitos": "Proselytes", "Publicanos": "Publicains", "Recaudadores": "Collecteurs d'impots",
+            "Profetas": "Prophetes", "ProsÃ©litos": "Proselytes", "Publicanos": "Publicains", "Recaudadores": "Collecteurs d'impots",
             "Rechazados": "Rejetes", "Remanente": "Reste fidele", "Reyes de la tierra": "Rois de la terre",
             "Sacerdotes": "Pretres", "Saduceos": "Sadduceens", "Samaritanos piadosos": "Samaritains compatissants",
             "Sanedrin": "Sanhedrin", "Siervas": "Servantes", "Soldados": "Soldats", "Sumos sacerdotes": "Souverains sacrificateurs",
@@ -2334,10 +2284,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Ninivitas": "Ninivites", "Partos": "Parthes", "Persas": "Perses", "Romanos": "Romains",
             "Samaritanos": "Samaritains", "Sidonios": "Sidoniens", "Sirios": "Syriens", "Sumerios": "Sumeriens",
             "Tarsenses": "Tarsiens", "Tribus de Israel": "Tribus d'Israel",
-            "Ararat": "Ararat", "Atenas": "Athenes", "Beerseba": "Beer-Sheba", "Belén": "Bethleem", "Betania": "Bethanie",
-            "Betel": "Bethel", "Betesda": "Bethesda", "Cana": "Cana", "Canaán": "Canaan", "Carmelo": "Carmel",
+            "Ararat": "Ararat", "Atenas": "Athenes", "Beerseba": "Beer-Sheba", "BelÃ©n": "Bethleem", "Betania": "Bethanie",
+            "Betel": "Bethel", "Betesda": "Bethesda", "Cana": "Cana", "CanaÃ¡n": "Canaan", "Carmelo": "Carmel",
             "Cesarea": "Cesaree", "Cesarea de Filipo": "Cesaree de Philippe", "Corinto": "Corinthe", "Creta": "Crete",
-            "Damasco": "Damas", "Decápolis": "Decapole", "Emaús": "Emmaus", "Esmirna": "Smyrne",
+            "Damasco": "Damas", "DecÃ¡polis": "Decapole", "EmaÃºs": "Emmaus", "Esmirna": "Smyrne",
             "Filipos": "Philippes", "Getsemani": "Gethsemane", "Golgota": "Golgotha", "Gosen": "Goshen", "Hebron": "Hebron",
             "Horeb": "Horeb", "Jordan": "Jourdain", "Laodicea": "Laodicee", "Listra": "Lystre", "Magdala": "Magdala",
             "Madian": "Madian", "Monte de los Olivos": "Mont des Oliviers", "Nazaret": "Nazareth",
@@ -2346,172 +2296,172 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Sinai": "Sinai", "Sion": "Sion", "Siria": "Syrie", "Susa": "Suse", "Tarsis": "Tarsis",
             "Tiatira": "Thyatire", "Tiro": "Tyr", "Troas": "Troas", "Ur": "Ur", "Zoar": "Tsoar",
             "Budismo mahayana": "Bouddhisme mahayana", "Budismo theravada": "Bouddhisme theravada", "Budismo vajrayana": "Bouddhisme vajrayana",
-            "Chiismo": "Chiisme", "Evangelicalismo": "Evangelicalisme", "Judaísmo conservador": "Judaisme conservateur",
-            "Judaísmo ortodoxo": "Judaisme orthodoxe", "Judaísmo reformista": "Judaisme reforme",
-            "Ortodoxia oriental": "Orthodoxie orientale", "Pentecostalismo": "Pentecôtisme", "Shaivismo": "Shaivisme",
+            "Chiismo": "Chiisme", "Evangelicalismo": "Evangelicalisme", "JudaÃ­smo conservador": "Judaisme conservateur",
+            "JudaÃ­smo ortodoxo": "Judaisme orthodoxe", "JudaÃ­smo reformista": "Judaisme reforme",
+            "Ortodoxia oriental": "Orthodoxie orientale", "Pentecostalismo": "PentecÃ´tisme", "Shaivismo": "Shaivisme",
             "Shaktismo": "Shaktisme", "Sufismo": "Soufisme", "Sunismo": "Sunnisme", "Tenrikyo": "Tenrikyo",
             "Testigos de Jehova": "Temoins de Jehovah", "Tradiciones chinas": "Traditions chinoises",
             "Unitarios universalistas": "Unitariens universalistes", "Vaishnavismo": "Vaishnavisme", "Wicca": "Wicca",
-            "Bahaismo": "Bahaisme", "Caodaísmo": "Caodaisme", "Religiones africanas tradicionales": "Religions africaines traditionnelles",
-            "Religiones indígenas americanas": "Religions autochtones americaines", "Religiones indígenas australianas": "Religions autochtones australiennes",
+            "Bahaismo": "Bahaisme", "CaodaÃ­smo": "Caodaisme", "Religiones africanas tradicionales": "Religions africaines traditionnelles",
+            "Religiones indÃ­genas americanas": "Religions autochtones americaines", "Religiones indÃ­genas australianas": "Religions autochtones australiennes",
             "Abigail": "Abigail", "Abisag": "Abishag", "Abital": "Abital", "Acsa": "Acsa", "Ada": "Ada",
-            "Ana": "Anne", "Apphia": "Apphia", "Asenat": "Asnath", "Atalia": "Athalie", "Batseba": "Bath-Shéba",
+            "Ana": "Anne", "Apphia": "Apphia", "Asenat": "Asnath", "Atalia": "Athalie", "Batseba": "Bath-ShÃ©ba",
             "Candace": "Candace", "Claudia": "Claudia", "Cloe": "Chloe", "Dalila": "Dalila", "Damaris": "Damaris",
             "Dorcas": "Dorcas", "Elisabet": "Elisabeth", "Eunice": "Eunice", "Febe": "Phebe", "Hagar": "Agar",
             "Herodias": "Herodiade", "Hulda": "Houlda", "Jael": "Jael", "Jezabel": "Jezabel", "Jocabed": "Jokebed",
             "Julia": "Julia", "Junia": "Junia", "Keturah": "Qetura", "Lia": "Lea", "Loida": "Lois",
-            "Maria de Cleofas": "Marie de Cléophas", "Merab": "Merab", "Mical": "Mical", "Milca": "Milca",
-            "Noemi": "Noémi", "Orfa": "Orpa", "Penina": "Peninna", "Persida": "Persis", "Priscila": "Priscille",
+            "Maria de Cleofas": "Marie de ClÃ©ophas", "Merab": "Merab", "Mical": "Mical", "Milca": "Milca",
+            "Noemi": "NoÃ©mi", "Orfa": "Orpa", "Penina": "Peninna", "Persida": "Persis", "Priscila": "Priscille",
             "Pua": "Pua", "Rahab": "Rahab", "Reina de Saba": "Reine de Saba", "Rizpa": "Ritspa", "Rode": "Rhode",
-            "Safira": "Saphira", "Salome": "Salomé", "Sara": "Sara", "Sefora": "Séphora", "Sifra": "Shiphra",
-            "Susana": "Suzanne", "Tabita": "Tabitha", "Tamar": "Tamar", "Vasti": "Vasthi", "Mujer cananea": "Femme cananéenne",
+            "Safira": "Saphira", "Salome": "SalomÃ©", "Sara": "Sara", "Sefora": "SÃ©phora", "Sifra": "Shiphra",
+            "Susana": "Suzanne", "Tabita": "Tabitha", "Tamar": "Tamar", "Vasti": "Vasthi", "Mujer cananea": "Femme cananÃ©enne",
             "Mujer samaritana": "Femme samaritaine", "Mujer sirofenicia": "Femme syro-phoenicienne", "Mujer de Lot": "Femme de Lot",
             "Mujer de Job": "Femme de Job", "Mujer de Manoa": "Femme de Manoach", "Mujer de Potifar": "Femme de Potiphar",
-            "Mujer encorvada": "Femme courbée", "Mujer del flujo de sangre": "Femme atteinte d'une perte de sang",
+            "Mujer encorvada": "Femme courbÃ©e", "Mujer del flujo de sangre": "Femme atteinte d'une perte de sang",
             "Mujer sabia de Abel": "Femme sage d'Abel", "Mujer sabia de Tecoa": "Femme sage de Tekoa",
-            "Mujer sorprendida en adulterio": "Femme surprise en adultère", "Mujer sunamita": "Femme de Sunem",
+            "Mujer sorprendida en adulterio": "Femme surprise en adultÃ¨re", "Mujer sunamita": "Femme de Sunem",
             "Viuda de Nain": "Veuve de Nain", "Viuda de Sarepta": "Veuve de Sarepta", "Viuda pobre del templo": "Pauvre veuve du temple",
-            "Mujer vinculada a la muerte de Juan el Bautista": "Femme liée à la mort de Jean-Baptiste",
-            "Compañera de prisiones de Pablo": "Compagne d'emprisonnement de Paul",
-            "Hija simbólica de Oseas": "Fille symbolique dans Osée",
-            "Sierva que reconoció a Pedro": "Servante qui reconnut Pierre",
-            "Alimentada en tiempos de Elías": "Nourrie au temps d'Élie",
-            "Judío elocuente y poderoso en las Escrituras": "Juif éloquent et puissant dans les Écritures",
-            "Judio elocuente y poderoso en las Escrituras": "Juif éloquent et puissant dans les Écritures",
-            "Maestro de la Ley entre los fariseos": "Maître de la Loi parmi les pharisiens",
-            "Reconstruyó los muros de Jerusalén": "Reconstruisit les murailles de Jérusalem",
-            "Reconstruyo los muros de Jerusalén": "Reconstruisit les murailles de Jérusalem",
-            "Reconstruyó los muros de Jerusalen": "Reconstruisit les murailles de Jérusalem",
-            "Reconstruyo los muros de Jerusalen": "Reconstruisit les murailles de Jérusalem",
-            "Siervo mencionado por Pablo": "Serviteur mentionné par Paul",
-            "Siervo etíope que ayudó a Jeremías": "Serviteur éthiopien qui aida Jérémie",
-            "Siervo etiope que ayudó a Jeremías": "Serviteur éthiopien qui aida Jérémie",
-            "Siervo etíope que ayudo a Jeremías": "Serviteur éthiopien qui aida Jérémie",
-            "Siervo etiope que ayudo a Jeremías": "Serviteur éthiopien qui aida Jérémie",
-            "Siervo etíope que ayudó a Jeremias": "Serviteur éthiopien qui aida Jérémie",
-            "Siervo etiope que ayudó a Jeremias": "Serviteur éthiopien qui aida Jérémie",
-            "Siervo etíope que ayudo a Jeremias": "Serviteur éthiopien qui aida Jérémie",
-            "Siervo etiope que ayudo a Jeremias": "Serviteur éthiopien qui aida Jérémie",
-            "Personas entregadas a alabar y honrar a Dios": "Personnes consacrées à louer et honorer Dieu",
-            "Pueblo mencionado en conflictos del Antiguo Testamento": "Peuple mentionné dans les conflits de l'Ancien Testament",
-            "Responsables del hogar en distintos relatos bíblicos": "Responsables du foyer dans différents récits bibliques",
-            "Guerreros armados con arco en batallas bíblicas": "Guerriers armés d'arcs dans des batailles bibliques",
-            "Reuniones del pueblo para escuchar la Ley o adorar": "Assemblées du peuple pour écouter la Loi ou adorer",
-            "Ministros dedicados al canto en el templo": "Ministres consacrés au chant dans le temple",
+            "Mujer vinculada a la muerte de Juan el Bautista": "Femme liÃ©e Ã  la mort de Jean-Baptiste",
+            "CompaÃ±era de prisiones de Pablo": "Compagne d'emprisonnement de Paul",
+            "Hija simbÃ³lica de Oseas": "Fille symbolique dans OsÃ©e",
+            "Sierva que reconociÃ³ a Pedro": "Servante qui reconnut Pierre",
+            "Alimentada en tiempos de ElÃ­as": "Nourrie au temps d'Ã‰lie",
+            "JudÃ­o elocuente y poderoso en las Escrituras": "Juif Ã©loquent et puissant dans les Ã‰critures",
+            "Judio elocuente y poderoso en las Escrituras": "Juif Ã©loquent et puissant dans les Ã‰critures",
+            "Maestro de la Ley entre los fariseos": "MaÃ®tre de la Loi parmi les pharisiens",
+            "ReconstruyÃ³ los muros de JerusalÃ©n": "Reconstruisit les murailles de JÃ©rusalem",
+            "Reconstruyo los muros de JerusalÃ©n": "Reconstruisit les murailles de JÃ©rusalem",
+            "ReconstruyÃ³ los muros de Jerusalen": "Reconstruisit les murailles de JÃ©rusalem",
+            "Reconstruyo los muros de Jerusalen": "Reconstruisit les murailles de JÃ©rusalem",
+            "Siervo mencionado por Pablo": "Serviteur mentionnÃ© par Paul",
+            "Siervo etÃ­ope que ayudÃ³ a JeremÃ­as": "Serviteur Ã©thiopien qui aida JÃ©rÃ©mie",
+            "Siervo etiope que ayudÃ³ a JeremÃ­as": "Serviteur Ã©thiopien qui aida JÃ©rÃ©mie",
+            "Siervo etÃ­ope que ayudo a JeremÃ­as": "Serviteur Ã©thiopien qui aida JÃ©rÃ©mie",
+            "Siervo etiope que ayudo a JeremÃ­as": "Serviteur Ã©thiopien qui aida JÃ©rÃ©mie",
+            "Siervo etÃ­ope que ayudÃ³ a Jeremias": "Serviteur Ã©thiopien qui aida JÃ©rÃ©mie",
+            "Siervo etiope que ayudÃ³ a Jeremias": "Serviteur Ã©thiopien qui aida JÃ©rÃ©mie",
+            "Siervo etÃ­ope que ayudo a Jeremias": "Serviteur Ã©thiopien qui aida JÃ©rÃ©mie",
+            "Siervo etiope que ayudo a Jeremias": "Serviteur Ã©thiopien qui aida JÃ©rÃ©mie",
+            "Personas entregadas a alabar y honrar a Dios": "Personnes consacrÃ©es Ã  louer et honorer Dieu",
+            "Pueblo mencionado en conflictos del Antiguo Testamento": "Peuple mentionnÃ© dans les conflits de l'Ancien Testament",
+            "Responsables del hogar en distintos relatos bÃ­blicos": "Responsables du foyer dans diffÃ©rents rÃ©cits bibliques",
+            "Guerreros armados con arco en batallas bÃ­blicas": "Guerriers armÃ©s d'arcs dans des batailles bibliques",
+            "Reuniones del pueblo para escuchar la Ley o adorar": "AssemblÃ©es du peuple pour Ã©couter la Loi ou adorer",
+            "Ministros dedicados al canto en el templo": "Ministres consacrÃ©s au chant dans le temple",
             "Encargados de prisiones, como en el libro de Hechos": "Responsables des prisons, comme dans le livre des Actes",
-            "Oficiales romanos mencionados varias veces en el Nuevo Testamento": "Officiers romains mentionnés à plusieurs reprises dans le Nouveau Testament",
-            "Reuniones de líderes para tratar asuntos del pueblo o de la iglesia": "Réunions de dirigeants pour traiter les affaires du peuple ou de l'Église",
-            "Personas que orientaban a reyes o líderes": "Personnes qui conseillaient des rois ou des dirigeants",
-            "Obreros implicados en murallas, ciudades o el templo": "Ouvriers impliqués dans les murailles, les villes ou le temple",
-            "Servidores de palacio en reinos bíblicos": "Serviteurs de palais dans les royaumes bibliques",
-            "Personas que han respondido con fe al mensaje de Dios": "Personnes ayant répondu avec foi au message de Dieu",
-            "Exiliados fuera de su tierra por juicio o guerra": "Exilés hors de leur terre à cause du jugement ou de la guerre",
-            "Conjunto del pueblo de Israel descendiente de Jacob": "Ensemble du peuple d'Israël descendant de Jacob",
-            "Expertos en la interpretación de la Ley mosaica": "Experts dans l'interprétation de la Loi mosaïque",
-            "Personas oprimidas por espíritus malignos en los Evangelios": "Personnes opprimées par des esprits mauvais dans les Évangiles",
-            "Grupo frecuentemente atendido con compasión y milagros": "Groupe souvent pris en charge avec compassion et miracles",
-            "Pueblo llevado cautivo fuera de Israel y Judá": "Peuple emmené en captivité hors d'Israël et de Juda",
-            "Personas de otras naciones presentes entre el pueblo": "Personnes d'autres nations présentes parmi le peuple",
-            "Linajes apartados para el servicio del templo": "Lignées mises à part pour le service du temple",
-            "Responsables del acceso y orden en el templo": "Responsables de l'accès et de l'ordre dans le temple",
-            "Expresión poética para referirse al pueblo de Jerusalén": "Expression poétique pour désigner le peuple de Jérusalem",
-            "Grupo vulnerable protegido en la Ley y los profetas": "Groupe vulnérable protégé dans la Loi et les prophètes",
-            "Líderes militares y administrativos de Israel": "Chefs militaires et administratifs d'Israël",
-            "Grupo mencionado en exhortaciones, guerras y discipulado": "Groupe mentionné dans les exhortations, les guerres et le discipulat",
-            "Líderes levantados por Dios para gobernar y liberar a Israel": "Chefs suscités par Dieu pour gouverner et délivrer Israël",
-            "Sabios que visitaron a Jesús tras su nacimiento": "Sages qui visitèrent Jésus après sa naissance",
-            "Comerciantes presentes en ciudades y rutas bíblicas": "Marchands présents dans les villes et sur les routes bibliques",
-            "Mujeres que vivieron la espera de un hijo con fe y dolor": "Femmes qui vécurent l'attente d'un enfant avec foi et douleur",
+            "Oficiales romanos mencionados varias veces en el Nuevo Testamento": "Officiers romains mentionnÃ©s Ã  plusieurs reprises dans le Nouveau Testament",
+            "Reuniones de lÃ­deres para tratar asuntos del pueblo o de la iglesia": "RÃ©unions de dirigeants pour traiter les affaires du peuple ou de l'Ã‰glise",
+            "Personas que orientaban a reyes o lÃ­deres": "Personnes qui conseillaient des rois ou des dirigeants",
+            "Obreros implicados en murallas, ciudades o el templo": "Ouvriers impliquÃ©s dans les murailles, les villes ou le temple",
+            "Servidores de palacio en reinos bÃ­blicos": "Serviteurs de palais dans les royaumes bibliques",
+            "Personas que han respondido con fe al mensaje de Dios": "Personnes ayant rÃ©pondu avec foi au message de Dieu",
+            "Exiliados fuera de su tierra por juicio o guerra": "ExilÃ©s hors de leur terre Ã  cause du jugement ou de la guerre",
+            "Conjunto del pueblo de Israel descendiente de Jacob": "Ensemble du peuple d'IsraÃ«l descendant de Jacob",
+            "Expertos en la interpretaciÃ³n de la Ley mosaica": "Experts dans l'interprÃ©tation de la Loi mosaÃ¯que",
+            "Personas oprimidas por espÃ­ritus malignos en los Evangelios": "Personnes opprimÃ©es par des esprits mauvais dans les Ã‰vangiles",
+            "Grupo frecuentemente atendido con compasiÃ³n y milagros": "Groupe souvent pris en charge avec compassion et miracles",
+            "Pueblo llevado cautivo fuera de Israel y JudÃ¡": "Peuple emmenÃ© en captivitÃ© hors d'IsraÃ«l et de Juda",
+            "Personas de otras naciones presentes entre el pueblo": "Personnes d'autres nations prÃ©sentes parmi le peuple",
+            "Linajes apartados para el servicio del templo": "LignÃ©es mises Ã  part pour le service du temple",
+            "Responsables del acceso y orden en el templo": "Responsables de l'accÃ¨s et de l'ordre dans le temple",
+            "ExpresiÃ³n poÃ©tica para referirse al pueblo de JerusalÃ©n": "Expression poÃ©tique pour dÃ©signer le peuple de JÃ©rusalem",
+            "Grupo vulnerable protegido en la Ley y los profetas": "Groupe vulnÃ©rable protÃ©gÃ© dans la Loi et les prophÃ¨tes",
+            "LÃ­deres militares y administrativos de Israel": "Chefs militaires et administratifs d'IsraÃ«l",
+            "Grupo mencionado en exhortaciones, guerras y discipulado": "Groupe mentionnÃ© dans les exhortations, les guerres et le discipulat",
+            "LÃ­deres levantados por Dios para gobernar y liberar a Israel": "Chefs suscitÃ©s par Dieu pour gouverner et dÃ©livrer IsraÃ«l",
+            "Sabios que visitaron a JesÃºs tras su nacimiento": "Sages qui visitÃ¨rent JÃ©sus aprÃ¨s sa naissance",
+            "Comerciantes presentes en ciudades y rutas bÃ­blicas": "Marchands prÃ©sents dans les villes et sur les routes bibliques",
+            "Mujeres que vivieron la espera de un hijo con fe y dolor": "Femmes qui vÃ©curent l'attente d'un enfant avec foi et douleur",
             "Grupo que protesta contra Dios o sus siervos": "Groupe qui proteste contre Dieu ou ses serviteurs",
-            "Personas consagradas a Dios mediante voto especial": "Personnes consacrées à Dieu par un voeu spécial",
+            "Personas consagradas a Dios mediante voto especial": "Personnes consacrÃ©es Ã  Dieu par un voeu spÃ©cial",
             "Miembros influyentes del pueblo o de la corte": "Membres influents du peuple ou de la cour",
-            "Trabajadores del campo, la construcción o la mies espiritual": "Travailleurs des champs, de la construction ou de la moisson spirituelle",
-            "Imagen del pueblo descarriado necesitado de pastor": "Image du peuple égaré ayant besoin d'un berger",
-            "Encargados de cuidar rebaños en la vida cotidiana bíblica": "Responsables des troupeaux dans la vie quotidienne biblique",
-            "Término frecuente para quienes necesitan arrepentimiento y gracia": "Terme fréquent pour ceux qui ont besoin de repentance et de grâce",
+            "Trabajadores del campo, la construcciÃ³n o la mies espiritual": "Travailleurs des champs, de la construction ou de la moisson spirituelle",
+            "Imagen del pueblo descarriado necesitado de pastor": "Image du peuple Ã©garÃ© ayant besoin d'un berger",
+            "Encargados de cuidar rebaÃ±os en la vida cotidiana bÃ­blica": "Responsables des troupeaux dans la vie quotidienne biblique",
+            "TÃ©rmino frecuente para quienes necesitan arrepentimiento y gracia": "Terme frÃ©quent pour ceux qui ont besoin de repentance et de grÃ¢ce",
             "Personas de paso o en viaje hacia lugares santos": "Personnes de passage ou en route vers des lieux saints",
-            "Oficio común en Galilea y entre varios discípulos": "Métier courant en Galilée et parmi plusieurs disciples",
-            "Servidores asignados al cuidado de entradas y espacios sagrados": "Serviteurs chargés de veiller sur les entrées et les espaces sacrés",
-            "Personas encarceladas por delitos, injusticia o causa del Evangelio": "Personnes emprisonnées pour des crimes, l'injustice ou à cause de l'Évangile",
-            "Gentiles incorporados a la fe judía": "Païens intégrés à la foi juive",
-            "Funcionarios que cobraban tributos e impuestos": "Fonctionnaires chargés de percevoir tributs et impôts",
-            "Personas marginadas social o religiosamente": "Personnes marginalisées socialement ou religieusement",
-            "Gobernantes de naciones en pasajes históricos y proféticos": "Souverains des nations dans des passages historiques et prophétiques",
-            "Grupo fiel preservado por Dios en tiempos de crisis": "Groupe fidèle préservé par Dieu en temps de crise",
-            "Referencia a quienes actúan con misericordia inesperada": "Référence à ceux qui agissent avec une miséricorde inattendue",
+            "Oficio comÃºn en Galilea y entre varios discÃ­pulos": "MÃ©tier courant en GalilÃ©e et parmi plusieurs disciples",
+            "Servidores asignados al cuidado de entradas y espacios sagrados": "Serviteurs chargÃ©s de veiller sur les entrÃ©es et les espaces sacrÃ©s",
+            "Personas encarceladas por delitos, injusticia o causa del Evangelio": "Personnes emprisonnÃ©es pour des crimes, l'injustice ou Ã  cause de l'Ã‰vangile",
+            "Gentiles incorporados a la fe judÃ­a": "PaÃ¯ens intÃ©grÃ©s Ã  la foi juive",
+            "Funcionarios que cobraban tributos e impuestos": "Fonctionnaires chargÃ©s de percevoir tributs et impÃ´ts",
+            "Personas marginadas social o religiosamente": "Personnes marginalisÃ©es socialement ou religieusement",
+            "Gobernantes de naciones en pasajes histÃ³ricos y profÃ©ticos": "Souverains des nations dans des passages historiques et prophÃ©tiques",
+            "Grupo fiel preservado por Dios en tiempos de crisis": "Groupe fidÃ¨le prÃ©servÃ© par Dieu en temps de crise",
+            "Referencia a quienes actÃºan con misericordia inesperada": "RÃ©fÃ©rence Ã  ceux qui agissent avec une misÃ©ricorde inattendue",
             "Mujeres al servicio de hogares o familias": "Femmes au service des foyers ou des familles",
-            "Militares presentes en historias del Antiguo y Nuevo Testamento": "Militaires présents dans les récits de l'Ancien et du Nouveau Testament",
+            "Militares presentes en historias del Antiguo y Nuevo Testamento": "Militaires prÃ©sents dans les rÃ©cits de l'Ancien et du Nouveau Testament",
             "Imagen de quienes sirven en la obra de Dios": "Image de ceux qui servent dans l'oeuvre de Dieu",
-            "Grupo religioso influyente en tiempos de Jesús": "Groupe religieux influent au temps de Jésus",
-            "Grupo sacerdotal y político del judaísmo": "Groupe sacerdotal et politique du judaïsme",
-            "Intérpretes y maestros de la Ley": "Interprètes et maîtres de la Loi",
-            "Partidarios de la casa de Herodes": "Partisans de la maison d'Hérode",
-            "Movimiento judío de fuerte fervor nacional": "Mouvement juif de fort zèle national",
-            "Comunidad judía asociada a vida apartada": "Communauté juive associée à une vie séparée",
-            "Cobradores de impuestos en tiempos de Roma": "Percepteurs d'impôts à l'époque romaine",
-            "Tribu dedicada al servicio del templo": "Tribu consacrée au service du temple",
-            "Encargados del culto en Israel": "Responsables du culte en Israël",
-            "Máxima autoridad sacerdotal": "Plus haute autorité sacerdotale",
-            "Consejo religioso judío": "Conseil religieux juif",
-            "Seguidores y aprendices de Jesús": "Disciples et apprentis de Jésus",
-            "Enviados escogidos por Jesús": "Envoyés choisis par Jésus",
+            "Grupo religioso influyente en tiempos de JesÃºs": "Groupe religieux influent au temps de JÃ©sus",
+            "Grupo sacerdotal y polÃ­tico del judaÃ­smo": "Groupe sacerdotal et politique du judaÃ¯sme",
+            "IntÃ©rpretes y maestros de la Ley": "InterprÃ¨tes et maÃ®tres de la Loi",
+            "Partidarios de la casa de Herodes": "Partisans de la maison d'HÃ©rode",
+            "Movimiento judÃ­o de fuerte fervor nacional": "Mouvement juif de fort zÃ¨le national",
+            "Comunidad judÃ­a asociada a vida apartada": "CommunautÃ© juive associÃ©e Ã  une vie sÃ©parÃ©e",
+            "Cobradores de impuestos en tiempos de Roma": "Percepteurs d'impÃ´ts Ã  l'Ã©poque romaine",
+            "Tribu dedicada al servicio del templo": "Tribu consacrÃ©e au service du temple",
+            "Encargados del culto en Israel": "Responsables du culte en IsraÃ«l",
+            "MÃ¡xima autoridad sacerdotal": "Plus haute autoritÃ© sacerdotale",
+            "Consejo religioso judÃ­o": "Conseil religieux juif",
+            "Seguidores y aprendices de JesÃºs": "Disciples et apprentis de JÃ©sus",
+            "Enviados escogidos por JesÃºs": "EnvoyÃ©s choisis par JÃ©sus",
             "Portavoces del mensaje de Dios": "Porte-parole du message de Dieu",
-            "Pueblos no judíos": "Peuples non juifs",
-            "Pueblo del pacto en tiempos bíblicos": "Peuple de l'alliance dans les temps bibliques",
-            "Judíos de lengua griega mencionados en Hechos": "Juifs de langue grecque mentionnés dans les Actes",
-            "Grupo vulnerable atendido por la iglesia primitiva": "Groupe vulnérable pris en charge par l'Église primitive",
-            "Servidores escogidos en la iglesia primitiva": "Serviteurs choisis dans l'Église primitive",
-            "Líderes espirituales del pueblo o de la iglesia": "Dirigeants spirituels du peuple ou de l'Église",
-            "Fe basada en Jesucristo y el evangelio": "Foi fondée sur Jésus-Christ et l'Évangile",
-            "Rama principal del cristianismo con centro histórico en Roma": "Branche principale du christianisme ayant son centre historique à Rome",
-            "Conjunto de iglesias cristianas surgidas de la Reforma": "Ensemble d'Églises chrétiennes issues de la Réforme",
-            "Tradición cristiana histórica de las iglesias ortodoxas": "Tradition chrétienne historique des Églises orthodoxes",
-            "Corriente cristiana centrada en conversión, Biblia y evangelización": "Courant chrétien centré sur la conversion, la Bible et l'évangélisation",
-            "Movimiento cristiano que enfatiza la obra del Espíritu Santo": "Mouvement chrétien qui met l'accent sur l'oeuvre du Saint-Esprit",
-            "Religión monoteísta fundada en las enseñanzas de Mahoma": "Religion monothéiste fondée sur les enseignements de Mahomet",
+            "Pueblos no judÃ­os": "Peuples non juifs",
+            "Pueblo del pacto en tiempos bÃ­blicos": "Peuple de l'alliance dans les temps bibliques",
+            "JudÃ­os de lengua griega mencionados en Hechos": "Juifs de langue grecque mentionnÃ©s dans les Actes",
+            "Grupo vulnerable atendido por la iglesia primitiva": "Groupe vulnÃ©rable pris en charge par l'Ã‰glise primitive",
+            "Servidores escogidos en la iglesia primitiva": "Serviteurs choisis dans l'Ã‰glise primitive",
+            "LÃ­deres espirituales del pueblo o de la iglesia": "Dirigeants spirituels du peuple ou de l'Ã‰glise",
+            "Fe basada en Jesucristo y el evangelio": "Foi fondÃ©e sur JÃ©sus-Christ et l'Ã‰vangile",
+            "Rama principal del cristianismo con centro histÃ³rico en Roma": "Branche principale du christianisme ayant son centre historique Ã  Rome",
+            "Conjunto de iglesias cristianas surgidas de la Reforma": "Ensemble d'Ã‰glises chrÃ©tiennes issues de la RÃ©forme",
+            "TradiciÃ³n cristiana histÃ³rica de las iglesias ortodoxas": "Tradition chrÃ©tienne historique des Ã‰glises orthodoxes",
+            "Corriente cristiana centrada en conversiÃ³n, Biblia y evangelizaciÃ³n": "Courant chrÃ©tien centrÃ© sur la conversion, la Bible et l'Ã©vangÃ©lisation",
+            "Movimiento cristiano que enfatiza la obra del EspÃ­ritu Santo": "Mouvement chrÃ©tien qui met l'accent sur l'oeuvre du Saint-Esprit",
+            "ReligiÃ³n monoteÃ­sta fundada en las enseÃ±anzas de Mahoma": "Religion monothÃ©iste fondÃ©e sur les enseignements de Mahomet",
             "Rama mayoritaria del islam": "Branche majoritaire de l'islam",
-            "Rama principal del islam vinculada a la sucesión de Alí": "Branche principale de l'islam liée à la succession d'Ali",
-            "Corriente mística dentro del islam": "Courant mystique au sein de l'islam",
-            "Religión del pueblo judío basada en la Torá": "Religion du peuple juif fondée sur la Torah",
-            "Corriente judía tradicional de estricta observancia": "Courant juif traditionnel de stricte observance",
-            "Corriente judía de continuidad y adaptación": "Courant juif de continuité et d'adaptation",
-            "Corriente judía de enfoque más liberal": "Courant juif d'approche plus libérale",
+            "Rama principal del islam vinculada a la sucesiÃ³n de AlÃ­": "Branche principale de l'islam liÃ©e Ã  la succession d'Ali",
+            "Corriente mÃ­stica dentro del islam": "Courant mystique au sein de l'islam",
+            "ReligiÃ³n del pueblo judÃ­o basada en la TorÃ¡": "Religion du peuple juif fondÃ©e sur la Torah",
+            "Corriente judÃ­a tradicional de estricta observancia": "Courant juif traditionnel de stricte observance",
+            "Corriente judÃ­a de continuidad y adaptaciÃ³n": "Courant juif de continuitÃ© et d'adaptation",
+            "Corriente judÃ­a de enfoque mÃ¡s liberal": "Courant juif d'approche plus libÃ©rale",
             "Conjunto de tradiciones religiosas originadas en la India": "Ensemble de traditions religieuses originaires de l'Inde",
-            "Corriente hindú centrada en Vishnu": "Courant hindou centré sur Vishnou",
-            "Corriente hindú centrada en Shiva": "Courant hindou centré sur Shiva",
-            "Corriente hindú centrada en la diosa Shakti": "Courant hindou centré sur la déesse Shakti",
-            "Tradición fundada a partir de las enseñanzas de Buda": "Tradition fondée à partir des enseignements de Bouddha",
-            "Rama budista extendida en el sur de Asia": "Branche bouddhiste répandue en Asie du Sud",
-            "Rama budista extendida en Asia oriental": "Branche bouddhiste répandue en Asie orientale",
-            "Forma budista asociada al Tíbet y regiones cercanas": "Forme bouddhiste associée au Tibet et aux régions voisines",
-            "Religión monoteísta originada en el Punjab": "Religion monothéiste née au Pendjab",
-            "Tradición india centrada en la no violencia y la disciplina": "Tradition indienne centrée sur la non-violence et la discipline",
-            "Antigua religión persa vinculada a Zaratustra": "Ancienne religion perse liée à Zoroastre",
-            "Religión monoteísta nacida en Persia con vocación universal": "Religion monothéiste née en Perse à vocation universelle",
-            "Tradición filosófica y ética de origen chino": "Tradition philosophique et éthique d'origine chinoise",
-            "Tradición religiosa y filosófica china vinculada al Tao": "Tradition religieuse et philosophique chinoise liée au Tao",
-            "Religión tradicional de Japón": "Religion traditionnelle du Japon",
-            "Creencia en espíritus asociados a la naturaleza y los seres": "Croyance en des esprits associés à la nature et aux êtres",
-            "Conjunto de prácticas religiosas populares de China": "Ensemble de pratiques religieuses populaires de Chine",
+            "Corriente hindÃº centrada en Vishnu": "Courant hindou centrÃ© sur Vishnou",
+            "Corriente hindÃº centrada en Shiva": "Courant hindou centrÃ© sur Shiva",
+            "Corriente hindÃº centrada en la diosa Shakti": "Courant hindou centrÃ© sur la dÃ©esse Shakti",
+            "TradiciÃ³n fundada a partir de las enseÃ±anzas de Buda": "Tradition fondÃ©e Ã  partir des enseignements de Bouddha",
+            "Rama budista extendida en el sur de Asia": "Branche bouddhiste rÃ©pandue en Asie du Sud",
+            "Rama budista extendida en Asia oriental": "Branche bouddhiste rÃ©pandue en Asie orientale",
+            "Forma budista asociada al TÃ­bet y regiones cercanas": "Forme bouddhiste associÃ©e au Tibet et aux rÃ©gions voisines",
+            "ReligiÃ³n monoteÃ­sta originada en el Punjab": "Religion monothÃ©iste nÃ©e au Pendjab",
+            "TradiciÃ³n india centrada en la no violencia y la disciplina": "Tradition indienne centrÃ©e sur la non-violence et la discipline",
+            "Antigua religiÃ³n persa vinculada a Zaratustra": "Ancienne religion perse liÃ©e Ã  Zoroastre",
+            "ReligiÃ³n monoteÃ­sta nacida en Persia con vocaciÃ³n universal": "Religion monothÃ©iste nÃ©e en Perse Ã  vocation universelle",
+            "TradiciÃ³n filosÃ³fica y Ã©tica de origen chino": "Tradition philosophique et Ã©thique d'origine chinoise",
+            "TradiciÃ³n religiosa y filosÃ³fica china vinculada al Tao": "Tradition religieuse et philosophique chinoise liÃ©e au Tao",
+            "ReligiÃ³n tradicional de JapÃ³n": "Religion traditionnelle du Japon",
+            "Creencia en espÃ­ritus asociados a la naturaleza y los seres": "Croyance en des esprits associÃ©s Ã  la nature et aux Ãªtres",
+            "Conjunto de prÃ¡cticas religiosas populares de China": "Ensemble de pratiques religieuses populaires de Chine",
             "Sistemas religiosos aut?ctonos de ?frica": "Syst?mes religieux autochtones d'Afrique",
-            "Tradiciones espirituales de pueblos originarios de América": "Traditions spirituelles des peuples autochtones d'Amérique",
-            "Tradiciones espirituales de pueblos aborígenes": "Traditions spirituelles des peuples autochtones d'Australie",
-            "Religión vietnamita de carácter sincretista": "Religion vietnamienne de caractère syncrétique",
-            "Movimiento religioso japonés de origen moderno": "Mouvement religieux japonais d'origine moderne",
-            "Corriente religiosa basada en comunicación con espíritus": "Courant religieux fondé sur la communication avec les esprits",
-            "Movimiento religioso surgido en Jamaica": "Mouvement religieux né en Jamaïque",
+            "Tradiciones espirituales de pueblos originarios de AmÃ©rica": "Traditions spirituelles des peuples autochtones d'AmÃ©rique",
+            "Tradiciones espirituales de pueblos aborÃ­genes": "Traditions spirituelles des peuples autochtones d'Australie",
+            "ReligiÃ³n vietnamita de carÃ¡cter sincretista": "Religion vietnamienne de caractÃ¨re syncrÃ©tique",
+            "Movimiento religioso japonÃ©s de origen moderno": "Mouvement religieux japonais d'origine moderne",
+            "Corriente religiosa basada en comunicaciÃ³n con espÃ­ritus": "Courant religieux fondÃ© sur la communication avec les esprits",
+            "Movimiento religioso surgido en Jamaica": "Mouvement religieux nÃ© en JamaÃ¯que",
             "Movimiento religioso de enfoque pluralista": "Mouvement religieux d'approche pluraliste",
-            "Tradición cristiana vinculada a La Iglesia de Jesucristo de los Santos de los Últimos Días": "Tradition chrétienne liée à l'Église de Jésus-Christ des Saints des Derniers Jours",
-            "Movimiento religioso de interpretación bíblica particular": "Mouvement religieux à l'interprétation biblique particulière",
-            "Movimiento religioso fundado por Mary Baker Eddy": "Mouvement religieux fondé par Mary Baker Eddy",
-            "Conjunto de espiritualidades modernas de carácter sincretista": "Ensemble de spiritualités modernes à caractère syncrétique",
-            "Recuperación moderna de tradiciones religiosas precristianas": "Récupération moderne de traditions religieuses préchrétiennes",
-            "Tradición neopagana de carácter ritual y dual": "Tradition néopaïenne de caractère rituel et dual",
-            "Postura de negación de la existencia de deidades": "Position niant l'existence de divinités",
-            "Postura sobre la imposibilidad o duda de conocer a Dios": "Position sur l'impossibilité ou le doute de connaître Dieu",
-            "Visión ética no religiosa centrada en el ser humano": "Vision éthique non religieuse centrée sur l'être humain",
-            "Creencia en un creador sin revelación religiosa particular": "Croyance en un créateur sans révélation religieuse particulière",
-            "Personas que no se identifican con una religión concreta": "Personnes qui ne s'identifient à aucune religion particulière",
+            "TradiciÃ³n cristiana vinculada a La Iglesia de Jesucristo de los Santos de los Ãšltimos DÃ­as": "Tradition chrÃ©tienne liÃ©e Ã  l'Ã‰glise de JÃ©sus-Christ des Saints des Derniers Jours",
+            "Movimiento religioso de interpretaciÃ³n bÃ­blica particular": "Mouvement religieux Ã  l'interprÃ©tation biblique particuliÃ¨re",
+            "Movimiento religioso fundado por Mary Baker Eddy": "Mouvement religieux fondÃ© par Mary Baker Eddy",
+            "Conjunto de espiritualidades modernas de carÃ¡cter sincretista": "Ensemble de spiritualitÃ©s modernes Ã  caractÃ¨re syncrÃ©tique",
+            "RecuperaciÃ³n moderna de tradiciones religiosas precristianas": "RÃ©cupÃ©ration moderne de traditions religieuses prÃ©chrÃ©tiennes",
+            "TradiciÃ³n neopagana de carÃ¡cter ritual y dual": "Tradition nÃ©opaÃ¯enne de caractÃ¨re rituel et dual",
+            "Postura de negaciÃ³n de la existencia de deidades": "Position niant l'existence de divinitÃ©s",
+            "Postura sobre la imposibilidad o duda de conocer a Dios": "Position sur l'impossibilitÃ© ou le doute de connaÃ®tre Dieu",
+            "VisiÃ³n Ã©tica no religiosa centrada en el ser humano": "Vision Ã©thique non religieuse centrÃ©e sur l'Ãªtre humain",
+            "Creencia en un creador sin revelaciÃ³n religiosa particular": "Croyance en un crÃ©ateur sans rÃ©vÃ©lation religieuse particuliÃ¨re",
+            "Personas que no se identifican con una religiÃ³n concreta": "Personnes qui ne s'identifient Ã  aucune religion particuliÃ¨re",
             "Barnabas": "Barnabas", "Boaz": "Boaz", "Cain": "Cain", "Cornelio": "Corneille", "Crispo": "Crispus",
             "Efrain": "Ephraim", "Elcanah": "Elqana", "Eleazar": "Eleazar", "Eli": "Eli", "Enoc": "Enoch",
             "Ezequias": "Ezechias", "Festo": "Festus", "Filemon": "Philemon", "Finees": "Phinees", "Gamaliel": "Gamaliel",
@@ -2549,13 +2499,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Sinai": "Sinai", "Siria": "Syrie", "Persia": "Perse", "Antioquia": "Antioche", "Cafarnaum": "Capernaum",
             "Capernaum": "Capernaum", "Getsemani": "Gethsemane", "Golgota": "Golgotha", "Monte de los Olivos": "Mont des Oliviers",
             "Juan el bautista": "Jean-Baptiste", "Jose de Arimatea": "Joseph d'Arimathee",
-            "Discipulos": "Disciples", "Apostoles": "Apôtres", "Profetas": "Prophetes", "Levitas": "Levites",
+            "Discipulos": "Disciples", "Apostoles": "ApÃ´tres", "Profetas": "Prophetes", "Levitas": "Levites",
             "Sacerdotes": "Pretres", "Fariseos": "Pharisiens", "Saduceos": "Sadduceens", "Escribas": "Scribes",
             "Cristianismo": "Christianisme",
             "Catolicismo": "Catholicisme",
             "Protestantismo": "Protestantisme",
             "Islam": "Islam",
-            "Judaísmo": "Judaisme",
+            "JudaÃ­smo": "Judaisme",
             "Hinduismo": "Hindouisme",
             "Budismo": "Bouddhisme",
             "Sijismo": "Sikhisme",
@@ -2593,7 +2543,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Murmuradores": "Grumblers", "Nazareos": "Nazirites", "Nobles": "Nobles", "Obreros": "Workers",
             "Ovejas perdidas": "Lost sheep", "Pastoreadores": "Shepherds", "Pecadores": "Sinners",
             "Peregrinos": "Pilgrims", "Pescadores": "Fishermen", "Porteros": "Doorkeepers", "Presos": "Prisoners",
-            "Profetas": "Prophets", "Prosélitos": "Proselytes", "Publicanos": "Tax collectors", "Recaudadores": "Collectors",
+            "Profetas": "Prophets", "ProsÃ©litos": "Proselytes", "Publicanos": "Tax collectors", "Recaudadores": "Collectors",
             "Rechazados": "Outcasts", "Remanente": "Remnant", "Reyes de la tierra": "Kings of the earth",
             "Sacerdotes": "Priests", "Saduceos": "Sadducees", "Samaritanos piadosos": "Compassionate Samaritans",
             "Sanedrin": "Sanhedrin", "Siervas": "Female servants", "Soldados": "Soldiers", "Sumos sacerdotes": "Chief priests",
@@ -2609,10 +2559,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Ninivitas": "Ninevites", "Partos": "Parthians", "Persas": "Persians", "Romanos": "Romans",
             "Samaritanos": "Samaritans", "Sidonios": "Sidonians", "Sirios": "Syrians", "Sumerios": "Sumerians",
             "Tarsenses": "People of Tarsus", "Tribus de Israel": "Tribes of Israel",
-            "Ararat": "Ararat", "Atenas": "Athens", "Beerseba": "Beersheba", "Belén": "Bethlehem", "Betania": "Bethany",
-            "Betel": "Bethel", "Betesda": "Bethesda", "Cana": "Cana", "Canaán": "Canaan", "Carmelo": "Carmel",
+            "Ararat": "Ararat", "Atenas": "Athens", "Beerseba": "Beersheba", "BelÃ©n": "Bethlehem", "Betania": "Bethany",
+            "Betel": "Bethel", "Betesda": "Bethesda", "Cana": "Cana", "CanaÃ¡n": "Canaan", "Carmelo": "Carmel",
             "Cesarea": "Caesarea", "Cesarea de Filipo": "Caesarea Philippi", "Corinto": "Corinth", "Creta": "Crete",
-            "Damasco": "Damascus", "Decápolis": "Decapolis", "Emaús": "Emmaus", "Esmirna": "Smyrna",
+            "Damasco": "Damascus", "DecÃ¡polis": "Decapolis", "EmaÃºs": "Emmaus", "Esmirna": "Smyrna",
             "Filipos": "Philippi", "Getsemani": "Gethsemane", "Golgota": "Golgotha", "Gosen": "Goshen", "Hebron": "Hebron",
             "Horeb": "Horeb", "Jordan": "Jordan", "Laodicea": "Laodicea", "Listra": "Lystra", "Magdala": "Magdala",
             "Madian": "Midian", "Monte de los Olivos": "Mount of Olives", "Nazaret": "Nazareth",
@@ -2621,14 +2571,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Sinai": "Sinai", "Sion": "Zion", "Siria": "Syria", "Susa": "Susa", "Tarsis": "Tarshish",
             "Tiatira": "Thyatira", "Tiro": "Tyre", "Troas": "Troas", "Ur": "Ur", "Zoar": "Zoar",
             "Budismo mahayana": "Mahayana Buddhism", "Budismo theravada": "Theravada Buddhism", "Budismo vajrayana": "Vajrayana Buddhism",
-            "Chiismo": "Shia Islam", "Evangelicalismo": "Evangelicalism", "Judaísmo conservador": "Conservative Judaism",
-            "Judaísmo ortodoxo": "Orthodox Judaism", "Judaísmo reformista": "Reform Judaism",
+            "Chiismo": "Shia Islam", "Evangelicalismo": "Evangelicalism", "JudaÃ­smo conservador": "Conservative Judaism",
+            "JudaÃ­smo ortodoxo": "Orthodox Judaism", "JudaÃ­smo reformista": "Reform Judaism",
             "Ortodoxia oriental": "Eastern Orthodoxy", "Pentecostalismo": "Pentecostalism", "Shaivismo": "Shaivism",
             "Shaktismo": "Shaktism", "Sufismo": "Sufism", "Sunismo": "Sunni Islam", "Tenrikyo": "Tenrikyo",
             "Testigos de Jehova": "Jehovah's Witnesses", "Tradiciones chinas": "Chinese traditions",
             "Unitarios universalistas": "Unitarian Universalists", "Vaishnavismo": "Vaishnavism", "Wicca": "Wicca",
-            "Bahaismo": "Baha'i Faith", "Caodaísmo": "Caodaism", "Religiones africanas tradicionales": "Traditional African religions",
-            "Religiones indígenas americanas": "Indigenous religions of the Americas", "Religiones indígenas australianas": "Indigenous Australian religions",
+            "Bahaismo": "Baha'i Faith", "CaodaÃ­smo": "Caodaism", "Religiones africanas tradicionales": "Traditional African religions",
+            "Religiones indÃ­genas americanas": "Indigenous religions of the Americas", "Religiones indÃ­genas australianas": "Indigenous Australian religions",
             "Abigail": "Abigail", "Abisag": "Abishag", "Abital": "Abital", "Acsa": "Achsah", "Ada": "Adah",
             "Ana": "Hannah", "Apphia": "Apphia", "Asenat": "Asenath", "Atalia": "Athaliah", "Batseba": "Bathsheba",
             "Candace": "Candace", "Claudia": "Claudia", "Cloe": "Chloe", "Dalila": "Delilah", "Damaris": "Damaris",
@@ -2647,146 +2597,146 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Mujer sorprendida en adulterio": "Woman caught in adultery", "Mujer sunamita": "Shunammite woman",
             "Viuda de Nain": "Widow of Nain", "Viuda de Sarepta": "Widow of Zarephath", "Viuda pobre del templo": "Poor widow of the temple",
             "Mujer vinculada a la muerte de Juan el Bautista": "Woman linked to the death of John the Baptist",
-            "Compañera de prisiones de Pablo": "Companion in imprisonment with Paul",
-            "Hija simbólica de Oseas": "Symbolic daughter in Hosea",
-            "Sierva que reconoció a Pedro": "Servant girl who recognized Peter",
-            "Alimentada en tiempos de Elías": "Fed in the days of Elijah",
-            "Judío elocuente y poderoso en las Escrituras": "Eloquent Jew, mighty in the Scriptures",
+            "CompaÃ±era de prisiones de Pablo": "Companion in imprisonment with Paul",
+            "Hija simbÃ³lica de Oseas": "Symbolic daughter in Hosea",
+            "Sierva que reconociÃ³ a Pedro": "Servant girl who recognized Peter",
+            "Alimentada en tiempos de ElÃ­as": "Fed in the days of Elijah",
+            "JudÃ­o elocuente y poderoso en las Escrituras": "Eloquent Jew, mighty in the Scriptures",
             "Judio elocuente y poderoso en las Escrituras": "Eloquent Jew, mighty in the Scriptures",
             "Maestro de la Ley entre los fariseos": "Teacher of the Law among the Pharisees",
-            "Reconstruyó los muros de Jerusalén": "Rebuilt the walls of Jerusalem",
-            "Reconstruyo los muros de Jerusalén": "Rebuilt the walls of Jerusalem",
-            "Reconstruyó los muros de Jerusalen": "Rebuilt the walls of Jerusalem",
+            "ReconstruyÃ³ los muros de JerusalÃ©n": "Rebuilt the walls of Jerusalem",
+            "Reconstruyo los muros de JerusalÃ©n": "Rebuilt the walls of Jerusalem",
+            "ReconstruyÃ³ los muros de Jerusalen": "Rebuilt the walls of Jerusalem",
             "Reconstruyo los muros de Jerusalen": "Rebuilt the walls of Jerusalem",
             "Siervo mencionado por Pablo": "Servant mentioned by Paul",
-            "Siervo etíope que ayudó a Jeremías": "Ethiopian servant who helped Jeremiah",
-            "Siervo etiope que ayudó a Jeremías": "Ethiopian servant who helped Jeremiah",
-            "Siervo etíope que ayudo a Jeremías": "Ethiopian servant who helped Jeremiah",
-            "Siervo etiope que ayudo a Jeremías": "Ethiopian servant who helped Jeremiah",
-            "Siervo etíope que ayudó a Jeremias": "Ethiopian servant who helped Jeremiah",
-            "Siervo etiope que ayudó a Jeremias": "Ethiopian servant who helped Jeremiah",
-            "Siervo etíope que ayudo a Jeremias": "Ethiopian servant who helped Jeremiah",
+            "Siervo etÃ­ope que ayudÃ³ a JeremÃ­as": "Ethiopian servant who helped Jeremiah",
+            "Siervo etiope que ayudÃ³ a JeremÃ­as": "Ethiopian servant who helped Jeremiah",
+            "Siervo etÃ­ope que ayudo a JeremÃ­as": "Ethiopian servant who helped Jeremiah",
+            "Siervo etiope que ayudo a JeremÃ­as": "Ethiopian servant who helped Jeremiah",
+            "Siervo etÃ­ope que ayudÃ³ a Jeremias": "Ethiopian servant who helped Jeremiah",
+            "Siervo etiope que ayudÃ³ a Jeremias": "Ethiopian servant who helped Jeremiah",
+            "Siervo etÃ­ope que ayudo a Jeremias": "Ethiopian servant who helped Jeremiah",
             "Siervo etiope que ayudo a Jeremias": "Ethiopian servant who helped Jeremiah",
             "Personas entregadas a alabar y honrar a Dios": "People devoted to praising and honoring God",
             "Pueblo mencionado en conflictos del Antiguo Testamento": "People mentioned in Old Testament conflicts",
-            "Responsables del hogar en distintos relatos bíblicos": "Heads of household in various biblical accounts",
-            "Guerreros armados con arco en batallas bíblicas": "Warriors armed with bows in biblical battles",
+            "Responsables del hogar en distintos relatos bÃ­blicos": "Heads of household in various biblical accounts",
+            "Guerreros armados con arco en batallas bÃ­blicas": "Warriors armed with bows in biblical battles",
             "Reuniones del pueblo para escuchar la Ley o adorar": "Gatherings of the people to hear the Law or worship",
             "Ministros dedicados al canto en el templo": "Ministers devoted to singing in the temple",
             "Encargados de prisiones, como en el libro de Hechos": "Prison officials, as in the book of Acts",
             "Oficiales romanos mencionados varias veces en el Nuevo Testamento": "Roman officers mentioned several times in the New Testament",
-            "Reuniones de líderes para tratar asuntos del pueblo o de la iglesia": "Meetings of leaders to address matters of the people or the church",
-            "Personas que orientaban a reyes o líderes": "People who advised kings or leaders",
+            "Reuniones de lÃ­deres para tratar asuntos del pueblo o de la iglesia": "Meetings of leaders to address matters of the people or the church",
+            "Personas que orientaban a reyes o lÃ­deres": "People who advised kings or leaders",
             "Obreros implicados en murallas, ciudades o el templo": "Workers involved with walls, cities, or the temple",
-            "Servidores de palacio en reinos bíblicos": "Palace servants in biblical kingdoms",
+            "Servidores de palacio en reinos bÃ­blicos": "Palace servants in biblical kingdoms",
             "Personas que han respondido con fe al mensaje de Dios": "People who have responded in faith to God's message",
             "Exiliados fuera de su tierra por juicio o guerra": "Exiles driven from their land by judgment or war",
             "Conjunto del pueblo de Israel descendiente de Jacob": "The people of Israel descended from Jacob",
-            "Expertos en la interpretación de la Ley mosaica": "Experts in the interpretation of the Mosaic Law",
-            "Personas oprimidas por espíritus malignos en los Evangelios": "People oppressed by evil spirits in the Gospels",
-            "Grupo frecuentemente atendido con compasión y milagros": "Group often ministered to with compassion and miracles",
-            "Pueblo llevado cautivo fuera de Israel y Judá": "People carried away captive from Israel and Judah",
+            "Expertos en la interpretaciÃ³n de la Ley mosaica": "Experts in the interpretation of the Mosaic Law",
+            "Personas oprimidas por espÃ­ritus malignos en los Evangelios": "People oppressed by evil spirits in the Gospels",
+            "Grupo frecuentemente atendido con compasiÃ³n y milagros": "Group often ministered to with compassion and miracles",
+            "Pueblo llevado cautivo fuera de Israel y JudÃ¡": "People carried away captive from Israel and Judah",
             "Personas de otras naciones presentes entre el pueblo": "People from other nations living among the people",
             "Linajes apartados para el servicio del templo": "Lineages set apart for temple service",
             "Responsables del acceso y orden en el templo": "Those responsible for access and order in the temple",
-            "Expresión poética para referirse al pueblo de Jerusalén": "Poetic expression referring to the people of Jerusalem",
+            "ExpresiÃ³n poÃ©tica para referirse al pueblo de JerusalÃ©n": "Poetic expression referring to the people of Jerusalem",
             "Grupo vulnerable protegido en la Ley y los profetas": "Vulnerable group protected in the Law and the Prophets",
-            "Líderes militares y administrativos de Israel": "Military and administrative leaders of Israel",
+            "LÃ­deres militares y administrativos de Israel": "Military and administrative leaders of Israel",
             "Grupo mencionado en exhortaciones, guerras y discipulado": "Group mentioned in exhortation, warfare, and discipleship",
-            "Líderes levantados por Dios para gobernar y liberar a Israel": "Leaders raised up by God to govern and deliver Israel",
-            "Sabios que visitaron a Jesús tras su nacimiento": "Wise men who visited Jesus after his birth",
-            "Comerciantes presentes en ciudades y rutas bíblicas": "Merchants found in biblical cities and trade routes",
+            "LÃ­deres levantados por Dios para gobernar y liberar a Israel": "Leaders raised up by God to govern and deliver Israel",
+            "Sabios que visitaron a JesÃºs tras su nacimiento": "Wise men who visited Jesus after his birth",
+            "Comerciantes presentes en ciudades y rutas bÃ­blicas": "Merchants found in biblical cities and trade routes",
             "Mujeres que vivieron la espera de un hijo con fe y dolor": "Women who lived through waiting for a child with faith and sorrow",
             "Grupo que protesta contra Dios o sus siervos": "Group that complains against God or his servants",
             "Personas consagradas a Dios mediante voto especial": "People consecrated to God through a special vow",
             "Miembros influyentes del pueblo o de la corte": "Influential members of the people or the court",
-            "Trabajadores del campo, la construcción o la mies espiritual": "Workers in the fields, construction, or the spiritual harvest",
+            "Trabajadores del campo, la construcciÃ³n o la mies espiritual": "Workers in the fields, construction, or the spiritual harvest",
             "Imagen del pueblo descarriado necesitado de pastor": "Image of a straying people in need of a shepherd",
-            "Encargados de cuidar rebaños en la vida cotidiana bíblica": "Those responsible for caring for flocks in everyday biblical life",
-            "Término frecuente para quienes necesitan arrepentimiento y gracia": "Common term for those in need of repentance and grace",
+            "Encargados de cuidar rebaÃ±os en la vida cotidiana bÃ­blica": "Those responsible for caring for flocks in everyday biblical life",
+            "TÃ©rmino frecuente para quienes necesitan arrepentimiento y gracia": "Common term for those in need of repentance and grace",
             "Personas de paso o en viaje hacia lugares santos": "People passing through or traveling toward holy places",
-            "Oficio común en Galilea y entre varios discípulos": "Common trade in Galilee and among several disciples",
+            "Oficio comÃºn en Galilea y entre varios discÃ­pulos": "Common trade in Galilee and among several disciples",
             "Servidores asignados al cuidado de entradas y espacios sagrados": "Servants assigned to care for entrances and sacred spaces",
             "Personas encarceladas por delitos, injusticia o causa del Evangelio": "People imprisoned for crimes, injustice, or the cause of the gospel",
-            "Gentiles incorporados a la fe judía": "Gentiles incorporated into the Jewish faith",
+            "Gentiles incorporados a la fe judÃ­a": "Gentiles incorporated into the Jewish faith",
             "Funcionarios que cobraban tributos e impuestos": "Officials who collected tribute and taxes",
             "Personas marginadas social o religiosamente": "People marginalized socially or religiously",
-            "Gobernantes de naciones en pasajes históricos y proféticos": "Rulers of nations in historical and prophetic passages",
+            "Gobernantes de naciones en pasajes histÃ³ricos y profÃ©ticos": "Rulers of nations in historical and prophetic passages",
             "Grupo fiel preservado por Dios en tiempos de crisis": "Faithful group preserved by God in times of crisis",
-            "Referencia a quienes actúan con misericordia inesperada": "Reference to those who show unexpected mercy",
+            "Referencia a quienes actÃºan con misericordia inesperada": "Reference to those who show unexpected mercy",
             "Mujeres al servicio de hogares o familias": "Women serving households or families",
             "Militares presentes en historias del Antiguo y Nuevo Testamento": "Soldiers appearing in Old and New Testament accounts",
             "Imagen de quienes sirven en la obra de Dios": "Image of those who serve in God's work",
-            "Grupo religioso influyente en tiempos de Jesús": "Influential religious group in the time of Jesus",
-            "Grupo sacerdotal y político del judaísmo": "Priestly and political group within Judaism",
-            "Intérpretes y maestros de la Ley": "Interpreters and teachers of the Law",
+            "Grupo religioso influyente en tiempos de JesÃºs": "Influential religious group in the time of Jesus",
+            "Grupo sacerdotal y polÃ­tico del judaÃ­smo": "Priestly and political group within Judaism",
+            "IntÃ©rpretes y maestros de la Ley": "Interpreters and teachers of the Law",
             "Partidarios de la casa de Herodes": "Supporters of the house of Herod",
-            "Movimiento judío de fuerte fervor nacional": "Jewish movement marked by strong national zeal",
-            "Comunidad judía asociada a vida apartada": "Jewish community associated with a separated way of life",
+            "Movimiento judÃ­o de fuerte fervor nacional": "Jewish movement marked by strong national zeal",
+            "Comunidad judÃ­a asociada a vida apartada": "Jewish community associated with a separated way of life",
             "Cobradores de impuestos en tiempos de Roma": "Tax collectors in the days of Rome",
             "Tribu dedicada al servicio del templo": "Tribe devoted to temple service",
             "Encargados del culto en Israel": "Those responsible for worship in Israel",
-            "Máxima autoridad sacerdotal": "Highest priestly authority",
-            "Consejo religioso judío": "Jewish religious council",
-            "Seguidores y aprendices de Jesús": "Followers and learners of Jesus",
-            "Enviados escogidos por Jesús": "Messengers chosen by Jesus",
+            "MÃ¡xima autoridad sacerdotal": "Highest priestly authority",
+            "Consejo religioso judÃ­o": "Jewish religious council",
+            "Seguidores y aprendices de JesÃºs": "Followers and learners of Jesus",
+            "Enviados escogidos por JesÃºs": "Messengers chosen by Jesus",
             "Portavoces del mensaje de Dios": "Spokespeople of God's message",
-            "Pueblos no judíos": "Non-Jewish peoples",
-            "Pueblo del pacto en tiempos bíblicos": "Covenant people in biblical times",
-            "Judíos de lengua griega mencionados en Hechos": "Greek-speaking Jews mentioned in Acts",
+            "Pueblos no judÃ­os": "Non-Jewish peoples",
+            "Pueblo del pacto en tiempos bÃ­blicos": "Covenant people in biblical times",
+            "JudÃ­os de lengua griega mencionados en Hechos": "Greek-speaking Jews mentioned in Acts",
             "Grupo vulnerable atendido por la iglesia primitiva": "Vulnerable group cared for by the early church",
             "Servidores escogidos en la iglesia primitiva": "Servants chosen in the early church",
-            "Líderes espirituales del pueblo o de la iglesia": "Spiritual leaders of the people or the church",
+            "LÃ­deres espirituales del pueblo o de la iglesia": "Spiritual leaders of the people or the church",
             "Fe basada en Jesucristo y el evangelio": "Faith based on Jesus Christ and the gospel",
-            "Rama principal del cristianismo con centro histórico en Roma": "Main branch of Christianity with its historic center in Rome",
+            "Rama principal del cristianismo con centro histÃ³rico en Roma": "Main branch of Christianity with its historic center in Rome",
             "Conjunto de iglesias cristianas surgidas de la Reforma": "Collection of Christian churches that emerged from the Reformation",
-            "Tradición cristiana histórica de las iglesias ortodoxas": "Historic Christian tradition of the Orthodox churches",
-            "Corriente cristiana centrada en conversión, Biblia y evangelización": "Christian movement centered on conversion, the Bible, and evangelism",
-            "Movimiento cristiano que enfatiza la obra del Espíritu Santo": "Christian movement that emphasizes the work of the Holy Spirit",
-            "Religión monoteísta fundada en las enseñanzas de Mahoma": "Monotheistic religion founded on the teachings of Muhammad",
+            "TradiciÃ³n cristiana histÃ³rica de las iglesias ortodoxas": "Historic Christian tradition of the Orthodox churches",
+            "Corriente cristiana centrada en conversiÃ³n, Biblia y evangelizaciÃ³n": "Christian movement centered on conversion, the Bible, and evangelism",
+            "Movimiento cristiano que enfatiza la obra del EspÃ­ritu Santo": "Christian movement that emphasizes the work of the Holy Spirit",
+            "ReligiÃ³n monoteÃ­sta fundada en las enseÃ±anzas de Mahoma": "Monotheistic religion founded on the teachings of Muhammad",
             "Rama mayoritaria del islam": "Major branch of Islam",
-            "Rama principal del islam vinculada a la sucesión de Alí": "Main branch of Islam linked to the succession of Ali",
-            "Corriente mística dentro del islam": "Mystical current within Islam",
-            "Religión del pueblo judío basada en la Torá": "Religion of the Jewish people based on the Torah",
-            "Corriente judía tradicional de estricta observancia": "Traditional Jewish branch of strict observance",
-            "Corriente judía de continuidad y adaptación": "Jewish branch focused on continuity and adaptation",
-            "Corriente judía de enfoque más liberal": "Jewish branch with a more liberal approach",
+            "Rama principal del islam vinculada a la sucesiÃ³n de AlÃ­": "Main branch of Islam linked to the succession of Ali",
+            "Corriente mÃ­stica dentro del islam": "Mystical current within Islam",
+            "ReligiÃ³n del pueblo judÃ­o basada en la TorÃ¡": "Religion of the Jewish people based on the Torah",
+            "Corriente judÃ­a tradicional de estricta observancia": "Traditional Jewish branch of strict observance",
+            "Corriente judÃ­a de continuidad y adaptaciÃ³n": "Jewish branch focused on continuity and adaptation",
+            "Corriente judÃ­a de enfoque mÃ¡s liberal": "Jewish branch with a more liberal approach",
             "Conjunto de tradiciones religiosas originadas en la India": "Collection of religious traditions originating in India",
-            "Corriente hindú centrada en Vishnu": "Hindu branch centered on Vishnu",
-            "Corriente hindú centrada en Shiva": "Hindu branch centered on Shiva",
-            "Corriente hindú centrada en la diosa Shakti": "Hindu branch centered on the goddess Shakti",
-            "Tradición fundada a partir de las enseñanzas de Buda": "Tradition founded on the teachings of Buddha",
+            "Corriente hindÃº centrada en Vishnu": "Hindu branch centered on Vishnu",
+            "Corriente hindÃº centrada en Shiva": "Hindu branch centered on Shiva",
+            "Corriente hindÃº centrada en la diosa Shakti": "Hindu branch centered on the goddess Shakti",
+            "TradiciÃ³n fundada a partir de las enseÃ±anzas de Buda": "Tradition founded on the teachings of Buddha",
             "Rama budista extendida en el sur de Asia": "Buddhist branch widespread in South Asia",
             "Rama budista extendida en Asia oriental": "Buddhist branch widespread in East Asia",
-            "Forma budista asociada al Tíbet y regiones cercanas": "Buddhist form associated with Tibet and nearby regions",
-            "Religión monoteísta originada en el Punjab": "Monotheistic religion originating in Punjab",
-            "Tradición india centrada en la no violencia y la disciplina": "Indian tradition centered on nonviolence and discipline",
-            "Antigua religión persa vinculada a Zaratustra": "Ancient Persian religion linked to Zoroaster",
-            "Religión monoteísta nacida en Persia con vocación universal": "Monotheistic religion born in Persia with a universal calling",
-            "Tradición filosófica y ética de origen chino": "Philosophical and ethical tradition of Chinese origin",
-            "Tradición religiosa y filosófica china vinculada al Tao": "Chinese religious and philosophical tradition linked to the Tao",
-            "Religión tradicional de Japón": "Traditional religion of Japan",
-            "Creencia en espíritus asociados a la naturaleza y los seres": "Belief in spirits associated with nature and living beings",
-            "Conjunto de prácticas religiosas populares de China": "Collection of popular religious practices from China",
+            "Forma budista asociada al TÃ­bet y regiones cercanas": "Buddhist form associated with Tibet and nearby regions",
+            "ReligiÃ³n monoteÃ­sta originada en el Punjab": "Monotheistic religion originating in Punjab",
+            "TradiciÃ³n india centrada en la no violencia y la disciplina": "Indian tradition centered on nonviolence and discipline",
+            "Antigua religiÃ³n persa vinculada a Zaratustra": "Ancient Persian religion linked to Zoroaster",
+            "ReligiÃ³n monoteÃ­sta nacida en Persia con vocaciÃ³n universal": "Monotheistic religion born in Persia with a universal calling",
+            "TradiciÃ³n filosÃ³fica y Ã©tica de origen chino": "Philosophical and ethical tradition of Chinese origin",
+            "TradiciÃ³n religiosa y filosÃ³fica china vinculada al Tao": "Chinese religious and philosophical tradition linked to the Tao",
+            "ReligiÃ³n tradicional de JapÃ³n": "Traditional religion of Japan",
+            "Creencia en espÃ­ritus asociados a la naturaleza y los seres": "Belief in spirits associated with nature and living beings",
+            "Conjunto de prÃ¡cticas religiosas populares de China": "Collection of popular religious practices from China",
             "Sistemas religiosos aut?ctonos de ?frica": "Indigenous religious systems of Africa",
-            "Tradiciones espirituales de pueblos originarios de América": "Spiritual traditions of the indigenous peoples of the Americas",
-            "Tradiciones espirituales de pueblos aborígenes": "Spiritual traditions of Aboriginal peoples",
-            "Religión vietnamita de carácter sincretista": "Vietnamese religion of a syncretic character",
-            "Movimiento religioso japonés de origen moderno": "Modern Japanese religious movement",
-            "Corriente religiosa basada en comunicación con espíritus": "Religious movement based on communication with spirits",
+            "Tradiciones espirituales de pueblos originarios de AmÃ©rica": "Spiritual traditions of the indigenous peoples of the Americas",
+            "Tradiciones espirituales de pueblos aborÃ­genes": "Spiritual traditions of Aboriginal peoples",
+            "ReligiÃ³n vietnamita de carÃ¡cter sincretista": "Vietnamese religion of a syncretic character",
+            "Movimiento religioso japonÃ©s de origen moderno": "Modern Japanese religious movement",
+            "Corriente religiosa basada en comunicaciÃ³n con espÃ­ritus": "Religious movement based on communication with spirits",
             "Movimiento religioso surgido en Jamaica": "Religious movement that arose in Jamaica",
             "Movimiento religioso de enfoque pluralista": "Religious movement with a pluralist approach",
-            "Tradición cristiana vinculada a La Iglesia de Jesucristo de los Santos de los Últimos Días": "Christian tradition linked to The Church of Jesus Christ of Latter-day Saints",
-            "Movimiento religioso de interpretación bíblica particular": "Religious movement with a distinctive biblical interpretation",
+            "TradiciÃ³n cristiana vinculada a La Iglesia de Jesucristo de los Santos de los Ãšltimos DÃ­as": "Christian tradition linked to The Church of Jesus Christ of Latter-day Saints",
+            "Movimiento religioso de interpretaciÃ³n bÃ­blica particular": "Religious movement with a distinctive biblical interpretation",
             "Movimiento religioso fundado por Mary Baker Eddy": "Religious movement founded by Mary Baker Eddy",
-            "Conjunto de espiritualidades modernas de carácter sincretista": "Collection of modern spiritualities of a syncretic nature",
-            "Recuperación moderna de tradiciones religiosas precristianas": "Modern revival of pre-Christian religious traditions",
-            "Tradición neopagana de carácter ritual y dual": "Neopagan tradition of a ritual and dual nature",
-            "Postura de negación de la existencia de deidades": "Position that denies the existence of deities",
+            "Conjunto de espiritualidades modernas de carÃ¡cter sincretista": "Collection of modern spiritualities of a syncretic nature",
+            "RecuperaciÃ³n moderna de tradiciones religiosas precristianas": "Modern revival of pre-Christian religious traditions",
+            "TradiciÃ³n neopagana de carÃ¡cter ritual y dual": "Neopagan tradition of a ritual and dual nature",
+            "Postura de negaciÃ³n de la existencia de deidades": "Position that denies the existence of deities",
             "Postura sobre la imposibilidad o duda de conocer a Dios": "Position regarding the impossibility or doubt of knowing God",
-            "Visión ética no religiosa centrada en el ser humano": "Non-religious ethical vision centered on the human being",
-            "Creencia en un creador sin revelación religiosa particular": "Belief in a creator without a particular religious revelation",
-            "Personas que no se identifican con una religión concreta": "People who do not identify with a specific religion",
+            "VisiÃ³n Ã©tica no religiosa centrada en el ser humano": "Non-religious ethical vision centered on the human being",
+            "Creencia en un creador sin revelaciÃ³n religiosa particular": "Belief in a creator without a particular religious revelation",
+            "Personas que no se identifican con una religiÃ³n concreta": "People who do not identify with a specific religion",
             "Barnabas": "Barnabas", "Boaz": "Boaz", "Cain": "Cain", "Cornelio": "Cornelius", "Crispo": "Crispus",
             "Efrain": "Ephraim", "Elcanah": "Elkanah", "Eleazar": "Eleazar", "Eli": "Eli", "Enoc": "Enoch",
             "Ezequias": "Hezekiah", "Festo": "Festus", "Filemon": "Philemon", "Finees": "Phinehas", "Gamaliel": "Gamaliel",
@@ -2830,7 +2780,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "Catolicismo": "Catholicism",
             "Protestantismo": "Protestantism",
             "Islam": "Islam",
-            "Judaísmo": "Judaism",
+            "JudaÃ­smo": "Judaism",
             "Hinduismo": "Hinduism",
             "Budismo": "Buddhism",
             "Sijismo": "Sikhism",
@@ -2935,7 +2885,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             if lang_code == "ca" and pasaje_completo():
                 return "Estudi del passatge"
             if lang_code == "fr" and pasaje_completo():
-                return "Étude du passage"
+                return "Ã‰tude du passage"
             if lang_code == "en" and pasaje_completo():
                 return "Passage study"
         return study_type_labels.get(value, value)
@@ -2950,19 +2900,19 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     label_style_theme = ft.TextStyle(color=theme["primary"])
     textos_comportamiento = {
         "es": {
-            "title": "CÓMO COMPORTARME SI...",
-            "situation": "SITUACIÓN",
-            "select_situation": "Selecciona una situación",
+            "title": "CÃ“MO COMPORTARME SI...",
+            "situation": "SITUACIÃ“N",
+            "select_situation": "Selecciona una situaciÃ³n",
             "generate": "GENERAR RESPUESTA",
             "help_critican": "Si me critican",
-            "help_hablan_mal": "Si hablan mal de mí",
+            "help_hablan_mal": "Si hablan mal de mÃ­",
             "help_enojan": "Si se enojan conmigo",
             "help_rechazan": "Si me rechazan",
             "help_ofenden": "Si me ofenden",
             "help_injusticia": "Si son injustos conmigo",
             "help_discuten": "Si discuten conmigo",
             "help_perdonar": "Si me cuesta perdonar",
-            "msg_select_situation": "Selecciona primero una situación",
+            "msg_select_situation": "Selecciona primero una situaciÃ³n",
             "status_generating": "Estado: generando respuesta...",
             "status_ready": "Estado: respuesta lista",
         },
@@ -3020,7 +2970,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     }.get(lang_code, {})
     textos_incredulo = {
         "es": {
-            "title": "QUÉ RESPONDER A UN INCRÉDULO SI...",
+            "title": "QUÃ‰ RESPONDER A UN INCRÃ‰DULO SI...",
             "question": "PREGUNTA",
             "select_question": "Selecciona una pregunta",
             "generate": "GENERAR RESPUESTA",
@@ -3097,10 +3047,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     textos_dones = {
         "es": {
             "title": "TEST DE DONES ESPIRITUALES",
-            "intro": "Responde esta autoevaluación del 0 al 4. No busca etiquetarte, sino ayudarte a ver por dónde sueles servir con más fuerza.",
+            "intro": "Responde esta autoevaluaciÃ³n del 0 al 4. No busca etiquetarte, sino ayudarte a ver por dÃ³nde sueles servir con mÃ¡s fuerza.",
             "instructions": "Escala: 0 nada | 1 poco | 2 bastante | 3 mucho | 4 muy identificado.",
             "score_label": "PUNTOS",
-            "score_missing": "Elige una puntuación",
+            "score_missing": "Elige una puntuaciÃ³n",
             "progress": "Respondidas: {done} de {total}",
             "calculating": "Calculando resultado del test...",
             "ready": "Resultado listo.",
@@ -3111,7 +3061,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "incomplete": "Te faltan {missing} preguntas por responder.",
             "top_gifts": "Dones con mayor afinidad",
             "all_scores": "Puntuaciones completas",
-            "pastoral_note": "Usa este resultado como orientación práctica y coméntalo con tu pastor o liderazgo.",
+            "pastoral_note": "Usa este resultado como orientaciÃ³n prÃ¡ctica y comÃ©ntalo con tu pastor o liderazgo.",
         },
         "ca": {
             "title": "TEST DE DONES ESPIRITUALS",
@@ -3171,98 +3121,98 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     textos_chat_consejero = {
         "es": {
             "title": "CHAT CONSEJERO CRISTIANO",
-            "message": "CUÉNTAME QUÉ TE PASA",
-            "placeholder": "Escribe aquí tu situación, duda o carga. Por ejemplo: estoy muy angustiado, no sé cómo perdonar, tengo miedo, necesito orientación...",
+            "message": "CUÃ‰NTAME QUÃ‰ TE PASA",
+            "placeholder": "Escribe aquÃ­ tu situaciÃ³n, duda o carga. Por ejemplo: estoy muy angustiado, no sÃ© cÃ³mo perdonar, tengo miedo, necesito orientaciÃ³n...",
             "send": "ENVIAR MENSAJE",
             "clear": "LIMPIAR CHAT",
-            "header_status": "Responde con base bíblica y tono pastoral",
+            "header_status": "Responde con base bÃ­blica y tono pastoral",
             "empty_message": "Escribe primero un mensaje",
             "status_generating": "Estado: respondiendo en el chat...",
             "status_ready": "Estado: respuesta lista",
-            "intro": "Habla con naturalidad. Recibirás acompañamiento bíblico, pastoral y práctico.",
+            "intro": "Habla con naturalidad. RecibirÃ¡s acompaÃ±amiento bÃ­blico, pastoral y prÃ¡ctico.",
             "greetings": [
-                "Hola, soy tu consejero cristiano. Antes de nada, ¿cómo te llamas? Y si quieres, cuéntame qué te pasa o cómo te puedo ayudar.",
-                "Hola, puedes hablarme con libertad. ¿Cómo te llamas? Después, si quieres, dime qué estás viviendo o en qué te gustaría que te acompañara.",
-                "Bienvenido. Me gustaría saber cómo te llamas, y luego puedes contarme con calma qué situación estás pasando o cómo te puedo ayudar.",
-                "Hola, gracias por estar aquí. ¿Cómo te llamas? Si te parece, después me cuentas qué te preocupa o qué está pasando ahora mismo.",
+                "Hola, soy tu consejero cristiano. Antes de nada, Â¿cÃ³mo te llamas? Y si quieres, cuÃ©ntame quÃ© te pasa o cÃ³mo te puedo ayudar.",
+                "Hola, puedes hablarme con libertad. Â¿CÃ³mo te llamas? DespuÃ©s, si quieres, dime quÃ© estÃ¡s viviendo o en quÃ© te gustarÃ­a que te acompaÃ±ara.",
+                "Bienvenido. Me gustarÃ­a saber cÃ³mo te llamas, y luego puedes contarme con calma quÃ© situaciÃ³n estÃ¡s pasando o cÃ³mo te puedo ayudar.",
+                "Hola, gracias por estar aquÃ­. Â¿CÃ³mo te llamas? Si te parece, despuÃ©s me cuentas quÃ© te preocupa o quÃ© estÃ¡ pasando ahora mismo.",
             ],
-            "greeting": "Hola, soy tu consejero cristiano. Antes de nada, ¿cómo te llamas? Y si quieres, cuéntame qué te pasa o cómo te puedo ayudar.",
-            "warning": "Si hay peligro inmediato, abuso, autolesión o ideas suicidas, busca ayuda urgente en tu zona y contacta también con un pastor o una persona de confianza.",
-            "you": "Tú",
+            "greeting": "Hola, soy tu consejero cristiano. Antes de nada, Â¿cÃ³mo te llamas? Y si quieres, cuÃ©ntame quÃ© te pasa o cÃ³mo te puedo ayudar.",
+            "warning": "Si hay peligro inmediato, abuso, autolesiÃ³n o ideas suicidas, busca ayuda urgente en tu zona y contacta tambiÃ©n con un pastor o una persona de confianza.",
+            "you": "TÃº",
             "assistant": "Consejero cristiano",
             "typing": "_Consejero cristiano escribiendo..._",
-            "fallback_response": "Perdona, no me he expresado bien. Cuéntame un poco más y te respondo con más claridad y calma.",
+            "fallback_response": "Perdona, no me he expresado bien. CuÃ©ntame un poco mÃ¡s y te respondo con mÃ¡s claridad y calma.",
             "quick_questions": [
                 "Estoy angustiado",
-                "Necesito oración",
+                "Necesito oraciÃ³n",
                 "Tengo una duda de fe",
-                "No sé qué decisión tomar",
+                "No sÃ© quÃ© decisiÃ³n tomar",
                 "Estoy luchando con el pecado",
                 "Necesito consuelo",
             ],
         },
         "ca": {
-            "title": "XAT CONSELLER CRISTIÀ",
-            "message": "EXPLICA'M QUÈ ET PASSA",
-            "placeholder": "Escriu aquí la teva situació, dubte o càrrega. Per exemple: estic molt anguniat, no sé com perdonar, tinc por, necessito orientació...",
+            "title": "XAT CONSELLER CRISTIÃ€",
+            "message": "EXPLICA'M QUÃˆ ET PASSA",
+            "placeholder": "Escriu aquÃ­ la teva situaciÃ³, dubte o cÃ rrega. Per exemple: estic molt anguniat, no sÃ© com perdonar, tinc por, necessito orientaciÃ³...",
             "send": "ENVIAR MISSATGE",
             "clear": "NETEJAR XAT",
-            "header_status": "Respon amb base bíblica i to pastoral",
+            "header_status": "Respon amb base bÃ­blica i to pastoral",
             "empty_message": "Escriu primer un missatge",
             "status_generating": "Estat: responent al xat...",
             "status_ready": "Estat: resposta llesta",
-            "intro": "Parla amb naturalitat. Rebràs una resposta bíblica, pastoral i pràctica.",
+            "intro": "Parla amb naturalitat. RebrÃ s una resposta bÃ­blica, pastoral i prÃ ctica.",
             "greetings": [
-                "Hola, soc el teu conseller cristià. Pots parlar-me amb calma; vull entendre bé el que estàs vivint i acompanyar-te a la llum de la Paraula de Déu. Què està passant?",
-                "Hola, pots obrir el teu cor amb llibertat. Soc aquí per escoltar-te sense pressa i orientar-te amb una mirada bíblica i pastoral. Què et pesa més avui?",
-                "Benvingut. Vull escoltar amb calma allò que estàs passant i caminar amb tu davant de Déu. Quina situació t'està costant més ara mateix?",
-                "Hola, gràcies per escriure. Si vols, explica'm a poc a poc el que portes dins i ho mirarem junts a la llum de la Paraula. Què et preocupa per dins?",
+                "Hola, soc el teu conseller cristiÃ . Pots parlar-me amb calma; vull entendre bÃ© el que estÃ s vivint i acompanyar-te a la llum de la Paraula de DÃ©u. QuÃ¨ estÃ  passant?",
+                "Hola, pots obrir el teu cor amb llibertat. Soc aquÃ­ per escoltar-te sense pressa i orientar-te amb una mirada bÃ­blica i pastoral. QuÃ¨ et pesa mÃ©s avui?",
+                "Benvingut. Vull escoltar amb calma allÃ² que estÃ s passant i caminar amb tu davant de DÃ©u. Quina situaciÃ³ t'estÃ  costant mÃ©s ara mateix?",
+                "Hola, grÃ cies per escriure. Si vols, explica'm a poc a poc el que portes dins i ho mirarem junts a la llum de la Paraula. QuÃ¨ et preocupa per dins?",
             ],
-            "greeting": "Hola, soc el teu conseller cristià. Pots parlar-me amb calma; vull entendre bé el que estàs vivint i acompanyar-te a la llum de la Paraula de Déu. Què està passant?",
-            "warning": "Si hi ha perill immediat, abús, autolesió o idees suïcides, busca ajuda urgent a la teva zona i contacta també amb un pastor o una persona de confiança.",
+            "greeting": "Hola, soc el teu conseller cristiÃ . Pots parlar-me amb calma; vull entendre bÃ© el que estÃ s vivint i acompanyar-te a la llum de la Paraula de DÃ©u. QuÃ¨ estÃ  passant?",
+            "warning": "Si hi ha perill immediat, abÃºs, autolesiÃ³ o idees suÃ¯cides, busca ajuda urgent a la teva zona i contacta tambÃ© amb un pastor o una persona de confianÃ§a.",
             "you": "Tu",
-            "assistant": "Conseller cristià",
-            "typing": "_El conseller cristià està escrivint..._",
-            "fallback_response": "Perdona, no m'he expressat bé. Explica'm una mica més i et respondré amb més claredat i calma.",
+            "assistant": "Conseller cristiÃ ",
+            "typing": "_El conseller cristiÃ  estÃ  escrivint..._",
+            "fallback_response": "Perdona, no m'he expressat bÃ©. Explica'm una mica mÃ©s i et respondrÃ© amb mÃ©s claredat i calma.",
             "quick_questions": [
                 "Estic anguniat",
-                "Necessito pregària",
+                "Necessito pregÃ ria",
                 "Tinc un dubte de fe",
-                "No sé quina decisió prendre",
+                "No sÃ© quina decisiÃ³ prendre",
                 "Estic lluitant amb el pecat",
                 "Necessito consol",
             ],
         },
         "fr": {
-            "title": "CHAT CONSEILLER CHRÉTIEN",
+            "title": "CHAT CONSEILLER CHRÃ‰TIEN",
             "message": "RACONTE-MOI CE QUI T'ARRIVE",
-            "placeholder": "Écris ici ta situation, ton doute ou ton fardeau. Par exemple : je suis très angoissé, je ne sais pas comment pardonner, j'ai peur, j'ai besoin d'être guidé...",
+            "placeholder": "Ã‰cris ici ta situation, ton doute ou ton fardeau. Par exemple : je suis trÃ¨s angoissÃ©, je ne sais pas comment pardonner, j'ai peur, j'ai besoin d'Ãªtre guidÃ©...",
             "send": "ENVOYER LE MESSAGE",
             "clear": "EFFACER LE CHAT",
             "header_status": "Reponses bibliques avec un ton pastoral",
-            "empty_message": "Écris d'abord un message",
-            "status_generating": "Etat : réponse en cours dans le chat...",
-            "status_ready": "Etat : réponse prête",
-            "intro": "Parle naturellement. Tu recevras une réponse biblique, pastorale et pratique.",
+            "empty_message": "Ã‰cris d'abord un message",
+            "status_generating": "Etat : rÃ©ponse en cours dans le chat...",
+            "status_ready": "Etat : rÃ©ponse prÃªte",
+            "intro": "Parle naturellement. Tu recevras une rÃ©ponse biblique, pastorale et pratique.",
             "greetings": [
-                "Bonjour, je suis ton conseiller chrétien. Tu peux me parler calmement ; je veux bien comprendre ce que tu vis et t'accompagner à la lumière de la Parole de Dieu. Que se passe-t-il ?",
-                "Bonjour, tu peux parler librement ici. Je veux t'écouter avec douceur et t'accompagner avec une perspective biblique et pastorale. Qu'est-ce qui pèse le plus sur ton coeur aujourd'hui ?",
-                "Bienvenue. Je suis là pour t'écouter sans te presser et regarder avec toi ta situation devant Dieu. Qu'est-ce qui te fait le plus souffrir en ce moment ?",
-                "Bonjour, merci d'être là. Si tu veux, raconte-moi tranquillement ce que tu traverses et nous le regarderons ensemble à la lumière de la Parole. Qu'est-ce qui t'inquiète le plus ?",
+                "Bonjour, je suis ton conseiller chrÃ©tien. Tu peux me parler calmement ; je veux bien comprendre ce que tu vis et t'accompagner Ã  la lumiÃ¨re de la Parole de Dieu. Que se passe-t-il ?",
+                "Bonjour, tu peux parler librement ici. Je veux t'Ã©couter avec douceur et t'accompagner avec une perspective biblique et pastorale. Qu'est-ce qui pÃ¨se le plus sur ton coeur aujourd'hui ?",
+                "Bienvenue. Je suis lÃ  pour t'Ã©couter sans te presser et regarder avec toi ta situation devant Dieu. Qu'est-ce qui te fait le plus souffrir en ce moment ?",
+                "Bonjour, merci d'Ãªtre lÃ . Si tu veux, raconte-moi tranquillement ce que tu traverses et nous le regarderons ensemble Ã  la lumiÃ¨re de la Parole. Qu'est-ce qui t'inquiÃ¨te le plus ?",
             ],
-            "greeting": "Bonjour, je suis ton conseiller chrétien. Tu peux me parler calmement ; je veux bien comprendre ce que tu vis et t'accompagner à la lumière de la Parole de Dieu. Que se passe-t-il ?",
-            "warning": "S'il y a un danger immédiat, un abus, une automutilation ou des idées suicidaires, cherche une aide urgente dans ta région et contacte aussi un pasteur ou une personne de confiance.",
+            "greeting": "Bonjour, je suis ton conseiller chrÃ©tien. Tu peux me parler calmement ; je veux bien comprendre ce que tu vis et t'accompagner Ã  la lumiÃ¨re de la Parole de Dieu. Que se passe-t-il ?",
+            "warning": "S'il y a un danger immÃ©diat, un abus, une automutilation ou des idÃ©es suicidaires, cherche une aide urgente dans ta rÃ©gion et contacte aussi un pasteur ou une personne de confiance.",
             "you": "Toi",
-            "assistant": "Conseiller chrétien",
-            "typing": "_Le conseiller chrétien est en train d'écrire..._",
-            "fallback_response": "Pardonne-moi, je ne me suis pas bien exprimé. Dis-m'en un peu plus et je te répondrai avec plus de clarté et de douceur.",
+            "assistant": "Conseiller chrÃ©tien",
+            "typing": "_Le conseiller chrÃ©tien est en train d'Ã©crire..._",
+            "fallback_response": "Pardonne-moi, je ne me suis pas bien exprimÃ©. Dis-m'en un peu plus et je te rÃ©pondrai avec plus de clartÃ© et de douceur.",
             "quick_questions": [
-                "Je suis angoissé",
-                "J'ai besoin de prière",
+                "Je suis angoissÃ©",
+                "J'ai besoin de priÃ¨re",
                 "J'ai un doute de foi",
-                "Je ne sais pas quelle décision prendre",
-                "Je lutte contre le péché",
-                "J'ai besoin de réconfort",
+                "Je ne sais pas quelle dÃ©cision prendre",
+                "Je lutte contre le pÃ©chÃ©",
+                "J'ai besoin de rÃ©confort",
             ],
         },
         "en": {
@@ -3300,53 +3250,53 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     }.get(lang_code, {})
     textos_chat_soporte = {
         "es": {
-            "title": "GUÍA DE LA APP",
-            "message": "DIME QUÉ QUIERES HACER EN LA APP",
-            "placeholder": "Escribe tu duda. Por ejemplo: por dónde empiezo, qué sección me conviene o cuál uso para una duda de fe...",
+            "title": "GUÃA DE LA APP",
+            "message": "DIME QUÃ‰ QUIERES HACER EN LA APP",
+            "placeholder": "Escribe tu duda. Por ejemplo: por dÃ³nde empiezo, quÃ© secciÃ³n me conviene o cuÃ¡l uso para una duda de fe...",
             "send": "ENVIAR MENSAJE",
             "clear": "LIMPIAR CHAT",
-            "header_status": "Guía para usar Biblia IA paso a paso",
+            "header_status": "GuÃ­a para usar Biblia IA paso a paso",
             "empty_message": "Escribe primero un mensaje",
-            "status_generating": "Estado: respondiendo en la guía de la app...",
+            "status_generating": "Estado: respondiendo en la guÃ­a de la app...",
             "status_ready": "Estado: respuesta lista",
-            "intro": "Habla con naturalidad. Recibirás ayuda práctica para ir a la sección correcta y usar la app sin liarte.",
-            "greeting": "Hola, soy la guía de la app. Puedo decirte por dónde empezar, qué sección te conviene y qué botón usar según lo que necesites. ¿Quieres leer un pasaje, hacer un estudio o resolver una duda?",
-            "warning": "Si tu duda es sobre la API key o un error de conexión, también puedo orientarte y decirte en qué pantalla resolverlo.",
-            "you": "Tú",
-            "assistant": "Guía de la app",
-            "typing": "_La guía de la app está escribiendo..._",
-            "fallback_response": "Perdona, no te he entendido del todo. Dime qué quieres hacer dentro de la app y te diré qué sección te conviene usar.",
+            "intro": "Habla con naturalidad. RecibirÃ¡s ayuda prÃ¡ctica para ir a la secciÃ³n correcta y usar la app sin liarte.",
+            "greeting": "Hola, soy la guÃ­a de la app. Puedo decirte por dÃ³nde empezar, quÃ© secciÃ³n te conviene y quÃ© botÃ³n usar segÃºn lo que necesites. Â¿Quieres leer un pasaje, hacer un estudio o resolver una duda?",
+            "warning": "Si tu duda es sobre la API key o un error de conexiÃ³n, tambiÃ©n puedo orientarte y decirte en quÃ© pantalla resolverlo.",
+            "you": "TÃº",
+            "assistant": "GuÃ­a de la app",
+            "typing": "_La guÃ­a de la app estÃ¡ escribiendo..._",
+            "fallback_response": "Perdona, no te he entendido del todo. Dime quÃ© quieres hacer dentro de la app y te dirÃ© quÃ© secciÃ³n te conviene usar.",
             "quick_questions": [
-                "¿Por dónde empiezo?",
-                "¿Qué sección me conviene?",
-                "¿Qué diferencia hay entre Biblia y Estudio Bíblico?",
-                "¿Qué diferencia hay entre Preguntas y Chat Consejero Cristiano?",
-                "¿Cómo busco un pasaje?",
-                "¿Dónde configuro la IA?",
+                "Â¿Por dÃ³nde empiezo?",
+                "Â¿QuÃ© secciÃ³n me conviene?",
+                "Â¿QuÃ© diferencia hay entre Biblia y Estudio BÃ­blico?",
+                "Â¿QuÃ© diferencia hay entre Preguntas y Chat Consejero Cristiano?",
+                "Â¿CÃ³mo busco un pasaje?",
+                "Â¿DÃ³nde configuro la IA?",
             ],
         },
         "ca": {
             "title": "GUIA DE L'APP",
-            "message": "DIGUES-ME QUÈ VOLS FER A L'APP",
-            "placeholder": "Escriu aquí el teu dubte sobre com fer servir l'app. Per exemple: per on començo, per a què serveix cada secció o com entro a l'estudi bíblic...",
+            "message": "DIGUES-ME QUÃˆ VOLS FER A L'APP",
+            "placeholder": "Escriu aquÃ­ el teu dubte sobre com fer servir l'app. Per exemple: per on comenÃ§o, per a quÃ¨ serveix cada secciÃ³ o com entro a l'estudi bÃ­blic...",
             "send": "ENVIAR MISSATGE",
             "clear": "NETEJAR XAT",
             "header_status": "Guia per fer servir Biblia IA pas a pas",
             "empty_message": "Escriu primer un missatge",
             "status_generating": "Estat: responent a la guia de l'app...",
             "status_ready": "Estat: resposta llesta",
-            "intro": "Parla amb naturalitat. Rebràs ajuda pràctica per entendre i fer servir l'aplicació.",
-            "greeting": "Hola, sóc la guia de l'app. Puc ajudar-te a entendre per a què serveix cada secció, per on començar i com fer servir Biblia IA pas a pas. Què vols fer dins de l'aplicació?",
-            "warning": "Si el teu dubte és sobre la API key o un error de connexió, també et puc orientar i dir-te en quina pantalla resoldre-ho.",
+            "intro": "Parla amb naturalitat. RebrÃ s ajuda prÃ ctica per entendre i fer servir l'aplicaciÃ³.",
+            "greeting": "Hola, sÃ³c la guia de l'app. Puc ajudar-te a entendre per a quÃ¨ serveix cada secciÃ³, per on comenÃ§ar i com fer servir Biblia IA pas a pas. QuÃ¨ vols fer dins de l'aplicaciÃ³?",
+            "warning": "Si el teu dubte Ã©s sobre la API key o un error de connexiÃ³, tambÃ© et puc orientar i dir-te en quina pantalla resoldre-ho.",
             "you": "Tu",
             "assistant": "Guia de l'app",
-            "typing": "_La guia de l'app està escrivint..._",
-            "fallback_response": "Perdona, no t'he entès del tot. Digues-me què vols fer dins de l'app o quina pantalla veus i et guio pas a pas.",
+            "typing": "_La guia de l'app estÃ  escrivint..._",
+            "fallback_response": "Perdona, no t'he entÃ¨s del tot. Digues-me quÃ¨ vols fer dins de l'app o quina pantalla veus i et guio pas a pas.",
             "quick_questions": [
-                "Per on començo?",
-                "Quina secció em convé?",
-                "Quina diferència hi ha entre Bíblia i Estudi Bíblic?",
-                "Quina diferència hi ha entre Preguntes i Xat Conseller Cristià?",
+                "Per on comenÃ§o?",
+                "Quina secciÃ³ em convÃ©?",
+                "Quina diferÃ¨ncia hi ha entre BÃ­blia i Estudi BÃ­blic?",
+                "Quina diferÃ¨ncia hi ha entre Preguntes i Xat Conseller CristiÃ ?",
                 "Com busco un passatge?",
                 "On configuro la IA?",
             ],
@@ -3354,27 +3304,27 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         "fr": {
             "title": "GUIDE DE L'APP",
             "message": "DIS-MOI CE QUE TU VEUX FAIRE DANS L'APP",
-            "placeholder": "Écris ici ta question sur l'usage de l'application. Par exemple : par où commencer, à quoi sert chaque section ou comment ouvrir l'étude biblique...",
+            "placeholder": "Ã‰cris ici ta question sur l'usage de l'application. Par exemple : par oÃ¹ commencer, Ã  quoi sert chaque section ou comment ouvrir l'Ã©tude biblique...",
             "send": "ENVOYER LE MESSAGE",
             "clear": "EFFACER LE CHAT",
-            "header_status": "Guide pour utiliser Biblia IA pas à pas",
-            "empty_message": "Écris d'abord un message",
-            "status_generating": "Etat : réponse du guide de l'app...",
-            "status_ready": "Etat : réponse prête",
+            "header_status": "Guide pour utiliser Biblia IA pas Ã  pas",
+            "empty_message": "Ã‰cris d'abord un message",
+            "status_generating": "Etat : rÃ©ponse du guide de l'app...",
+            "status_ready": "Etat : rÃ©ponse prÃªte",
             "intro": "Parle naturellement. Tu recevras une aide pratique pour comprendre et utiliser l'application.",
-            "greeting": "Bonjour, je suis le guide de l'app. Je peux t'aider à comprendre à quoi sert chaque section, par où commencer et comment utiliser Biblia IA pas à pas. Que veux-tu faire dans l'application ?",
-            "warning": "Si ta question concerne la clé API ou une erreur de connexion, je peux aussi t'orienter vers le bon écran pour la résoudre.",
+            "greeting": "Bonjour, je suis le guide de l'app. Je peux t'aider Ã  comprendre Ã  quoi sert chaque section, par oÃ¹ commencer et comment utiliser Biblia IA pas Ã  pas. Que veux-tu faire dans l'application ?",
+            "warning": "Si ta question concerne la clÃ© API ou une erreur de connexion, je peux aussi t'orienter vers le bon Ã©cran pour la rÃ©soudre.",
             "you": "Toi",
             "assistant": "Guide de l'app",
-            "typing": "_Le guide de l'app est en train d'écrire..._",
-            "fallback_response": "Pardonne-moi, je n'ai pas tout compris. Dis-moi ce que tu veux faire dans l'app ou quel écran tu vois et je te guiderai pas à pas.",
+            "typing": "_Le guide de l'app est en train d'Ã©crire..._",
+            "fallback_response": "Pardonne-moi, je n'ai pas tout compris. Dis-moi ce que tu veux faire dans l'app ou quel Ã©cran tu vois et je te guiderai pas Ã  pas.",
             "quick_questions": [
-                "Par où commencer ?",
+                "Par oÃ¹ commencer ?",
                 "Quelle section me convient ?",
-                "Quelle différence entre Bible et Étude biblique ?",
-                "Quelle différence entre Questions et Chat conseiller chrétien ?",
+                "Quelle diffÃ©rence entre Bible et Ã‰tude biblique ?",
+                "Quelle diffÃ©rence entre Questions et Chat conseiller chrÃ©tien ?",
                 "Comment chercher un passage ?",
-                "Où configurer l'IA ?",
+                "OÃ¹ configurer l'IA ?",
             ],
         },
         "en": {
@@ -3406,34 +3356,34 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     }.get(lang_code, {})
     textos_chat_suenos = {
         "es": {
-            "title": "CHAT INTERPRETACIÓN DE SUEÑOS",
-            "message": "CUÉNTAME TU SUEÑO",
-            "placeholder": "Escribe aquí tu sueño con los detalles principales y, si quieres, lo que estás viviendo ahora. Por ejemplo: soñaba con agua, una puerta cerrada y mucha inquietud...",
+            "title": "CHAT INTERPRETACIÃ“N DE SUEÃ‘OS",
+            "message": "CUÃ‰NTAME TU SUEÃ‘O",
+            "placeholder": "Escribe aquÃ­ tu sueÃ±o con los detalles principales y, si quieres, lo que estÃ¡s viviendo ahora. Por ejemplo: soÃ±aba con agua, una puerta cerrada y mucha inquietud...",
             "send": "ENVIAR MENSAJE",
             "clear": "LIMPIAR CHAT",
-            "header_status": "Orientación bíblica, no oráculo ni adivinación",
-            "empty_message": "Escribe primero tu sueño o tu pregunta",
-            "status_generating": "Estado: discerniendo el sueño...",
+            "header_status": "OrientaciÃ³n bÃ­blica, no orÃ¡culo ni adivinaciÃ³n",
+            "empty_message": "Escribe primero tu sueÃ±o o tu pregunta",
+            "status_generating": "Estado: discerniendo el sueÃ±o...",
             "status_ready": "Estado: respuesta lista",
-            "intro": "Recibirás una orientación prudente, bíblica y pastoral sobre los posibles significados del sueño.",
+            "intro": "RecibirÃ¡s una orientaciÃ³n prudente, bÃ­blica y pastoral sobre los posibles significados del sueÃ±o.",
             "greetings": [
-                "Hola. Puedes contarme tu sueño con calma, incluyendo lo que viste, sentiste y el contexto que estás viviendo estos días. Lo miraremos con prudencia a la luz de la Biblia.",
-                "Hola. Escribe tu sueño con los detalles principales y, si quieres, también lo que estás orando o discerniendo en este tiempo. Buscaremos una orientación bíblica sin ir más allá de lo que la Escritura permite afirmar.",
-                "Bienvenido. Cuéntame el sueño paso a paso y dime qué fue lo que más te llamó la atención o te inquietó. Te responderé con una lectura bíblica y pastoral, no esotérica.",
+                "Hola. Puedes contarme tu sueÃ±o con calma, incluyendo lo que viste, sentiste y el contexto que estÃ¡s viviendo estos dÃ­as. Lo miraremos con prudencia a la luz de la Biblia.",
+                "Hola. Escribe tu sueÃ±o con los detalles principales y, si quieres, tambiÃ©n lo que estÃ¡s orando o discerniendo en este tiempo. Buscaremos una orientaciÃ³n bÃ­blica sin ir mÃ¡s allÃ¡ de lo que la Escritura permite afirmar.",
+                "Bienvenido. CuÃ©ntame el sueÃ±o paso a paso y dime quÃ© fue lo que mÃ¡s te llamÃ³ la atenciÃ³n o te inquietÃ³. Te responderÃ© con una lectura bÃ­blica y pastoral, no esotÃ©rica.",
             ],
-            "greeting": "Hola. Puedes contarme tu sueño con calma, incluyendo lo que viste, sentiste y el contexto que estás viviendo estos días. Lo miraremos con prudencia a la luz de la Biblia.",
-            "warning": "Esta sección no funciona como un oráculo ni reemplaza la Biblia, la oración o la guía de tu pastor. No usamos tarot, astrología ni lenguaje esotérico.",
-            "you": "Tú",
-            "assistant": "Guía bíblica de sueños",
-            "typing": "_La guía bíblica de sueños está escribiendo..._",
-            "fallback_response": "Perdona, necesito un poco más de contexto para ayudarte mejor. Cuéntame el sueño con más detalle y también qué sentiste al despertar.",
+            "greeting": "Hola. Puedes contarme tu sueÃ±o con calma, incluyendo lo que viste, sentiste y el contexto que estÃ¡s viviendo estos dÃ­as. Lo miraremos con prudencia a la luz de la Biblia.",
+            "warning": "Esta secciÃ³n no funciona como un orÃ¡culo ni reemplaza la Biblia, la oraciÃ³n o la guÃ­a de tu pastor. No usamos tarot, astrologÃ­a ni lenguaje esotÃ©rico.",
+            "you": "TÃº",
+            "assistant": "GuÃ­a bÃ­blica de sueÃ±os",
+            "typing": "_La guÃ­a bÃ­blica de sueÃ±os estÃ¡ escribiendo..._",
+            "fallback_response": "Perdona, necesito un poco mÃ¡s de contexto para ayudarte mejor. CuÃ©ntame el sueÃ±o con mÃ¡s detalle y tambiÃ©n quÃ© sentiste al despertar.",
             "quick_questions": [
-                "He soñado con agua",
-                "He soñado con una casa",
-                "He soñado con animales",
-                "No sé si este sueño viene de Dios",
-                "Este sueño me inquieta",
-                "Quiero una orientación bíblica",
+                "He soÃ±ado con agua",
+                "He soÃ±ado con una casa",
+                "He soÃ±ado con animales",
+                "No sÃ© si este sueÃ±o viene de Dios",
+                "Este sueÃ±o me inquieta",
+                "Quiero una orientaciÃ³n bÃ­blica",
             ],
         },
         "ca": {
@@ -3481,7 +3431,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "greetings": [
                 "Bonjour. Tu peux me raconter ton reve calmement, en incluant ce que tu as vu, ressenti et le contexte que tu traverses ces jours-ci. Nous le regarderons avec prudence a la lumiere de la Bible.",
                 "Bonjour. Ecris ton reve avec les details principaux et, si tu veux, ce que tu pries ou discernes en ce moment. Nous chercherons une orientation biblique sans aller au-dela de ce que l'Ecriture permet d'affirmer.",
-                "Bienvenue. Raconte-moi le reve pas a pas et dis-moi ce qui t'a le plus marque ou inquiété. Je te repondrai avec une lecture biblique et pastorale, non esoterique.",
+                "Bienvenue. Raconte-moi le reve pas a pas et dis-moi ce qui t'a le plus marque ou inquiÃ©tÃ©. Je te repondrai avec une lecture biblique et pastorale, non esoterique.",
             ],
             "greeting": "Bonjour. Tu peux me raconter ton reve calmement, en incluant ce que tu as vu, ressenti et le contexte que tu traverses ces jours-ci. Nous le regarderons avec prudence a la lumiere de la Bible.",
             "warning": "Cette section ne fonctionne pas comme un oracle et ne remplace ni la Bible, ni la priere, ni la direction de ton pasteur. Nous n'utilisons ni tarot, ni astrologie, ni langage esoterique.",
@@ -3842,18 +3792,18 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("celos", "Si j'ai de la jalousie"),
             ("envidia", "Si je ressens de l'envie"),
             ("orgullo", "Si l'orgueil me domine"),
-            ("chismes", "Si j'entends des commérages"),
+            ("chismes", "Si j'entends des commÃ©rages"),
             ("humillan", "Si on m'humilie"),
             ("mienten", "Si on me ment"),
             ("traicionan", "Si on me trahit"),
             ("ignoran", "Si on m'ignore"),
             ("rechazan_familia", "Si ma famille me rejette"),
             ("conflicto_pareja", "Si je me dispute avec mon conjoint"),
-            ("conflicto_hijos", "Si j'ai des problèmes avec mes enfants"),
-            ("conflicto_padres", "Si j'ai des problèmes avec mes parents"),
-            ("problema_trabajo", "Si j'ai des problèmes au travail"),
+            ("conflicto_hijos", "Si j'ai des problÃ¨mes avec mes enfants"),
+            ("conflicto_padres", "Si j'ai des problÃ¨mes avec mes parents"),
+            ("problema_trabajo", "Si j'ai des problÃ¨mes au travail"),
             ("despiden", "Si je perds mon travail"),
-            ("problema_dinero", "Si j'ai des problèmes d'argent"),
+            ("problema_dinero", "Si j'ai des problÃ¨mes d'argent"),
             ("enfermedad", "Si je suis malade"),
             ("duelo", "Si je traverse un deuil"),
             ("fracaso", "Si j'ai l'impression d'avoir echoue"),
@@ -3870,7 +3820,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("pecado_repetido", "Si je tombe toujours dans le meme peche"),
             ("burlas_fe", "Si on se moque de ma foi"),
             ("persecucion_fe", "Si je suis persecute a cause de ma foi"),
-            ("malas_companias", "Si je suis entoure de mauvaises fréquentations"),
+            ("malas_companias", "Si je suis entoure de mauvaises frÃ©quentations"),
             ("poner_limites", "Si j'ai besoin de poser des limites"),
             ("pedir_ayuda", "Si j'ai besoin de demander de l'aide"),
             ("corregir_otro", "Si je dois corriger quelqu'un"),
@@ -3998,7 +3948,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("blood", "Si me pregunta por que la Biblia habla tanto de sangre"),
             ("grace_works", "Si me pregunta si nos salvamos por gracia o por obras"),
             ("good_people", "Si me pregunta si una buena persona no creyente puede salvarse"),
-            ("babies", "Si me pregunta que pasa con los niños que mueren"),
+            ("babies", "Si me pregunta que pasa con los niÃ±os que mueren"),
             ("suicide", "Si me pregunta por el suicidio"),
             ("homosexuality", "Si me pregunta que dice la Biblia sobre la homosexualidad"),
             ("sexuality", "Si me pregunta por la sexualidad segun la Biblia"),
@@ -4043,7 +3993,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("hypocrites", "Si em parla dels hipocrites a l'esglesia"),
             ("many_religions", "Si em diu que totes les religions son iguals"),
             ("pray", "Si em pregunta per a que serveix pregar"),
-            ("unanswered_prayer", "Si em pregunta per que Deu no respon algunes pregàries"),
+            ("unanswered_prayer", "Si em pregunta per que Deu no respon algunes pregÃ ries"),
             ("hell", "Si em pregunta per l'infern"),
             ("trinity", "Si em pregunta que es la Trinitat"),
             ("reliable_gospels", "Si em pregunta si els evangelis son fiables"),
@@ -4066,7 +4016,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("grace_works", "Si em pregunta si ens salvem per gracia o per obres"),
             ("good_people", "Si em pregunta si una bona persona no creient pot salvar-se"),
             ("babies", "Si em pregunta que passa amb els nens que moren"),
-            ("suicide", "Si em pregunta pel suïcidi"),
+            ("suicide", "Si em pregunta pel suÃ¯cidi"),
             ("homosexuality", "Si em pregunta que diu la Biblia sobre l'homosexualitat"),
             ("sexuality", "Si em pregunta per la sexualitat segons la Biblia"),
             ("marriage", "Si em pregunta que es el matrimoni segons la Biblia"),
@@ -4358,7 +4308,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ("hidden_service", "como servir en lo secreto con alegria"),
             ("fruit_vs_gifts", "que diferencia hay entre dones y fruto del Espiritu"),
             ("spirit_filling", "que significa ser lleno del Espiritu Santo"),
-            ("hear_god_without_signs", "como buscar direccion sin depender de señales"),
+            ("hear_god_without_signs", "como buscar direccion sin depender de seÃ±ales"),
             ("insomnia", "como descansar cuando no puedo dormir por preocupaciones"),
             ("work_faith_balance", "como equilibrar trabajo, familia y vida espiritual"),
             ("study_theology", "como estudiar doctrina sin volverme frio"),
@@ -4604,7 +4554,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     contenedor_tipo = ft.Container(
         content=dd_tipo,
         padding=10,
-        border=ft.border.all(4, theme["field_border"]),
+        border=_border_all(4, theme["field_border"]),
         border_radius=14,
         bgcolor=theme["secondary"],
         expand=True,
@@ -4612,7 +4562,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     contenedor_tamano = ft.Container(
         content=dd_tamano,
         padding=10,
-        border=ft.border.all(4, theme["field_border"]),
+        border=_border_all(4, theme["field_border"]),
         border_radius=14,
         bgcolor=theme["secondary"],
         expand=True,
@@ -4620,42 +4570,42 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     contenedor_comportamiento = ft.Container(
         content=dd_comportamiento,
         padding=10,
-        border=ft.border.all(4, theme["field_border"]),
+        border=_border_all(4, theme["field_border"]),
         border_radius=14,
         bgcolor=theme["secondary"],
     )
     contenedor_tamano_comportamiento = ft.Container(
         content=dd_tamano_comportamiento,
         padding=10,
-        border=ft.border.all(4, theme["field_border"]),
+        border=_border_all(4, theme["field_border"]),
         border_radius=14,
         bgcolor=theme["secondary"],
     )
     contenedor_incredulo = ft.Container(
         content=dd_incredulo,
         padding=10,
-        border=ft.border.all(4, theme["field_border"]),
+        border=_border_all(4, theme["field_border"]),
         border_radius=14,
         bgcolor=theme["secondary"],
     )
     contenedor_tamano_incredulo = ft.Container(
         content=dd_tamano_incredulo,
         padding=10,
-        border=ft.border.all(4, theme["field_border"]),
+        border=_border_all(4, theme["field_border"]),
         border_radius=14,
         bgcolor=theme["secondary"],
     )
     contenedor_cristianos = ft.Container(
         content=dd_cristianos,
         padding=10,
-        border=ft.border.all(4, theme["field_border"]),
+        border=_border_all(4, theme["field_border"]),
         border_radius=14,
         bgcolor=theme["secondary"],
     )
     contenedor_tamano_cristianos = ft.Container(
         content=dd_tamano_cristianos,
         padding=10,
-        border=ft.border.all(4, theme["field_border"]),
+        border=_border_all(4, theme["field_border"]),
         border_radius=14,
         bgcolor=theme["secondary"],
     )
@@ -4686,7 +4636,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         key="resultado_test_dones",
         visible=False,
         padding=14,
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=18,
         bgcolor=theme["accent"],
         content=ft.Column(
@@ -4713,7 +4663,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 width=136,
                 dense=True,
                 text_size=13,
-                content_padding=ft.padding.symmetric(horizontal=10, vertical=8),
+                content_padding=_padding_symmetric(horizontal=10, vertical=8),
                 bgcolor=theme["field_bg"],
                 border_color=theme["field_border"],
                 border_width=4,
@@ -4726,7 +4676,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             bloques_preguntas_dones.append(
                 ft.Container(
                     padding=10,
-                    border=ft.border.all(3, theme["field_border"]),
+                    border=_border_all(3, theme["field_border"]),
                     border_radius=14,
                     bgcolor=theme["panel_bg"],
                     content=ft.ResponsiveRow(
@@ -4932,23 +4882,23 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     )
 
     etiquetas_temas = {
-        "adoracion": "Adoración",
-        "alegria": "Alegría",
+        "adoracion": "AdoraciÃ³n",
+        "alegria": "AlegrÃ­a",
         "amor": "Amor",
         "animo": "?nimo",
         "arrepentimiento": "Arrepentimiento",
         "ayuno": "Ayuno",
-        "bendicion": "Bendición",
+        "bendicion": "BendiciÃ³n",
         "bondad": "Bondad",
-        "compasion": "Compasión",
+        "compasion": "CompasiÃ³n",
         "confianza": "Confianza",
-        "consagracion": "Consagración",
+        "consagracion": "ConsagraciÃ³n",
         "consuelo": "Consuelo",
         "contentamiento": "Contentamiento",
         "crecimiento espiritual": "Crecimiento espiritual",
         "cruz": "Cruz",
         "descanso": "Descanso",
-        "direccion de Dios": "Dirección de Dios",
+        "direccion de Dios": "DirecciÃ³n de Dios",
         "disciplina": "Disciplina",
         "discipulado": "Discipulado",
         "esperanza": "Esperanza",
@@ -4967,31 +4917,31 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         "liderazgo": "Liderazgo",
         "misericordia": "Misericordia",
         "obediencia": "Obediencia",
-        "oracion": "Oración",
+        "oracion": "OraciÃ³n",
         "paciencia": "Paciencia",
         "palabra de Dios": "Palabra de Dios",
         "paz": "Paz",
-        "perdon": "Perdón",
+        "perdon": "PerdÃ³n",
         "perseverancia": "Perseverancia",
         "presencia de Dios": "Presencia de Dios",
         "promesas de Dios": "Promesas de Dios",
-        "proposito": "Propósito",
-        "proteccion": "Protección",
-        "provision": "Provisión",
+        "proposito": "PropÃ³sito",
+        "proteccion": "ProtecciÃ³n",
+        "provision": "ProvisiÃ³n",
         "pureza": "Pureza",
-        "reconciliacion": "Reconciliación",
-        "redencion": "Redención",
-        "renovacion": "Renovación",
-        "resurreccion": "Resurrección",
-        "sabiduria": "Sabiduría",
-        "salvacion": "Salvación",
+        "reconciliacion": "ReconciliaciÃ³n",
+        "redencion": "RedenciÃ³n",
+        "renovacion": "RenovaciÃ³n",
+        "resurreccion": "ResurrecciÃ³n",
+        "sabiduria": "SabidurÃ­a",
+        "salvacion": "SalvaciÃ³n",
         "santidad": "Santidad",
         "sanidad": "Sanidad",
         "servicio": "Servicio",
         "temor de Dios": "Temor de Dios",
-        "tentacion": "Tentación",
+        "tentacion": "TentaciÃ³n",
         "testimonio": "Testimonio",
-        "tribulacion": "Tribulación",
+        "tribulacion": "TribulaciÃ³n",
         "unidad": "Unidad",
         "victoria": "Victoria",
         "vida eterna": "Vida eterna",
@@ -4999,72 +4949,72 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     theme_translations = {
         "ca": {
-            "Adoración": "Adoracio",
-            "Alegría": "Alegria",
+            "AdoraciÃ³n": "Adoracio",
+            "AlegrÃ­a": "Alegria",
             "?nimo": "Anim",
-            "Bendición": "Benediccio",
-            "Compasión": "Compassio",
-            "Consagración": "Consagracio",
-            "Dirección de Dios": "Direccio de Deu",
-            "Oración": "Oracio",
-            "Perdón": "Perdo",
-            "Protección": "Proteccio",
-            "Provisión": "Provisio",
-            "Reconciliación": "Reconciliacio",
-            "Redención": "Redempcio",
-            "Renovación": "Renovacio",
-            "Resurrección": "Resurreccio",
-            "Sabiduría": "Saviesa",
-            "Salvación": "Salvacio",
-            "Tribulación": "Tribulacio",
+            "BendiciÃ³n": "Benediccio",
+            "CompasiÃ³n": "Compassio",
+            "ConsagraciÃ³n": "Consagracio",
+            "DirecciÃ³n de Dios": "Direccio de Deu",
+            "OraciÃ³n": "Oracio",
+            "PerdÃ³n": "Perdo",
+            "ProtecciÃ³n": "Proteccio",
+            "ProvisiÃ³n": "Provisio",
+            "ReconciliaciÃ³n": "Reconciliacio",
+            "RedenciÃ³n": "Redempcio",
+            "RenovaciÃ³n": "Renovacio",
+            "ResurrecciÃ³n": "Resurreccio",
+            "SabidurÃ­a": "Saviesa",
+            "SalvaciÃ³n": "Salvacio",
+            "TribulaciÃ³n": "Tribulacio",
             "Palabra de Dios": "Paraula de Deu",
             "Promesas de Dios": "Promeses de Deu",
             "Presencia de Dios": "Presencia de Deu",
             "Temor de Dios": "Temor de Deu",
         },
         "fr": {
-            "Adoración": "Adoration",
-            "Alegría": "Joie",
+            "AdoraciÃ³n": "Adoration",
+            "AlegrÃ­a": "Joie",
             "?nimo": "Courage",
-            "Bendición": "Benediction",
-            "Compasión": "Compassion",
-            "Consagración": "Consecration",
-            "Dirección de Dios": "Direction de Dieu",
-            "Oración": "Priere",
-            "Perdón": "Pardon",
-            "Protección": "Protection",
-            "Provisión": "Provision",
-            "Reconciliación": "Reconciliation",
-            "Redención": "Redemption",
-            "Renovación": "Renouvellement",
-            "Resurrección": "Resurrection",
-            "Sabiduría": "Sagesse",
-            "Salvación": "Salut",
-            "Tribulación": "Tribulation",
+            "BendiciÃ³n": "Benediction",
+            "CompasiÃ³n": "Compassion",
+            "ConsagraciÃ³n": "Consecration",
+            "DirecciÃ³n de Dios": "Direction de Dieu",
+            "OraciÃ³n": "Priere",
+            "PerdÃ³n": "Pardon",
+            "ProtecciÃ³n": "Protection",
+            "ProvisiÃ³n": "Provision",
+            "ReconciliaciÃ³n": "Reconciliation",
+            "RedenciÃ³n": "Redemption",
+            "RenovaciÃ³n": "Renouvellement",
+            "ResurrecciÃ³n": "Resurrection",
+            "SabidurÃ­a": "Sagesse",
+            "SalvaciÃ³n": "Salut",
+            "TribulaciÃ³n": "Tribulation",
             "Palabra de Dios": "Parole de Dieu",
             "Promesas de Dios": "Promesses de Dieu",
             "Presencia de Dios": "Presence de Dieu",
             "Temor de Dios": "Crainte de Dieu",
         },
         "en": {
-            "Adoración": "Worship",
-            "Alegría": "Joy",
+            "AdoraciÃ³n": "Worship",
+            "AlegrÃ­a": "Joy",
             "?nimo": "Encouragement",
-            "Bendición": "Blessing",
-            "Compasión": "Compassion",
-            "Consagración": "Consecration",
-            "Dirección de Dios": "God's guidance",
-            "Oración": "Prayer",
-            "Perdón": "Forgiveness",
-            "Protección": "Protection",
-            "Provisión": "Provision",
-            "Reconciliación": "Reconciliation",
-            "Redención": "Redemption",
-            "Renovación": "Renewal",
-            "Resurrección": "Resurrection",
-            "Sabiduría": "Wisdom",
-            "Salvación": "Salvation",
-            "Tribulación": "Tribulation",
+            "BendiciÃ³n": "Blessing",
+            "CompasiÃ³n": "Compassion",
+            "ConsagraciÃ³n": "Consecration",
+            "DirecciÃ³n de Dios": "God's guidance",
+            "OraciÃ³n": "Prayer",
+            "PerdÃ³n": "Forgiveness",
+            "ProtecciÃ³n": "Protection",
+            "ProvisiÃ³n": "Provision",
+            "ReconciliaciÃ³n": "Reconciliation",
+            "RedenciÃ³n": "Redemption",
+            "RenovaciÃ³n": "Renewal",
+            "ResurrecciÃ³n": "Resurrection",
+            "SabidurÃ­a": "Wisdom",
+            "SalvaciÃ³n": "Salvation",
+            "TribulaciÃ³n": "Tribulation",
             "Palabra de Dios": "Word of God",
             "Promesas de Dios": "Promises of God",
             "Presencia de Dios": "Presence of God",
@@ -5074,60 +5024,60 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     theme_slug_translations = {
         "ca": {
-            "abnegacion": "Abnegació",
-            "abundancia": "Abundància",
-            "aceptacion": "Acceptació",
-            "adoracion": "Adoració",
-            "afliccion": "Aflicció",
-            "agradecimiento": "Agraïment",
-            "alabanza": "Lloança",
+            "abnegacion": "AbnegaciÃ³",
+            "abundancia": "AbundÃ ncia",
+            "aceptacion": "AcceptaciÃ³",
+            "adoracion": "AdoraciÃ³",
+            "afliccion": "AflicciÃ³",
+            "agradecimiento": "AgraÃ¯ment",
+            "alabanza": "LloanÃ§a",
             "alegria": "Alegria",
             "amor": "Amor",
-            "amor al projimo": "Amor al proïsme",
-            "amor de Dios": "Amor de Déu",
-            "animo": "Ànim",
+            "amor al projimo": "Amor al proÃ¯sme",
+            "amor de Dios": "Amor de DÃ©u",
+            "animo": "Ã€nim",
             "ansiedad": "Ansietat",
             "arrepentimiento": "Penediment",
             "autoridad espiritual": "Autoritat espiritual",
             "avivamiento": "Avivament",
             "ayuno": "Dejuni",
             "batalla espiritual": "Batalla espiritual",
-            "bendicion": "Benedicció",
-            "bienaventuranza": "Benaurança",
+            "bendicion": "BenedicciÃ³",
+            "bienaventuranza": "BenauranÃ§a",
             "bondad": "Bondat",
-            "busqueda de Dios": "Recerca de Déu",
-            "camino estrecho": "Camí estret",
+            "busqueda de Dios": "Recerca de DÃ©u",
+            "camino estrecho": "CamÃ­ estret",
             "cielo": "Cel",
-            "compasion": "Compassió",
-            "compromiso": "Compromís",
+            "compasion": "CompassiÃ³",
+            "compromiso": "CompromÃ­s",
             "comunidad": "Comunitat",
-            "confianza": "Confiança",
-            "conocimiento de Dios": "Coneixement de Déu",
-            "consagracion": "Consagració",
-            "consolacion": "Consolació",
+            "confianza": "ConfianÃ§a",
+            "conocimiento de Dios": "Coneixement de DÃ©u",
+            "consagracion": "ConsagraciÃ³",
+            "consolacion": "ConsolaciÃ³",
             "consuelo": "Consol",
             "contentamiento": "Contentament",
-            "conversion": "Conversió",
+            "conversion": "ConversiÃ³",
             "corazon nuevo": "Cor nou",
-            "correccion": "Correcció",
+            "correccion": "CorrecciÃ³",
             "cosecha espiritual": "Sega espiritual",
             "costo del discipulado": "Cost del deixeblat",
-            "creacion": "Creació",
+            "creacion": "CreaciÃ³",
             "crecimiento espiritual": "Creixement espiritual",
             "crisis": "Crisi",
             "cruz": "Creu",
             "cuidado pastoral": "Acompanyament pastoral",
             "culpa": "Culpa",
             "debilidad": "Debilitat",
-            "decision": "Decisió",
-            "dependencia de Dios": "Dependència de Déu",
+            "decision": "DecisiÃ³",
+            "dependencia de Dios": "DependÃ¨ncia de DÃ©u",
             "derribando gigantes": "Vencent gegants",
             "descanso": "Descans",
             "desierto espiritual": "Desert espiritual",
             "desprendimiento": "Despreniment",
-            "devocion": "Devoció",
+            "devocion": "DevociÃ³",
             "dia malo": "Dia de prova",
-            "direccion de Dios": "Direcció de Déu",
+            "direccion de Dios": "DirecciÃ³ de DÃ©u",
             "discernimiento": "Discerniment",
             "disciplina": "Disciplina",
             "discipulado": "Deixeblat",
@@ -5135,17 +5085,17 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "dominio propio": "Domini propi",
             "dones espirituales": "Dons espirituals",
             "duda": "Dubte",
-            "edificacion": "Edificació",
-            "eleccion": "Elecció",
+            "edificacion": "EdificaciÃ³",
+            "eleccion": "ElecciÃ³",
             "enemigos": "Enemics",
             "entrega": "Entrega",
-            "escucha a Dios": "Escoltar Déu",
-            "esperanza": "Esperança",
+            "escucha a Dios": "Escoltar DÃ©u",
+            "esperanza": "EsperanÃ§a",
             "estabilidad": "Estabilitat",
             "eternidad": "Eternitat",
-            "evangelismo": "Evangelització",
+            "evangelismo": "EvangelitzaciÃ³",
             "exilio": "Exili",
-            "familia": "Família",
+            "familia": "FamÃ­lia",
             "fatiga": "Fatiga",
             "fe": "Fe",
             "fidelidad": "Fidelitat",
@@ -5154,25 +5104,25 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "fruto del Espiritu": "Fruit de l'Esperit",
             "generosidad": "Generositat",
             "gozo": "Goig",
-            "gracia": "Gràcia",
+            "gracia": "GrÃ cia",
             "gratitud": "Gratitud",
             "guerra espiritual": "Guerra espiritual",
             "guia del Espiritu Santo": "Guia de l'Esperit Sant",
-            "herencia": "Herència",
+            "herencia": "HerÃ¨ncia",
             "honestidad": "Honestedat",
             "honra": "Honra",
             "hospitalidad": "Hospitalitat",
             "humildad": "Humilitat",
             "identidad en Cristo": "Identitat en Crist",
             "idolatria": "Idolatria",
-            "iglesia": "Església",
+            "iglesia": "EsglÃ©sia",
             "integridad": "Integritat",
-            "intimidad con Dios": "Intimitat amb Déu",
+            "intimidad con Dios": "Intimitat amb DÃ©u",
             "juicio": "Judici",
-            "justicia": "Justícia",
+            "justicia": "JustÃ­cia",
             "juventud": "Joventut",
-            "lamentacion": "Lamentació",
-            "ley de Dios": "Llei de Déu",
+            "lamentacion": "LamentaciÃ³",
+            "ley de Dios": "Llei de DÃ©u",
             "libertad": "Llibertat",
             "liderazgo": "Lideratge",
             "limpieza del corazon": "Puresa del cor",
@@ -5184,61 +5134,61 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "miedo": "Por",
             "milagros": "Miracles",
             "ministerio": "Ministeri",
-            "misericordia": "Misericòrdia",
-            "mision": "Missió",
+            "misericordia": "MisericÃ²rdia",
+            "mision": "MissiÃ³",
             "motivos del corazon": "Intencions del cor",
             "nueva vida": "Vida nova",
             "nuevo nacimiento": "Nou naixement",
-            "obediencia": "Obediència",
-            "oracion": "Oració",
+            "obediencia": "ObediÃ¨ncia",
+            "oracion": "OraciÃ³",
             "orgullo": "Orgull",
-            "paciencia": "Paciència",
-            "palabra de Dios": "Paraula de Déu",
+            "paciencia": "PaciÃ¨ncia",
+            "palabra de Dios": "Paraula de DÃ©u",
             "paternidad": "Paternitat",
             "paz": "Pau",
             "pecado": "Pecat",
-            "perdon": "Perdó",
-            "persecucion": "Persecució",
-            "perseverancia": "Perseverança",
+            "perdon": "PerdÃ³",
+            "persecucion": "PersecuciÃ³",
+            "perseverancia": "PerseveranÃ§a",
             "plenitud": "Plenitud",
             "pobreza espiritual": "Pobresa espiritual",
-            "poder de Dios": "Poder de Déu",
-            "preparacion": "Preparació",
-            "presencia de Dios": "Presència de Déu",
-            "promesas de Dios": "Promeses de Déu",
-            "proposito": "Propòsit",
-            "proteccion": "Protecció",
-            "provision": "Provisió",
+            "poder de Dios": "Poder de DÃ©u",
+            "preparacion": "PreparaciÃ³",
+            "presencia de Dios": "PresÃ¨ncia de DÃ©u",
+            "promesas de Dios": "Promeses de DÃ©u",
+            "proposito": "PropÃ²sit",
+            "proteccion": "ProtecciÃ³",
+            "provision": "ProvisiÃ³",
             "prueba": "Prova",
             "pureza": "Puresa",
             "quebranto": "Trencament interior",
-            "reconciliacion": "Reconciliació",
-            "redencion": "Redempció",
-            "reino de Dios": "Regne de Déu",
+            "reconciliacion": "ReconciliaciÃ³",
+            "redencion": "RedempciÃ³",
+            "reino de Dios": "Regne de DÃ©u",
             "relaciones": "Relacions",
-            "renovacion": "Renovació",
-            "reposo": "Repòs",
-            "restauracion": "Restauració",
-            "resurreccion": "Resurrecció",
-            "reverencia": "Reverència",
+            "renovacion": "RenovaciÃ³",
+            "reposo": "RepÃ²s",
+            "restauracion": "RestauraciÃ³",
+            "resurreccion": "ResurrecciÃ³",
+            "reverencia": "ReverÃ¨ncia",
             "riquezas": "Riqueses",
             "sabiduria": "Saviesa",
             "sacrificio": "Sacrifici",
-            "salvacion": "Salvació",
-            "sanidad": "Guarició",
+            "salvacion": "SalvaciÃ³",
+            "sanidad": "GuariciÃ³",
             "santidad": "Santedat",
-            "seguridad en Dios": "Seguretat en Déu",
+            "seguridad en Dios": "Seguretat en DÃ©u",
             "servicio": "Servei",
-            "temor de Dios": "Temor de Déu",
-            "tentacion": "Temptació",
+            "temor de Dios": "Temor de DÃ©u",
+            "tentacion": "TemptaciÃ³",
             "testimonio": "Testimoni",
-            "tribulacion": "Tribulació",
+            "tribulacion": "TribulaciÃ³",
             "unidad": "Unitat",
-            "victoria": "Victòria",
+            "victoria": "VictÃ²ria",
             "vida eterna": "Vida eterna",
         },
         "fr": {
-            "abnegacion": "Abnégation",
+            "abnegacion": "AbnÃ©gation",
             "abundancia": "Abondance",
             "aceptacion": "Acceptation",
             "adoracion": "Adoration",
@@ -5250,156 +5200,156 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "amor al projimo": "Amour du prochain",
             "amor de Dios": "Amour de Dieu",
             "animo": "Courage",
-            "ansiedad": "Anxiété",
+            "ansiedad": "AnxiÃ©tÃ©",
             "arrepentimiento": "Repentance",
-            "autoridad espiritual": "Autorité spirituelle",
-            "avivamiento": "Réveil spirituel",
-            "ayuno": "Jeûne",
+            "autoridad espiritual": "AutoritÃ© spirituelle",
+            "avivamiento": "RÃ©veil spirituel",
+            "ayuno": "JeÃ»ne",
             "batalla espiritual": "Combat spirituel",
-            "bendicion": "Bénédiction",
-            "bienaventuranza": "Béatitude",
-            "bondad": "Bonté",
+            "bendicion": "BÃ©nÃ©diction",
+            "bienaventuranza": "BÃ©atitude",
+            "bondad": "BontÃ©",
             "busqueda de Dios": "Recherche de Dieu",
-            "camino estrecho": "Chemin étroit",
+            "camino estrecho": "Chemin Ã©troit",
             "cielo": "Ciel",
             "compasion": "Compassion",
             "compromiso": "Engagement",
-            "comunidad": "Communauté",
+            "comunidad": "CommunautÃ©",
             "confianza": "Confiance",
             "conocimiento de Dios": "Connaissance de Dieu",
-            "consagracion": "Consécration",
+            "consagracion": "ConsÃ©cration",
             "consolacion": "Consolation",
-            "consuelo": "Réconfort",
+            "consuelo": "RÃ©confort",
             "contentamiento": "Contentement",
             "conversion": "Conversion",
-            "corazon nuevo": "CÅ“ur nouveau",
+            "corazon nuevo": "CÃ…â€œur nouveau",
             "correccion": "Correction",
             "cosecha espiritual": "Moisson spirituelle",
-            "costo del discipulado": "Coût du discipulat",
-            "creacion": "Création",
+            "costo del discipulado": "CoÃ»t du discipulat",
+            "creacion": "CrÃ©ation",
             "crecimiento espiritual": "Croissance spirituelle",
             "crisis": "Crise",
             "cruz": "Croix",
             "cuidado pastoral": "Accompagnement pastoral",
-            "culpa": "Culpabilité",
+            "culpa": "CulpabilitÃ©",
             "debilidad": "Faiblesse",
-            "decision": "Décision",
-            "dependencia de Dios": "Dépendance envers Dieu",
-            "derribando gigantes": "Vaincre les géants",
+            "decision": "DÃ©cision",
+            "dependencia de Dios": "DÃ©pendance envers Dieu",
+            "derribando gigantes": "Vaincre les gÃ©ants",
             "descanso": "Repos",
-            "desierto espiritual": "Désert spirituel",
-            "desprendimiento": "Détachement",
-            "devocion": "Dévotion",
-            "dia malo": "Jour d'épreuve",
+            "desierto espiritual": "DÃ©sert spirituel",
+            "desprendimiento": "DÃ©tachement",
+            "devocion": "DÃ©votion",
+            "dia malo": "Jour d'Ã©preuve",
             "direccion de Dios": "Direction de Dieu",
             "discernimiento": "Discernement",
             "disciplina": "Discipline",
             "discipulado": "Discipulat",
             "dolor": "Douleur",
-            "dominio propio": "Maîtrise de soi",
+            "dominio propio": "MaÃ®trise de soi",
             "dones espirituales": "Dons spirituels",
             "duda": "Doute",
-            "edificacion": "Édification",
-            "eleccion": "Élection",
+            "edificacion": "Ã‰dification",
+            "eleccion": "Ã‰lection",
             "enemigos": "Ennemis",
             "entrega": "Abandon confiant",
-            "escucha a Dios": "Écouter Dieu",
-            "esperanza": "Espérance",
-            "estabilidad": "Stabilité",
-            "eternidad": "Éternité",
-            "evangelismo": "Évangélisation",
+            "escucha a Dios": "Ã‰couter Dieu",
+            "esperanza": "EspÃ©rance",
+            "estabilidad": "StabilitÃ©",
+            "eternidad": "Ã‰ternitÃ©",
+            "evangelismo": "Ã‰vangÃ©lisation",
             "exilio": "Exil",
             "familia": "Famille",
             "fatiga": "Fatigue",
             "fe": "Foi",
-            "fidelidad": "Fidélité",
-            "firmeza": "Fermeté",
+            "fidelidad": "FidÃ©litÃ©",
+            "firmeza": "FermetÃ©",
             "fortaleza": "Force",
             "fruto del Espiritu": "Fruit de l'Esprit",
-            "generosidad": "Générosité",
+            "generosidad": "GÃ©nÃ©rositÃ©",
             "gozo": "Joie",
             "gracia": "Gr?ce",
             "gratitud": "Gratitude",
             "guerra espiritual": "Guerre spirituelle",
             "guia del Espiritu Santo": "Direction du Saint-Esprit",
-            "herencia": "Héritage",
-            "honestidad": "Honnêteté",
+            "herencia": "HÃ©ritage",
+            "honestidad": "HonnÃªtetÃ©",
             "honra": "Honneur",
-            "hospitalidad": "Hospitalité",
-            "humildad": "Humilité",
-            "identidad en Cristo": "Identité en Christ",
+            "hospitalidad": "HospitalitÃ©",
+            "humildad": "HumilitÃ©",
+            "identidad en Cristo": "IdentitÃ© en Christ",
             "idolatria": "Idol?trie",
-            "iglesia": "Église",
-            "integridad": "Intégrité",
-            "intimidad con Dios": "Intimité avec Dieu",
+            "iglesia": "Ã‰glise",
+            "integridad": "IntÃ©gritÃ©",
+            "intimidad con Dios": "IntimitÃ© avec Dieu",
             "juicio": "Jugement",
             "justicia": "Justice",
             "juventud": "Jeunesse",
             "lamentacion": "Lamentation",
             "ley de Dios": "Loi de Dieu",
-            "libertad": "Liberté",
+            "libertad": "LibertÃ©",
             "liderazgo": "Leadership",
-            "limpieza del corazon": "Pureté du cœur",
+            "limpieza del corazon": "PuretÃ© du cÅ“ur",
             "llamado": "Appel",
-            "lucha interior": "Lutte intérieure",
-            "madurez": "Maturité",
+            "lucha interior": "Lutte intÃ©rieure",
+            "madurez": "MaturitÃ©",
             "mansedumbre": "Douceur",
             "matrimonio": "Mariage",
             "miedo": "Peur",
             "milagros": "Miracles",
-            "ministerio": "Ministère",
-            "misericordia": "Miséricorde",
+            "ministerio": "MinistÃ¨re",
+            "misericordia": "MisÃ©ricorde",
             "mision": "Mission",
-            "motivos del corazon": "Intentions du cÅ“ur",
+            "motivos del corazon": "Intentions du cÃ…â€œur",
             "nueva vida": "Vie nouvelle",
             "nuevo nacimiento": "Nouvelle naissance",
-            "obediencia": "Obéissance",
-            "oracion": "Prière",
+            "obediencia": "ObÃ©issance",
+            "oracion": "PriÃ¨re",
             "orgullo": "Orgueil",
             "paciencia": "Patience",
             "palabra de Dios": "Parole de Dieu",
-            "paternidad": "Paternité",
+            "paternidad": "PaternitÃ©",
             "paz": "Paix",
-            "pecado": "Péché",
+            "pecado": "PÃ©chÃ©",
             "perdon": "Pardon",
-            "persecucion": "Persécution",
-            "perseverancia": "Persévérance",
-            "plenitud": "Plénitude",
-            "pobreza espiritual": "Pauvreté spirituelle",
+            "persecucion": "PersÃ©cution",
+            "perseverancia": "PersÃ©vÃ©rance",
+            "plenitud": "PlÃ©nitude",
+            "pobreza espiritual": "PauvretÃ© spirituelle",
             "poder de Dios": "Puissance de Dieu",
-            "preparacion": "Préparation",
-            "presencia de Dios": "Présence de Dieu",
+            "preparacion": "PrÃ©paration",
+            "presencia de Dios": "PrÃ©sence de Dieu",
             "promesas de Dios": "Promesses de Dieu",
             "proposito": "But",
             "proteccion": "Protection",
             "provision": "Provision",
-            "prueba": "Épreuve",
-            "pureza": "Pureté",
-            "quebranto": "Brisement intérieur",
-            "reconciliacion": "Réconciliation",
-            "redencion": "Rédemption",
+            "prueba": "Ã‰preuve",
+            "pureza": "PuretÃ©",
+            "quebranto": "Brisement intÃ©rieur",
+            "reconciliacion": "RÃ©conciliation",
+            "redencion": "RÃ©demption",
             "reino de Dios": "Royaume de Dieu",
             "relaciones": "Relations",
             "renovacion": "Renouvellement",
             "reposo": "Repos",
             "restauracion": "Restauration",
-            "resurreccion": "Résurrection",
-            "reverencia": "Révérence",
+            "resurreccion": "RÃ©surrection",
+            "reverencia": "RÃ©vÃ©rence",
             "riquezas": "Richesses",
             "sabiduria": "Sagesse",
             "sacrificio": "Sacrifice",
             "salvacion": "Salut",
-            "sanidad": "Guérison",
-            "santidad": "Sainteté",
-            "seguridad en Dios": "Sécurité en Dieu",
+            "sanidad": "GuÃ©rison",
+            "santidad": "SaintetÃ©",
+            "seguridad en Dios": "SÃ©curitÃ© en Dieu",
             "servicio": "Service",
             "temor de Dios": "Crainte de Dieu",
             "tentacion": "Tentation",
-            "testimonio": "Témoignage",
+            "testimonio": "TÃ©moignage",
             "tribulacion": "Tribulation",
-            "unidad": "Unité",
+            "unidad": "UnitÃ©",
             "victoria": "Victoire",
-            "vida eterna": "Vie éternelle",
+            "vida eterna": "Vie Ã©ternelle",
         },
         "en": {
             "abnegacion": "Self-denial",
@@ -5609,7 +5559,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     contenedor_tema_sugerido = ft.Container(
         content=dd_tema_sugerido,
         padding=6,
-        border=ft.border.all(4, theme["field_border"]),
+        border=_border_all(4, theme["field_border"]),
         border_radius=12,
         bgcolor=theme["field_bg"],
     )
@@ -5635,7 +5585,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         multiline=False,
         expand=True,
         dense=True,
-        content_padding=ft.padding.symmetric(horizontal=16, vertical=14),
+        content_padding=_padding_symmetric(horizontal=16, vertical=14),
         bgcolor=theme["field_bg"],
         border_color=theme["field_border"],
         border_width=0,
@@ -5689,7 +5639,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         max_lines=1,
         height=48,
         dense=True,
-        content_padding=ft.padding.symmetric(horizontal=12, vertical=6),
+        content_padding=_padding_symmetric(horizontal=12, vertical=6),
         bgcolor=theme["accent"],
         border_color=theme["secondary"],
         border_width=5,
@@ -5770,9 +5720,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             [texto_contexto_activo_titulo, texto_contexto_activo_valor],
             spacing=4,
         ),
-        padding=ft.padding.symmetric(horizontal=12, vertical=10),
+        padding=_padding_symmetric(horizontal=12, vertical=10),
         bgcolor=theme["accent"],
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=16,
         visible=False,
     )
@@ -5951,8 +5901,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                     "generate": "ULTIMO PASO: PULSA GENERAR RESULTADO",
                 },
                 "ca": {
-                    "study_type": "PAS SEGÜENT: TRIA EL TIPUS D'ESTUDI",
-                    "words": "PAS SEGÜENT: TRIA LA QUANTITAT DE PARAULES",
+                    "study_type": "PAS SEGÃœENT: TRIA EL TIPUS D'ESTUDI",
+                    "words": "PAS SEGÃœENT: TRIA LA QUANTITAT DE PARAULES",
                     "generate": "ULTIM PAS: PREM GENERAR RESULTAT",
                 },
                 "fr": {
@@ -6220,7 +6170,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             elif lang_code == "ca":
                 etiqueta_estudio_informativo = "Estudi del passatge"
             elif lang_code == "fr":
-                etiqueta_estudio_informativo = "Étude du passage"
+                etiqueta_estudio_informativo = "Ã‰tude du passage"
             elif lang_code == "en":
                 etiqueta_estudio_informativo = "Passage study"
             else:
@@ -6356,11 +6306,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ]:
             if bloqueado:
                 contenedor.bgcolor = color_deshabilitado
-                contenedor.border = ft.border.all(2, borde_deshabilitado)
+                contenedor.border = _border_all(2, borde_deshabilitado)
                 contenedor.opacity = 0.55
             else:
                 contenedor.bgcolor = color_inactivo
-                contenedor.border = ft.border.all(2, borde_inactivo)
+                contenedor.border = _border_all(2, borde_inactivo)
                 contenedor.opacity = 1
 
         contenedor_por_paso = {
@@ -6385,7 +6335,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         dropdown_paso_actual = dropdown_por_paso.get(paso_actual)
         if contenedor_paso_actual is not None and not bloqueado:
             contenedor_paso_actual.bgcolor = color_paso
-            contenedor_paso_actual.border = ft.border.all(4, borde_activo)
+            contenedor_paso_actual.border = _border_all(4, borde_activo)
         if dropdown_paso_actual is not None and not dropdown_paso_actual.disabled:
             dropdown_paso_actual.border_color = borde_activo
             dropdown_paso_actual.border_width = 6
@@ -6393,27 +6343,27 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         if activo is not None or pasaje_activo:
             contenedor_tema_sugerido.bgcolor = color_deshabilitado
-            contenedor_tema_sugerido.border = ft.border.all(2, borde_deshabilitado)
+            contenedor_tema_sugerido.border = _border_all(2, borde_deshabilitado)
             contenedor_tema_sugerido.opacity = 0.55
         elif tema_activo:
             contenedor_tema_sugerido.bgcolor = color_activo
-            contenedor_tema_sugerido.border = ft.border.all(3, borde_activo)
+            contenedor_tema_sugerido.border = _border_all(3, borde_activo)
             contenedor_tema_sugerido.opacity = 1
         else:
             contenedor_tema_sugerido.bgcolor = color_inactivo
-            contenedor_tema_sugerido.border = ft.border.all(2, borde_inactivo)
+            contenedor_tema_sugerido.border = _border_all(2, borde_inactivo)
             contenedor_tema_sugerido.opacity = 1
 
         if dd_tipo.value != "Ninguno":
             contenedor_tipo.bgcolor = color_activo
-            contenedor_tipo.border = ft.border.all(4, borde_activo)
+            contenedor_tipo.border = _border_all(4, borde_activo)
         else:
             contenedor_tipo.bgcolor = color_inactivo
-            contenedor_tipo.border = ft.border.all(4, borde_inactivo)
+            contenedor_tipo.border = _border_all(4, borde_inactivo)
         contenedor_tipo.opacity = 1
         if paso_actual == "study_type":
             contenedor_tipo.bgcolor = color_paso
-            contenedor_tipo.border = ft.border.all(6, borde_activo)
+            contenedor_tipo.border = _border_all(6, borde_activo)
             dd_tipo.border_color = borde_activo
             dd_tipo.border_width = 7
             dd_tipo.bgcolor = color_paso
@@ -6423,14 +6373,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         if dd_tamano.value != "Ninguno":
             contenedor_tamano.bgcolor = color_activo
-            contenedor_tamano.border = ft.border.all(4, borde_activo)
+            contenedor_tamano.border = _border_all(4, borde_activo)
         else:
             contenedor_tamano.bgcolor = color_inactivo
-            contenedor_tamano.border = ft.border.all(4, borde_inactivo)
+            contenedor_tamano.border = _border_all(4, borde_inactivo)
         contenedor_tamano.opacity = 1
         if paso_actual == "words":
             contenedor_tamano.bgcolor = color_paso
-            contenedor_tamano.border = ft.border.all(6, borde_activo)
+            contenedor_tamano.border = _border_all(6, borde_activo)
             dd_tamano.border_color = borde_activo
             dd_tamano.border_width = 7
             dd_tamano.bgcolor = color_paso
@@ -6445,19 +6395,19 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             contenedor = contenedores_especiales[d]
             if tema_activo or pasaje_activo:
                 contenedor.bgcolor = color_deshabilitado
-                contenedor.border = ft.border.all(2, borde_deshabilitado)
+                contenedor.border = _border_all(2, borde_deshabilitado)
                 contenedor.opacity = 0.55
             elif activo is None:
                 contenedor.bgcolor = color_inactivo
-                contenedor.border = ft.border.all(2, borde_inactivo)
+                contenedor.border = _border_all(2, borde_inactivo)
                 contenedor.opacity = 1
             elif d == activo:
                 contenedor.bgcolor = color_activo
-                contenedor.border = ft.border.all(3, borde_activo)
+                contenedor.border = _border_all(3, borde_activo)
                 contenedor.opacity = 1
             else:
                 contenedor.bgcolor = color_deshabilitado
-                contenedor.border = ft.border.all(2, borde_deshabilitado)
+                contenedor.border = _border_all(2, borde_deshabilitado)
                 contenedor.opacity = 0.55
 
         if activo is None:
@@ -6514,7 +6464,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return texto
         texto_limpio = re.sub(r"(?:(?<=\s)|^)\?{2,}(?=\s|$|[.,;:!?)])", "", texto)
         texto_limpio = re.sub(r"\s+\?{2,}(?=[.,;:!?)])", "", texto_limpio)
-        texto_limpio = texto_limpio.replace("�", "")
+        texto_limpio = texto_limpio.replace("ï¿½", "")
         texto_limpio = re.sub(r"(?is)<think>.*?</think>", " ", texto_limpio)
         texto_limpio = re.sub(r"(?is)<thinking>.*?</thinking>", " ", texto_limpio)
         texto_limpio = re.sub(r"(?is)^.*?</think>\s*", "", texto_limpio)
@@ -6526,11 +6476,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         patron_prefacio = (
             r"(?is)^(starting with|i need to|let me|first,|wait,|the user|also, the user|finally,)"
             r".*?"
-            r"(vers[ií]culos seleccionados|versicles seleccionats|versets s[ée]lectionn[ée]s|selected verses|genesis\s+\d+:\d+(?:-\d+)?|g[eé]nesis\s+\d+:\d+(?:-\d+)?)"
+            r"(vers[iÃ­]culos seleccionados|versicles seleccionats|versets s[Ã©e]lectionn[Ã©e]s|selected verses|genesis\s+\d+:\d+(?:-\d+)?|g[eÃ©]nesis\s+\d+:\d+(?:-\d+)?)"
         )
         if re.search(patron_prefacio, inicio_filtrado):
             texto_limpio = re.sub(
-                r"(?is)^.*?(?=(vers[ií]culos seleccionados|versicles seleccionats|versets s[ée]lectionn[ée]s|selected verses|genesis\s+\d+:\d+(?:-\d+)?|g[eé]nesis\s+\d+:\d+(?:-\d+)?))",
+                r"(?is)^.*?(?=(vers[iÃ­]culos seleccionados|versicles seleccionats|versets s[Ã©e]lectionn[Ã©e]s|selected verses|genesis\s+\d+:\d+(?:-\d+)?|g[eÃ©]nesis\s+\d+:\d+(?:-\d+)?))",
                 "",
                 texto_limpio,
                 count=1,
@@ -6670,13 +6620,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         inicio = texto_limpio[:420].strip().lower()
         patrones = (
             r"^first,\s*i need to\b",
-            r"^first,\s*i(?:'|’)ll\b",
+            r"^first,\s*i(?:'|â€™)ll\b",
             r"^first,\s*i will\b",
             r"^first,\s*i shall\b",
             r"^first,\s*let me\b",
             r"^let me\b",
             r"^i need to\b",
-            r"^i(?:'|’)ll\b",
+            r"^i(?:'|â€™)ll\b",
             r"^i will\b",
             r"^i should\b",
             r"^then,\b",
@@ -6730,11 +6680,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         inicio = texto_limpio[:260].strip().lower()
         patrones_ingles = (
             r"^first,\s*i need to\b",
-            r"^first,\s*i(?:'|’)ll\b",
+            r"^first,\s*i(?:'|â€™)ll\b",
             r"^first,\s*i will\b",
             r"^let me\b",
             r"^i need to\b",
-            r"^i(?:'|’)ll\b",
+            r"^i(?:'|â€™)ll\b",
             r"^i will\b",
             r"^i should\b",
             r"^then,\b",
@@ -6920,10 +6870,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         if lang_code == "ca":
             tipus = "l'estudi" if mode == "study" else "la resposta"
             return (
-                f"La resposta anterior ha mostrat text de proces intern o ha començat en un idioma incorrecte. "
+                f"La resposta anterior ha mostrat text de proces intern o ha comenÃ§at en un idioma incorrecte. "
                 f"Torna a escriure {tipus} des de zero directament en catala. "
                 "No expliquis el que faras, no diguis 'primer', 'he de', 'vaig a' ni frases semblants. "
-                "Comença directament pel contingut final per a l'usuari."
+                "ComenÃ§a directament pel contingut final per a l'usuari."
             )
         if lang_code == "fr":
             type_reponse = "l'etude" if mode == "study" else "la reponse"
@@ -7205,24 +7155,24 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         normalizado = normalizar_texto_resultado(limpiar_linea_markdown_resultado(texto_sin_numero))
         prefijos_comentario = (
             "analisis",
-            "análisis",
+            "anÃ¡lisis",
             "analysis",
             "analise",
             "analyse",
             "aplicacion",
-            "aplicación",
+            "aplicaciÃ³n",
             "application",
             "conclusion",
-            "conclusión",
+            "conclusiÃ³n",
             "conclusio",
             "devocional",
             "desarrollo homiletico",
-            "desarrollo homilético",
+            "desarrollo homilÃ©tico",
             "homiletic development",
             "observacion",
-            "observación",
+            "observaciÃ³n",
             "reflexion",
-            "reflexión",
+            "reflexiÃ³n",
             "comentario",
             "commentary",
             "commentaire",
@@ -7232,7 +7182,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return False
         if re.match(r"^\d{1,3}[.)]?\s+\S", texto):
             return True
-        if len(re.findall(r"(?:^|\s)\d{1,3}[.)]?\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]", texto)) >= 2:
+        if len(re.findall(r"(?:^|\s)\d{1,3}[.)]?\s+[A-ZÃÃ‰ÃÃ“ÃšÃ‘a-zÃ¡Ã©Ã­Ã³ÃºÃ±]", texto)) >= 2:
             return True
         return False
 
@@ -7305,7 +7255,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return True
         if any(normalizado.startswith(prefijo) for prefijo in prefijos):
             return True
-        if re.match(r"^\d+\.\s+[A-ZÁÉÍÓÚÑÄËÏÖÜÀÈÌÒÙÂÊÎÔÛ][^\n]{0,80}$", texto):
+        if re.match(r"^\d+\.\s+[A-ZÃÃ‰ÃÃ“ÃšÃ‘Ã„Ã‹ÃÃ–ÃœÃ€ÃˆÃŒÃ’Ã™Ã‚ÃŠÃŽÃ”Ã›][^\n]{0,80}$", texto):
             return True
         return linea_parece_titulo_comentario(texto)
 
@@ -7316,26 +7266,26 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         marcadores = (
             r"\bEstudio breve\b",
-            r"\bAnalisis exeg[eé]tico\b",
-            r"\bAn[aá]lisis exeg[eé]tico\b",
+            r"\bAnalisis exeg[eÃ©]tico\b",
+            r"\bAn[aÃ¡]lisis exeg[eÃ©]tico\b",
             r"\bAnalisis hermeneutico\b",
-            r"\bAn[aá]lisis hermen[eé]utico\b",
+            r"\bAn[aÃ¡]lisis hermen[eÃ©]utico\b",
             r"\bDesarrollo homiletico\b",
-            r"\bDesarrollo homil[eé]tico\b",
+            r"\bDesarrollo homil[eÃ©]tico\b",
             r"\bAplicacion practica\b",
-            r"\bAplicación práctica\b",
+            r"\bAplicaciÃ³n prÃ¡ctica\b",
             r"\bConclusion\b",
-            r"\bConclusión\b",
+            r"\bConclusiÃ³n\b",
             r"\bReflexion\b",
-            r"\bReflexión\b",
+            r"\bReflexiÃ³n\b",
             r"\bDevocional\b",
             r"\bComentario\b",
             r"\bEnsenanza\b",
-            r"\bEnseñanza\b",
+            r"\bEnseÃ±anza\b",
             r"\bAplicacio practica\b",
-            r"\bAplicació pràctica\b",
+            r"\bAplicaciÃ³ prÃ ctica\b",
             r"\bConclusio\b",
-            r"\bConclusió\b",
+            r"\bConclusiÃ³\b",
             r"\bReflexio\b",
             r"\bComentari\b",
             r"\bApplication\b",
@@ -7344,10 +7294,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             r"\bReflection\b",
             r"\bCommentary\b",
             r"\bEtude breve\b",
-            r"\bÉtude brève\b",
+            r"\bÃ‰tude brÃ¨ve\b",
             r"\bApplication pratique\b",
             r"\bReflexion breve\b",
-            r"\bRéflexion brève\b",
+            r"\bRÃ©flexion brÃ¨ve\b",
             r"\bCommentaire\b",
         )
         patron = re.compile("|".join(marcadores), flags=re.IGNORECASE)
@@ -7543,10 +7493,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 selectable=True,
                 extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
             ),
-            padding=ft.padding.symmetric(horizontal=14, vertical=12),
+            padding=_padding_symmetric(horizontal=14, vertical=12),
             bgcolor=color_fondo,
             border_radius=14,
-            border=ft.border.all(2, color_borde),
+            border=_border_all(2, color_borde),
         )
 
     def sincronizar_vista_resultado() -> None:
@@ -7601,13 +7551,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 texto_limpio,
             )
         texto_limpio = re.sub(
-            r"(?i)(?:[¡!]*\s*am(?:e|é)n[¡!]*){3,}",
-            "Amén.",
+            r"(?i)(?:[Â¡!]*\s*am(?:e|Ã©)n[Â¡!]*){3,}",
+            "AmÃ©n.",
             texto_limpio,
         )
         texto_limpio = re.sub(
-            r"(?i)(am(?:e|é)n[.!?]?\s+){3,}",
-            "Amén. ",
+            r"(?i)(am(?:e|Ã©)n[.!?]?\s+){3,}",
+            "AmÃ©n. ",
             texto_limpio,
         )
         texto_limpio = re.sub(r"\n{3,}", "\n\n", texto_limpio)
@@ -7664,14 +7614,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         pistas_oracion = [
             "ora por mi",
-            "ora por mí",
+            "ora por mÃ­",
             "puedes orar",
             "podrias orar",
-            "podrías orar",
+            "podrÃ­as orar",
             "haz una oracion",
-            "haz una oración",
+            "haz una oraciÃ³n",
             "necesito oracion",
-            "necesito oración",
+            "necesito oraciÃ³n",
             "oremos",
             "pray for me",
             "i need prayer",
@@ -7690,12 +7640,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "quitarme la vida",
             "quitar la vida",
             "hacerme dano",
-            "hacerme daño",
+            "hacerme daÃ±o",
             "autoles",
             "me quiero morir",
             "abuso",
             "violacion",
-            "violación",
+            "violaciÃ³n",
             "kill myself",
             "end my life",
             "hurt myself",
@@ -7704,7 +7654,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "suicide",
             "me faire du mal",
             "mettre fin a ma vie",
-            "mettre fin à ma vie",
+            "mettre fin Ã  ma vie",
             "abus",
             "fer-me mal",
             "treure m la vida",
@@ -7861,7 +7811,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         respuesta = re.sub(r"`{1,3}", "", respuesta)
         respuesta = re.sub(r"[*_#]+", "", respuesta)
         respuesta = re.sub(r"(?m)^\s*\d+\.\s*", "", respuesta)
-        respuesta = re.sub(r"(?m)^\s*[-•]\s*", "", respuesta)
+        respuesta = re.sub(r"(?m)^\s*[-â€¢]\s*", "", respuesta)
         respuesta = re.sub(r"\n{2,}", "\n\n", respuesta).strip()
 
         if es_respuesta_oracion_chat_consejero(respuesta, ""):
@@ -7895,7 +7845,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         if not respuesta_final:
             return
 
-        cursor_chat = "▌"
+        cursor_chat = "â–Œ"
         hora_respuesta = hora_chat_actual()
         indice_mensaje = len(historial_chat_consejero)
         historial_chat_consejero.append(("assistant", "", hora_respuesta))
@@ -8015,9 +7965,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         alineacion = ft.MainAxisAlignment.END if es_usuario else ft.MainAxisAlignment.START
         ancho_burbuja = ancho_burbuja_chat_actual()
         radio = (
-            _radius_esquinas(top_left=18, top_right=18, bottom_left=18, bottom_right=6)
+            ft.BorderRadius(top_left=18, top_right=18, bottom_left=18, bottom_right=6)
             if es_usuario
-            else _radius_esquinas(top_left=18, top_right=18, bottom_left=6, bottom_right=18)
+            else ft.BorderRadius(top_left=18, top_right=18, bottom_left=6, bottom_right=18)
         )
 
         if control_mensaje is not None:
@@ -8062,10 +8012,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 spacing=6,
                 tight=True,
             ),
-            padding=ft.padding.symmetric(horizontal=14, vertical=10),
+            padding=_padding_symmetric(horizontal=14, vertical=10),
             width=ancho_burbuja,
             bgcolor=color_fondo,
-            border=ft.border.all(2, color_borde),
+            border=_border_all(2, color_borde),
             border_radius=radio,
             shadow=ft.BoxShadow(
                 blur_radius=6,
@@ -8090,7 +8040,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                         italic=True,
                         text_align=ft.TextAlign.CENTER,
                     ),
-                    padding=ft.padding.symmetric(horizontal=16, vertical=22),
+                    padding=_padding_symmetric(horizontal=16, vertical=22),
                     alignment=ft.Alignment(0, 0),
                 )
             )
@@ -8162,13 +8112,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     def instruccion_reintento_estudio() -> str:
         if dd_tipo.value == "Solo versiculos":
             return (
-                "CORRECCIÓN: la respuesta anterior no quedó bien formateada. Reescribe desde cero mostrando únicamente los versículos, con su número real al principio y cada versículo en su propia línea."
+                "CORRECCIÃ“N: la respuesta anterior no quedÃ³ bien formateada. Reescribe desde cero mostrando Ãºnicamente los versÃ­culos, con su nÃºmero real al principio y cada versÃ­culo en su propia lÃ­nea."
                 if lang_code == "es" else
                 (
-                    "CORRECCIÓ: la resposta anterior no ha quedat ben formatada. Reescriu-la des de zero mostrant únicament els versicles, amb el seu número real al principi i cada versicle en la seva pròpia línia."
+                    "CORRECCIÃ“: la resposta anterior no ha quedat ben formatada. Reescriu-la des de zero mostrant Ãºnicament els versicles, amb el seu nÃºmero real al principi i cada versicle en la seva prÃ²pia lÃ­nia."
                     if lang_code == "ca" else
                     (
-                        "CORRECTION : la réponse précédente n'était pas bien formatée. Réécris-la entièrement depuis zéro en affichant uniquement les versets, avec leur vrai numéro au début et chaque verset sur sa propre ligne."
+                        "CORRECTION : la rÃ©ponse prÃ©cÃ©dente n'Ã©tait pas bien formatÃ©e. RÃ©Ã©cris-la entiÃ¨rement depuis zÃ©ro en affichant uniquement les versets, avec leur vrai numÃ©ro au dÃ©but et chaque verset sur sa propre ligne."
                         if lang_code == "fr" else
                         "CORRECTION: the previous answer was not formatted correctly. Rewrite it from scratch showing only the verses, with the real verse number at the beginning and each verse on its own line."
                     )
@@ -8176,13 +8126,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             )
 
         return (
-            "CORRECCIÓN: la respuesta anterior no siguió bien la estructura pedida. Reescríbela desde cero. Si hay pasaje exacto, la primera sección debe ser 'Versículos seleccionados' con los versículos del pasaje, numerados y cada uno en su propia línea, con el mismo formato visual que usarías en 'Solo versiculos'. Después deja una línea en blanco y añade el comentario o estudio en un bloque aparte."
+            "CORRECCIÃ“N: la respuesta anterior no siguiÃ³ bien la estructura pedida. ReescrÃ­bela desde cero. Si hay pasaje exacto, la primera secciÃ³n debe ser 'VersÃ­culos seleccionados' con los versÃ­culos del pasaje, numerados y cada uno en su propia lÃ­nea, con el mismo formato visual que usarÃ­as en 'Solo versiculos'. DespuÃ©s deja una lÃ­nea en blanco y aÃ±ade el comentario o estudio en un bloque aparte."
             if lang_code == "es" else
             (
-                "CORRECCIÓ: la resposta anterior no ha seguit bé l'estructura demanada. Reescriu-la des de zero. Si hi ha un passatge exacte, la primera secció ha de ser 'Versicles seleccionats' amb els versicles del passatge, numerats i cadascun en la seva pròpia línia, amb el mateix format visual que faries servir a 'Solo versiculos'. Després deixa una línia en blanc i afegeix el comentari o estudi en un bloc a part."
+                "CORRECCIÃ“: la resposta anterior no ha seguit bÃ© l'estructura demanada. Reescriu-la des de zero. Si hi ha un passatge exacte, la primera secciÃ³ ha de ser 'Versicles seleccionats' amb els versicles del passatge, numerats i cadascun en la seva prÃ²pia lÃ­nia, amb el mateix format visual que faries servir a 'Solo versiculos'. DesprÃ©s deixa una lÃ­nia en blanc i afegeix el comentari o estudi en un bloc a part."
                 if lang_code == "ca" else
                 (
-                    "CORRECTION : la réponse précédente n'a pas bien suivi la structure demandée. Réécris-la entièrement depuis zéro. S'il y a un passage exact, la première section doit être 'Versets sélectionnés' avec les versets du passage, numérotés et chacun sur sa propre ligne, avec le même format visuel que dans 'Solo versiculos'. Laisse ensuite une ligne vide et ajoute le commentaire ou l'étude dans un bloc séparé."
+                    "CORRECTION : la rÃ©ponse prÃ©cÃ©dente n'a pas bien suivi la structure demandÃ©e. RÃ©Ã©cris-la entiÃ¨rement depuis zÃ©ro. S'il y a un passage exact, la premiÃ¨re section doit Ãªtre 'Versets sÃ©lectionnÃ©s' avec les versets du passage, numÃ©rotÃ©s et chacun sur sa propre ligne, avec le mÃªme format visuel que dans 'Solo versiculos'. Laisse ensuite une ligne vide et ajoute le commentaire ou l'Ã©tude dans un bloc sÃ©parÃ©."
                     if lang_code == "fr" else
                     "CORRECTION: the previous answer did not follow the requested structure well. Rewrite it from scratch. If there is an exact passage, the first section must be 'Selected verses' with the passage verses, numbered and each on its own line, using the same visual format as 'Solo versiculos'. Then leave a blank line and add the commentary or study in a separate block."
                 )
@@ -8235,16 +8185,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         if mode == "study":
             instruccion_extra = (
-                f"CORRECCIÓN: intenta que la parte final de estudio, reflexión, comentario o aplicación quede aproximadamente entre {minimo} y {maximo} palabras, sin contar los versículos citados. "
-                f"La respuesta anterior tuvo {total} palabras aproximadas en esa parte. Vuelve a escribirla completa acercándote de forma razonable a ese rango, sin obsesionarte con la exactitud."
+                f"CORRECCIÃ“N: intenta que la parte final de estudio, reflexiÃ³n, comentario o aplicaciÃ³n quede aproximadamente entre {minimo} y {maximo} palabras, sin contar los versÃ­culos citados. "
+                f"La respuesta anterior tuvo {total} palabras aproximadas en esa parte. Vuelve a escribirla completa acercÃ¡ndote de forma razonable a ese rango, sin obsesionarte con la exactitud."
                 if lang_code == "es" else
                 (
-                    f"CORRECCIÓ: intenta que la part final d'estudi, reflexió, comentari o aplicació quedi aproximadament entre {minimo} i {maximo} paraules, sense comptar els versicles citats. "
+                    f"CORRECCIÃ“: intenta que la part final d'estudi, reflexiÃ³, comentari o aplicaciÃ³ quedi aproximadament entre {minimo} i {maximo} paraules, sense comptar els versicles citats. "
                     f"La resposta anterior tenia aproximadament {total} paraules en aquesta part. Torna-la a escriure completa acostant-te de manera raonable a aquest rang, sense obsessionar-te amb l'exactitud."
                     if lang_code == "ca" else
                     (
-                        f"CORRECTION : fais en sorte que la partie finale d'étude, de réflexion, de commentaire ou d'application contienne approximativement entre {minimo} et {maximo} mots, sans compter les versets cités. "
-                        f"La réponse précédente comptait environ {total} mots dans cette partie. Réécris-la entièrement en te rapprochant raisonnablement de cette plage, sans rechercher une exactitude rigide."
+                        f"CORRECTION : fais en sorte que la partie finale d'Ã©tude, de rÃ©flexion, de commentaire ou d'application contienne approximativement entre {minimo} et {maximo} mots, sans compter les versets citÃ©s. "
+                        f"La rÃ©ponse prÃ©cÃ©dente comptait environ {total} mots dans cette partie. RÃ©Ã©cris-la entiÃ¨rement en te rapprochant raisonnablement de cette plage, sans rechercher une exactitude rigide."
                         if lang_code == "fr" else
                         f"CORRECTION: try to keep the final study, reflection, commentary, or application portion approximately between {minimo} and {maximo} words, not counting the quoted verses. The previous answer had about {total} words in that portion. Rewrite it completely while staying reasonably close to that range, without aiming for rigid precision."
                     )
@@ -8252,16 +8202,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             )
         else:
             instruccion_extra = (
-                f"CORRECCIÓN: intenta que la respuesta final quede aproximadamente entre {minimo} y {maximo} palabras. "
-                f"La respuesta anterior tuvo {total} palabras aproximadas. Vuelve a escribirla completa acercándote de forma razonable a ese rango, sin obsesionarte con la exactitud."
+                f"CORRECCIÃ“N: intenta que la respuesta final quede aproximadamente entre {minimo} y {maximo} palabras. "
+                f"La respuesta anterior tuvo {total} palabras aproximadas. Vuelve a escribirla completa acercÃ¡ndote de forma razonable a ese rango, sin obsesionarte con la exactitud."
                 if lang_code == "es" else
                 (
-                    f"CORRECCIÓ: intenta que la resposta final quedi aproximadament entre {minimo} i {maximo} paraules. "
+                    f"CORRECCIÃ“: intenta que la resposta final quedi aproximadament entre {minimo} i {maximo} paraules. "
                     f"La resposta anterior tenia aproximadament {total} paraules. Torna-la a escriure completa acostant-te de manera raonable a aquest rang, sense obsessionar-te amb l'exactitud."
                     if lang_code == "ca" else
                     (
-                        f"CORRECTION : essaie de faire en sorte que la réponse finale contienne approximativement entre {minimo} et {maximo} mots. "
-                        f"La réponse précédente comptait environ {total} mots. Réécris-la entièrement en te rapprochant raisonnablement de cette plage, sans rechercher une exactitude rigide."
+                        f"CORRECTION : essaie de faire en sorte que la rÃ©ponse finale contienne approximativement entre {minimo} et {maximo} mots. "
+                        f"La rÃ©ponse prÃ©cÃ©dente comptait environ {total} mots. RÃ©Ã©cris-la entiÃ¨rement en te rapprochant raisonnablement de cette plage, sans rechercher une exactitude rigide."
                         if lang_code == "fr" else
                         f"CORRECTION: try to keep the final answer approximately between {minimo} and {maximo} words. The previous answer had about {total} words. Rewrite it completely while staying reasonably close to that range, without aiming for rigid precision."
                     )
@@ -8508,19 +8458,19 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             }.get(dd_tamano.value)
 
         instruccion_estilo_bonito = (
-            "Cuida mucho la presentación visual del texto. Usa un título bonito y reverente, subtítulos claros en Markdown y una maquetación agradable. "
-            "Puedes usar algunos símbolos cristianos con moderación si encajan bien, pero evita caracteres raros o iconos que no se vean correctamente. "
+            "Cuida mucho la presentaciÃ³n visual del texto. Usa un tÃ­tulo bonito y reverente, subtÃ­tulos claros en Markdown y una maquetaciÃ³n agradable. "
+            "Puedes usar algunos sÃ­mbolos cristianos con moderaciÃ³n si encajan bien, pero evita caracteres raros o iconos que no se vean correctamente. "
             "No abuses de ellos ni recargues la respuesta. No uses reglas horizontales repetidas ni separadores decorativos como ---, ***, ___ o similares. "
             if lang_code == "es" else
             (
-                "Cuida molt la presentació visual del text. Fes servir un títol bonic i reverent, subtítols clars en Markdown i una maquetació agradable. "
-                "Pots fer servir alguns símbols cristians amb moderació si encaixen bé, però evita caràcters estranys o icones que no es vegin correctament. "
+                "Cuida molt la presentaciÃ³ visual del text. Fes servir un tÃ­tol bonic i reverent, subtÃ­tols clars en Markdown i una maquetaciÃ³ agradable. "
+                "Pots fer servir alguns sÃ­mbols cristians amb moderaciÃ³ si encaixen bÃ©, perÃ² evita carÃ cters estranys o icones que no es vegin correctament. "
                 "No n'abusis ni recarreguis la resposta. No facis servir linies horitzontals repetides ni separadors decoratius com ---, ***, ___ o semblants. "
                 if lang_code == "ca" else
                 (
-                    "Soigne beaucoup la présentation visuelle du texte. Utilise un beau titre révérencieux, des sous-titres clairs en Markdown et une mise en page agréable. "
-                    "Tu peux utiliser quelques symboles chrétiens avec modération s'ils s'intègrent bien, mais évite les caractères étranges ou les icônes qui s'affichent mal. "
-                    "N'en abuse pas et ne surcharge pas la réponse. "
+                    "Soigne beaucoup la prÃ©sentation visuelle du texte. Utilise un beau titre rÃ©vÃ©rencieux, des sous-titres clairs en Markdown et une mise en page agrÃ©able. "
+                    "Tu peux utiliser quelques symboles chrÃ©tiens avec modÃ©ration s'ils s'intÃ¨grent bien, mais Ã©vite les caractÃ¨res Ã©tranges ou les icÃ´nes qui s'affichent mal. "
+                    "N'en abuse pas et ne surcharge pas la rÃ©ponse. "
                     if lang_code == "fr" else
                     "Pay close attention to the visual presentation of the text. Use a beautiful reverent title, clear Markdown subheadings, and pleasant formatting. "
                     "You may use a few Christian symbols in moderation when they fit naturally, but avoid unusual characters or icons that may render badly. "
@@ -8544,7 +8494,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "es": {
                 dd_hombre: "personaje",
                 dd_mujer: "personaje",
-                dd_grupo: "grupo bíblico",
+                dd_grupo: "grupo bÃ­blico",
                 dd_pueblo: "pueblo",
                 dd_pais: "lugar",
                 dd_religion: "religion",
@@ -8603,42 +8553,42 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             sujeto = (
                 f"el tema {tema_texto}" if lang_code == "es"
                 else (f"el tema {tema_texto}" if lang_code == "ca"
-                else (f"le thème {tema_texto}" if lang_code == "fr" else f"the topic {tema_texto}"))
+                else (f"le thÃ¨me {tema_texto}" if lang_code == "fr" else f"the topic {tema_texto}"))
             )
         if sujeto is None:
             sujeto = (
-                "un tema bíblico" if lang_code == "es"
-                else ("un tema bíblic" if lang_code == "ca"
-                else ("un thème biblique" if lang_code == "fr" else "a biblical topic"))
+                "un tema bÃ­blico" if lang_code == "es"
+                else ("un tema bÃ­blic" if lang_code == "ca"
+                else ("un thÃ¨me biblique" if lang_code == "fr" else "a biblical topic"))
             )
         enfoque_tema = (
             f" Enfoca el contenido especialmente en el tema: {tema_texto}." if tema_texto and lang_code == "es"
             else (f" Centra el contingut especialment en el tema: {tema_texto}." if tema_texto and lang_code == "ca"
-            else (f" Centre le contenu spécialement sur le thème : {tema_texto}." if tema_texto and lang_code == "fr"
+            else (f" Centre le contenu spÃ©cialement sur le thÃ¨me : {tema_texto}." if tema_texto and lang_code == "fr"
             else (f" Focus the content especially on this topic: {tema_texto}." if tema_texto else "")))
         )
 
         version_texto = (
-            f" usando la versión {dd_biblia.value}" if dd_biblia.value != "Ninguna" and lang_code == "es"
-            else (f" usant la versió {dd_biblia.value}" if dd_biblia.value != "Ninguna" and lang_code == "ca"
+            f" usando la versiÃ³n {dd_biblia.value}" if dd_biblia.value != "Ninguna" and lang_code == "es"
+            else (f" usant la versiÃ³ {dd_biblia.value}" if dd_biblia.value != "Ninguna" and lang_code == "ca"
             else (f" en utilisant la version {dd_biblia.value}" if dd_biblia.value != "Ninguna" and lang_code == "fr"
             else (f" using the version {dd_biblia.value}" if dd_biblia.value != "Ninguna" else "")))
         )
         if pasaje_exacto:
             if lang_code == "es":
                 instruccion_pasaje = (
-                    f" Abre la respuesta citando primero los versículos exactos de {pasaje_exacto}{version_texto} bajo el subtítulo 'Versículos seleccionados'. "
-                    "Después desarrolla el estudio o la reflexión a partir de ese pasaje, sin sustituirlo por otros versículos al comienzo. "
+                    f" Abre la respuesta citando primero los versÃ­culos exactos de {pasaje_exacto}{version_texto} bajo el subtÃ­tulo 'VersÃ­culos seleccionados'. "
+                    "DespuÃ©s desarrolla el estudio o la reflexiÃ³n a partir de ese pasaje, sin sustituirlo por otros versÃ­culos al comienzo. "
                 )
             elif lang_code == "ca":
                 instruccion_pasaje = (
-                    f" Obre la resposta citant primer els versicles exactes de {pasaje_exacto}{version_texto} sota el subtítol 'Versicles seleccionats'. "
-                    "Després desenvolupa l'estudi o la reflexió a partir d'aquest passatge, sense substituir-lo per altres versicles al començament. "
+                    f" Obre la resposta citant primer els versicles exactes de {pasaje_exacto}{version_texto} sota el subtÃ­tol 'Versicles seleccionats'. "
+                    "DesprÃ©s desenvolupa l'estudi o la reflexiÃ³ a partir d'aquest passatge, sense substituir-lo per altres versicles al comenÃ§ament. "
                 )
             elif lang_code == "fr":
                 instruccion_pasaje = (
-                    f" Ouvre la réponse en citant d'abord les versets exacts de {pasaje_exacto}{version_texto} sous le sous-titre 'Versets sélectionnés'. "
-                    "Développe ensuite l'étude ou la réflexion à partir de ce passage, sans le remplacer par d'autres versets au début. "
+                    f" Ouvre la rÃ©ponse en citant d'abord les versets exacts de {pasaje_exacto}{version_texto} sous le sous-titre 'Versets sÃ©lectionnÃ©s'. "
+                    "DÃ©veloppe ensuite l'Ã©tude ou la rÃ©flexion Ã  partir de ce passage, sans le remplacer par d'autres versets au dÃ©but. "
                 )
             else:
                 instruccion_pasaje = (
@@ -8696,7 +8646,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                         " Separe obligatoirement le bloc de versets et le commentaire en blocs differents. "
                         "Apres le dernier verset, laisse une ligne vide et commence le commentaire avec un nouveau sous-titre en Markdown. "
                         "Ne melange pas les versets et l'explication dans le meme paragraphe ni sur la meme ligne. "
-                        "Numérote chaque verset de maniere visible avec son numero reel au debut et ecris chaque verset sur sa propre ligne. "
+                        "NumÃ©rote chaque verset de maniere visible avec son numero reel au debut et ecris chaque verset sur sa propre ligne. "
                         "Quand le commentaire commence, ne continue pas la numerotation comme s'il s'agissait encore de versets bibliques. "
                         "Ce bloc initial doit suivre exactement le meme style que dans le mode 'Solo versiculos' : bref titre en gras et versets complets du passage, un par ligne, avant toute etude."
                         if lang_code == "fr" else
@@ -8713,7 +8663,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             )
 
         instruccion_titulo_versiculos = (
-            " Antes de los versiculos, añade un titulo breve del pasaje en negrita, al estilo de los encabezados de muchas Biblias. "
+            " Antes de los versiculos, aÃ±ade un titulo breve del pasaje en negrita, al estilo de los encabezados de muchas Biblias. "
             "Si conoces con certeza alta el encabezado habitual de ese pasaje en la version pedida, puedes usarlo. "
             "Si no, escribe un titulo descriptivo fiel al contenido sin presentarlo como titulo oficial de esa traduccion."
             if lang_code == "es" else
@@ -8740,19 +8690,19 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         instruccion_tema_breve = ""
         if dd_tipo.value == "Estudio informativo" and tema_texto and tema_de_una_palabra:
             instruccion_tema_breve = (
-                "Empieza obligatoriamente con un apartado breve titulado 'Definición', donde expliques con claridad qué significa esa palabra en contexto bíblico. "
-                "A continuación añade otro apartado breve titulado 'Sinónimos o matices cercanos', con uno o varios sinónimos, términos relacionados o matices de sentido. "
-                "Solo después desarrolla el estudio completo. "
+                "Empieza obligatoriamente con un apartado breve titulado 'DefiniciÃ³n', donde expliques con claridad quÃ© significa esa palabra en contexto bÃ­blico. "
+                "A continuaciÃ³n aÃ±ade otro apartado breve titulado 'SinÃ³nimos o matices cercanos', con uno o varios sinÃ³nimos, tÃ©rminos relacionados o matices de sentido. "
+                "Solo despuÃ©s desarrolla el estudio completo. "
                 if lang_code == "es" else
                 (
-                    "Comença obligatòriament amb un apartat breu titulat 'Definició', on expliquis amb claredat què significa aquesta paraula en context bíblic. "
-                    "A continuació afegeix un altre apartat breu titulat 'Sinònims o matisos propers', amb un o diversos sinònims, termes relacionats o matisos de sentit. "
-                    "Només després desenvolupa l'estudi complet. "
+                    "ComenÃ§a obligatÃ²riament amb un apartat breu titulat 'DefiniciÃ³', on expliquis amb claredat quÃ¨ significa aquesta paraula en context bÃ­blic. "
+                    "A continuaciÃ³ afegeix un altre apartat breu titulat 'SinÃ²nims o matisos propers', amb un o diversos sinÃ²nims, termes relacionats o matisos de sentit. "
+                    "NomÃ©s desprÃ©s desenvolupa l'estudi complet. "
                     if lang_code == "ca" else
                     (
-                        "Commence obligatoirement par une brève section intitulée 'Définition', où tu expliques clairement ce que signifie ce mot dans le contexte biblique. "
-                        "Ajoute ensuite une autre brève section intitulée 'Synonymes ou nuances proches', avec un ou plusieurs synonymes, termes liés ou nuances de sens. "
-                        "Ce n'est qu'ensuite que tu développes l'étude complète. "
+                        "Commence obligatoirement par une brÃ¨ve section intitulÃ©e 'DÃ©finition', oÃ¹ tu expliques clairement ce que signifie ce mot dans le contexte biblique. "
+                        "Ajoute ensuite une autre brÃ¨ve section intitulÃ©e 'Synonymes ou nuances proches', avec un ou plusieurs synonymes, termes liÃ©s ou nuances de sens. "
+                        "Ce n'est qu'ensuite que tu dÃ©veloppes l'Ã©tude complÃ¨te. "
                         if lang_code == "fr" else
                         "Begin with a short section titled 'Definition', clearly explaining what that word means in a biblical context. "
                         "Then add another short section titled 'Synonyms or related nuances', including one or more synonyms, related terms, or shades of meaning. "
@@ -8776,7 +8726,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 (
                     " Verifie silencieusement au moins deux fois chaque citation avant de l'ecrire : livre, chapitre, verset et version. "
                     "N'invente pas de versets et ne melange pas les versions. "
-                    "Numérote chaque verset avec son numero reel au debut et mets chaque verset sur une ligne separee. "
+                    "NumÃ©rote chaque verset avec son numero reel au debut et mets chaque verset sur une ligne separee. "
                     "Si tu n'es pas tres sur du texte litteral, ne le complete pas de memoire : donne seulement la reference sure et indique brievement qu'il vaut mieux verifier le texte dans une Bible ou sur un site biblique fiable."
                     if lang_code == "fr" else
                     " Silently verify each citation at least twice before writing it: book, chapter, verse, and translation. "
@@ -8790,16 +8740,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         if dd_tipo.value == "Solo versiculos":
             if lang_code == "es":
                 return (
-                    f"Devuélveme únicamente los versículos exactos de {sujeto}{version_texto}.{enfoque_tema} "
+                    f"DevuÃ©lveme Ãºnicamente los versÃ­culos exactos de {sujeto}{version_texto}.{enfoque_tema} "
                     "No generes comentarios, explicaciones ni interpretaciones. "
-                    "No inventes versículos. "
+                    "No inventes versÃ­culos. "
                     f"{instruccion_titulo_versiculos} "
                     f"{refuerzo_solo_versiculos} "
                     "Formato: Markdown limpio."
                 )
             if lang_code == "ca":
                 return (
-                    f"Torna'm només els versicles exactes de {sujeto}{version_texto}.{enfoque_tema} "
+                    f"Torna'm nomÃ©s els versicles exactes de {sujeto}{version_texto}.{enfoque_tema} "
                     "No generis comentaris, explicacions ni interpretacions. "
                     "No inventis versicles. "
                     f"{instruccion_titulo_versiculos} "
@@ -8809,7 +8759,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             if lang_code == "fr":
                 return (
                     f"Donne-moi uniquement les versets exacts de {sujeto}{version_texto}.{enfoque_tema} "
-                    "Ne génère ni commentaires, ni explications, ni interprétations. "
+                    "Ne gÃ©nÃ¨re ni commentaires, ni explications, ni interprÃ©tations. "
                     "N'invente pas de versets. "
                     f"{instruccion_titulo_versiculos} "
                     f"{refuerzo_solo_versiculos} "
@@ -8827,230 +8777,230 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         instrucciones_tipo = {
             "Estudio informativo": (
                     (
-                        "Redacta un estudio informativo de personaje, objetivo, ordenado y con enfoque de estudio bíblico serio. "
-                        "Organiza el contenido con estos tres grandes apartados y subtítulos claros: "
-                        "'1. Perfil biográfico', '2. Cronología de su vida' y '3. Perfil de carácter'. "
-                        "En 'Perfil biográfico' incluye, cuando sea posible, significado del nombre, genealogía y familia, contexto geográfico y ocupación o papel principal. "
-                        "En 'Cronología de su vida' resume su llamado o comienzo, los acontecimientos clave, sus crisis y fracasos, y el final de su vida o su última mención bíblica. "
-                        "En 'Perfil de carácter' analiza fortalezas, debilidades y relaciones con otras personas. "
-                        "No idealices al personaje ni ignores sus pecados o límites. "
-                        "Prioriza siempre los datos bíblicos reales y distingue con cuidado entre lo explícito y lo inferido. "
-                        "No incluyas una aplicación devocional extensa salvo que sea muy breve al final. "
+                        "Redacta un estudio informativo de personaje, objetivo, ordenado y con enfoque de estudio bÃ­blico serio. "
+                        "Organiza el contenido con estos tres grandes apartados y subtÃ­tulos claros: "
+                        "'1. Perfil biogrÃ¡fico', '2. CronologÃ­a de su vida' y '3. Perfil de carÃ¡cter'. "
+                        "En 'Perfil biogrÃ¡fico' incluye, cuando sea posible, significado del nombre, genealogÃ­a y familia, contexto geogrÃ¡fico y ocupaciÃ³n o papel principal. "
+                        "En 'CronologÃ­a de su vida' resume su llamado o comienzo, los acontecimientos clave, sus crisis y fracasos, y el final de su vida o su Ãºltima menciÃ³n bÃ­blica. "
+                        "En 'Perfil de carÃ¡cter' analiza fortalezas, debilidades y relaciones con otras personas. "
+                        "No idealices al personaje ni ignores sus pecados o lÃ­mites. "
+                        "Prioriza siempre los datos bÃ­blicos reales y distingue con cuidado entre lo explÃ­cito y lo inferido. "
+                        "No incluyas una aplicaciÃ³n devocional extensa salvo que sea muy breve al final. "
                     ) if personaje_seleccionado else (
-                    "Redacta un estudio informativo de grupo bíblico, objetivo, ordenado y con enfoque de sociología bíblica seria. "
-                    "Organiza el contenido con estos cinco grandes apartados y subtítulos claros: "
-                    "'1. Identidad y origen', '2. Teología y dogmas', '3. Esfera de influencia', '4. Encuentro con el mensaje bíblico' y '5. Ocaso y legado'. "
-                    "En 'Identidad y origen' incluye etimología, surgimiento histórico y composición social del grupo. "
-                    "En 'Teología y dogmas' explica su canon de autoridad, lo que negaban y lo que afirmaban. "
-                    "En 'Esfera de influencia' desarrolla su centro de poder, relación con el Estado y rivalidades con otros grupos. "
-                    "En 'Encuentro con el mensaje bíblico' analiza su relación con Jesús y, si corresponde, con la Iglesia primitiva u otras figuras centrales. "
-                    "En 'Ocaso y legado' explica cómo terminó el grupo y qué huella dejó. "
-                    "No reduzcas el estudio a una simple definición rápida; explica también mentalidad, poder e impacto bíblico. "
-                    "Prioriza siempre los datos bíblicos reales y distingue con cuidado entre lo explícito y lo inferido. "
-                    "No incluyas una aplicación devocional extensa salvo que sea muy breve al final. "
+                    "Redacta un estudio informativo de grupo bÃ­blico, objetivo, ordenado y con enfoque de sociologÃ­a bÃ­blica seria. "
+                    "Organiza el contenido con estos cinco grandes apartados y subtÃ­tulos claros: "
+                    "'1. Identidad y origen', '2. TeologÃ­a y dogmas', '3. Esfera de influencia', '4. Encuentro con el mensaje bÃ­blico' y '5. Ocaso y legado'. "
+                    "En 'Identidad y origen' incluye etimologÃ­a, surgimiento histÃ³rico y composiciÃ³n social del grupo. "
+                    "En 'TeologÃ­a y dogmas' explica su canon de autoridad, lo que negaban y lo que afirmaban. "
+                    "En 'Esfera de influencia' desarrolla su centro de poder, relaciÃ³n con el Estado y rivalidades con otros grupos. "
+                    "En 'Encuentro con el mensaje bÃ­blico' analiza su relaciÃ³n con JesÃºs y, si corresponde, con la Iglesia primitiva u otras figuras centrales. "
+                    "En 'Ocaso y legado' explica cÃ³mo terminÃ³ el grupo y quÃ© huella dejÃ³. "
+                    "No reduzcas el estudio a una simple definiciÃ³n rÃ¡pida; explica tambiÃ©n mentalidad, poder e impacto bÃ­blico. "
+                    "Prioriza siempre los datos bÃ­blicos reales y distingue con cuidado entre lo explÃ­cito y lo inferido. "
+                    "No incluyas una aplicaciÃ³n devocional extensa salvo que sea muy breve al final. "
                     ) if grupo_seleccionado else (
-                    "Redacta un estudio informativo de lugar geográfico, objetivo, ordenado y con enfoque de geografía bíblica seria. "
-                    "Organiza el contenido con estos tres grandes apartados y subtítulos claros: "
-                    "'1. Ubicación y topografía', '2. Historia y arqueología' y '3. Eventos bíblicos clave'. "
-                    "En 'Ubicación y topografía' incluye nombre y etimología, región o coordenadas aproximadas, características físicas y recursos naturales o valor estratégico. "
-                    "En 'Historia y arqueología' explica sus primeras menciones, hallazgos arqueológicos relevantes y evolución política en distintas épocas. "
-                    "En 'Eventos bíblicos clave' resume cronológicamente los encuentros con Dios, batallas, milagros y personajes asociados a ese lugar. "
-                    "No conviertas el estudio en una simple lista de versículos: explica por qué ese lugar importa en la narrativa bíblica. "
-                    "Prioriza siempre los datos bíblicos reales y distingue con cuidado entre lo explícito, lo histórico y lo inferido. "
-                    "No incluyas una aplicación devocional extensa salvo que sea muy breve al final. "
+                    "Redacta un estudio informativo de lugar geogrÃ¡fico, objetivo, ordenado y con enfoque de geografÃ­a bÃ­blica seria. "
+                    "Organiza el contenido con estos tres grandes apartados y subtÃ­tulos claros: "
+                    "'1. UbicaciÃ³n y topografÃ­a', '2. Historia y arqueologÃ­a' y '3. Eventos bÃ­blicos clave'. "
+                    "En 'UbicaciÃ³n y topografÃ­a' incluye nombre y etimologÃ­a, regiÃ³n o coordenadas aproximadas, caracterÃ­sticas fÃ­sicas y recursos naturales o valor estratÃ©gico. "
+                    "En 'Historia y arqueologÃ­a' explica sus primeras menciones, hallazgos arqueolÃ³gicos relevantes y evoluciÃ³n polÃ­tica en distintas Ã©pocas. "
+                    "En 'Eventos bÃ­blicos clave' resume cronolÃ³gicamente los encuentros con Dios, batallas, milagros y personajes asociados a ese lugar. "
+                    "No conviertas el estudio en una simple lista de versÃ­culos: explica por quÃ© ese lugar importa en la narrativa bÃ­blica. "
+                    "Prioriza siempre los datos bÃ­blicos reales y distingue con cuidado entre lo explÃ­cito, lo histÃ³rico y lo inferido. "
+                    "No incluyas una aplicaciÃ³n devocional extensa salvo que sea muy breve al final. "
                     ) if lugar_seleccionado else (
-                    "Redacta un estudio informativo sobre una religión o rama del cristianismo, objetivo, ordenado y con enfoque histórico-doctrinal comparativo. "
-                    "Organiza el contenido con estos cuatro grandes apartados y subtítulos claros: "
-                    "'1. Orígenes e historia', '2. Autoridad y fuentes de revelación', '3. Pilares doctrinales' y '4. Prácticas y sacramentos'. "
-                    "En 'Orígenes e historia' incluye fundación, personajes clave, motivo de surgimiento y cronología principal. "
-                    "En 'Autoridad y fuentes de revelación' explica el lugar que ocupa la Biblia, el canon que acepta y la relación entre Escritura y tradición. "
-                    "En 'Pilares doctrinales' analiza especialmente la salvación, la persona de Jesús y la comprensión de la Iglesia o de la autoridad religiosa. "
-                    "En 'Prácticas y sacramentos' resume cómo viven su fe, sus ritos principales, su forma de adoración y su ética. "
-                    "Cuando sea apropiado, compara de manera clara y respetuosa con la enseñanza bíblica histórica o con otras tradiciones cristianas, sin caricaturizar. "
-                    "Mantén un tono informativo, preciso y respetuoso, evitando polémica innecesaria. "
-                    "No incluyas una aplicación devocional extensa salvo que sea muy breve al final. "
+                    "Redacta un estudio informativo sobre una religiÃ³n o rama del cristianismo, objetivo, ordenado y con enfoque histÃ³rico-doctrinal comparativo. "
+                    "Organiza el contenido con estos cuatro grandes apartados y subtÃ­tulos claros: "
+                    "'1. OrÃ­genes e historia', '2. Autoridad y fuentes de revelaciÃ³n', '3. Pilares doctrinales' y '4. PrÃ¡cticas y sacramentos'. "
+                    "En 'OrÃ­genes e historia' incluye fundaciÃ³n, personajes clave, motivo de surgimiento y cronologÃ­a principal. "
+                    "En 'Autoridad y fuentes de revelaciÃ³n' explica el lugar que ocupa la Biblia, el canon que acepta y la relaciÃ³n entre Escritura y tradiciÃ³n. "
+                    "En 'Pilares doctrinales' analiza especialmente la salvaciÃ³n, la persona de JesÃºs y la comprensiÃ³n de la Iglesia o de la autoridad religiosa. "
+                    "En 'PrÃ¡cticas y sacramentos' resume cÃ³mo viven su fe, sus ritos principales, su forma de adoraciÃ³n y su Ã©tica. "
+                    "Cuando sea apropiado, compara de manera clara y respetuosa con la enseÃ±anza bÃ­blica histÃ³rica o con otras tradiciones cristianas, sin caricaturizar. "
+                    "MantÃ©n un tono informativo, preciso y respetuoso, evitando polÃ©mica innecesaria. "
+                    "No incluyas una aplicaciÃ³n devocional extensa salvo que sea muy breve al final. "
                     ) if religion_seleccionada else (
-                    "Redacta un estudio informativo de pueblo o nación, objetivo, ordenado y con enfoque de estudio bíblico serio. "
-                    "Organiza el contenido con estos tres grandes apartados y subtítulos claros: "
-                    "'1. Identidad y origen', '2. Cultura y religión' y '3. Interacción con el pueblo de Dios'. "
-                    "En 'Identidad y origen' incluye, cuando sea posible, ancestro fundador, significado del nombre o gentilicio y ubicación geográfica. "
-                    "En 'Cultura y religión' explica sus dioses o creencias principales, prácticas cultuales y rasgos de su estructura social o modo de vida. "
-                    "En 'Interacción con el pueblo de Dios' desarrolla el tipo de relación con Israel o con el pueblo de Dios, los conflictos clave y la influencia mutua o el sincretismo si existió. "
-                    "Prioriza siempre los datos bíblicos reales y distingue con cuidado entre lo explícito y lo inferido. "
-                    "No reduzcas el estudio a una simple lista de batallas; explica también identidad, cosmovisión y papel teológico en la narrativa bíblica. "
-                    "No incluyas una aplicación devocional extensa salvo que sea muy breve al final. "
+                    "Redacta un estudio informativo de pueblo o naciÃ³n, objetivo, ordenado y con enfoque de estudio bÃ­blico serio. "
+                    "Organiza el contenido con estos tres grandes apartados y subtÃ­tulos claros: "
+                    "'1. Identidad y origen', '2. Cultura y religiÃ³n' y '3. InteracciÃ³n con el pueblo de Dios'. "
+                    "En 'Identidad y origen' incluye, cuando sea posible, ancestro fundador, significado del nombre o gentilicio y ubicaciÃ³n geogrÃ¡fica. "
+                    "En 'Cultura y religiÃ³n' explica sus dioses o creencias principales, prÃ¡cticas cultuales y rasgos de su estructura social o modo de vida. "
+                    "En 'InteracciÃ³n con el pueblo de Dios' desarrolla el tipo de relaciÃ³n con Israel o con el pueblo de Dios, los conflictos clave y la influencia mutua o el sincretismo si existiÃ³. "
+                    "Prioriza siempre los datos bÃ­blicos reales y distingue con cuidado entre lo explÃ­cito y lo inferido. "
+                    "No reduzcas el estudio a una simple lista de batallas; explica tambiÃ©n identidad, cosmovisiÃ³n y papel teolÃ³gico en la narrativa bÃ­blica. "
+                    "No incluyas una aplicaciÃ³n devocional extensa salvo que sea muy breve al final. "
                     ) if pueblo_seleccionado else (
-                    "Redacta un estudio informativo temático, objetivo, ordenado y con enfoque de estudio bíblico serio. "
-                    "Organiza el contenido con estos cinco grandes apartados y subtítulos claros: "
-                    "'1. Definición y etimología', '2. Fundamento teológico', '3. Base bíblica estructurada', '4. Ejemplos prácticos' y '5. Beneficios y consecuencias'. "
-                    "En 'Definición y etimología' explica qué significa el tema en contexto bíblico y, cuando sea posible, menciona términos originales, matices, sinónimos y antónimos. "
-                    "En 'Fundamento teológico' muestra cómo ese tema se ve primero en el carácter de Dios y, cuando corresponda, también en Cristo. "
-                    "En 'Base bíblica estructurada' no lances versículos al azar: agrúpalos por categorías o áreas claras. "
-                    "En 'Ejemplos prácticos' incluye modelos positivos y negativos dentro de la Biblia. "
-                    "En 'Beneficios y consecuencias' explica qué produce ese tema en la vida del creyente y por qué es importante. "
-                    "Prioriza siempre los datos bíblicos reales y distingue con cuidado entre lo explícito y lo inferido. "
-                    "No incluyas una aplicación devocional extensa salvo que sea muy breve al final. "
+                    "Redacta un estudio informativo temÃ¡tico, objetivo, ordenado y con enfoque de estudio bÃ­blico serio. "
+                    "Organiza el contenido con estos cinco grandes apartados y subtÃ­tulos claros: "
+                    "'1. DefiniciÃ³n y etimologÃ­a', '2. Fundamento teolÃ³gico', '3. Base bÃ­blica estructurada', '4. Ejemplos prÃ¡cticos' y '5. Beneficios y consecuencias'. "
+                    "En 'DefiniciÃ³n y etimologÃ­a' explica quÃ© significa el tema en contexto bÃ­blico y, cuando sea posible, menciona tÃ©rminos originales, matices, sinÃ³nimos y antÃ³nimos. "
+                    "En 'Fundamento teolÃ³gico' muestra cÃ³mo ese tema se ve primero en el carÃ¡cter de Dios y, cuando corresponda, tambiÃ©n en Cristo. "
+                    "En 'Base bÃ­blica estructurada' no lances versÃ­culos al azar: agrÃºpalos por categorÃ­as o Ã¡reas claras. "
+                    "En 'Ejemplos prÃ¡cticos' incluye modelos positivos y negativos dentro de la Biblia. "
+                    "En 'Beneficios y consecuencias' explica quÃ© produce ese tema en la vida del creyente y por quÃ© es importante. "
+                    "Prioriza siempre los datos bÃ­blicos reales y distingue con cuidado entre lo explÃ­cito y lo inferido. "
+                    "No incluyas una aplicaciÃ³n devocional extensa salvo que sea muy breve al final. "
                     ) if tema_seleccionado else (
-                    "Redacta un estudio informativo, objetivo, ordenado y con enfoque de estudio bíblico serio. "
-                    "Organiza el contenido, en la medida en que encaje con el pasaje o tema, en tres grandes apartados con subtítulos claros: "
-                    "'1. Marco contextual', '2. Análisis del texto' y '3. Exégesis y doctrina'. "
-                    "En 'Marco contextual' incluye, cuando sea posible, autor y fecha, destinatarios, contexto histórico-cultural y propósito del libro. "
-                    "En 'Análisis del texto' explica el género literario, palabras clave y la estructura del pasaje o del tema tratado. "
-                    "En 'Exégesis y doctrina' desarrolla el significado original del texto para sus primeros oyentes o lectores, la enseñanza central y las doctrinas principales implicadas. "
-                    "Evita saltar demasiado rápido a la aplicación personal; primero prioriza la intención original del autor. "
-                    "No incluyas una aplicación devocional extensa salvo que sea muy breve al final. "
+                    "Redacta un estudio informativo, objetivo, ordenado y con enfoque de estudio bÃ­blico serio. "
+                    "Organiza el contenido, en la medida en que encaje con el pasaje o tema, en tres grandes apartados con subtÃ­tulos claros: "
+                    "'1. Marco contextual', '2. AnÃ¡lisis del texto' y '3. ExÃ©gesis y doctrina'. "
+                    "En 'Marco contextual' incluye, cuando sea posible, autor y fecha, destinatarios, contexto histÃ³rico-cultural y propÃ³sito del libro. "
+                    "En 'AnÃ¡lisis del texto' explica el gÃ©nero literario, palabras clave y la estructura del pasaje o del tema tratado. "
+                    "En 'ExÃ©gesis y doctrina' desarrolla el significado original del texto para sus primeros oyentes o lectores, la enseÃ±anza central y las doctrinas principales implicadas. "
+                    "Evita saltar demasiado rÃ¡pido a la aplicaciÃ³n personal; primero prioriza la intenciÃ³n original del autor. "
+                    "No incluyas una aplicaciÃ³n devocional extensa salvo que sea muy breve al final. "
                     )
                 if lang_code == "es" else
                 (
                     (
-                        "Redacta un estudi informatiu de personatge, objectiu, ordenat i amb enfocament de veritable estudi bíblic. "
-                        "Organitza el contingut amb aquests tres grans apartats i subtítols clars: "
-                        "'1. Perfil biogràfic', '2. Cronologia de la seva vida' i '3. Perfil de caràcter'. "
-                        "A 'Perfil biogràfic' inclou, quan sigui possible, significat del nom, genealogia i família, context geogràfic i ocupació o paper principal. "
-                        "A 'Cronologia de la seva vida' resumeix la seva crida o inici, els esdeveniments clau, les seves crisis i fracassos, i el final de la seva vida o la seva última menció bíblica. "
-                        "A 'Perfil de caràcter' analitza fortaleses, debilitats i relacions amb altres persones. "
-                        "No idealitzis el personatge ni ignoris els seus pecats o límits. "
-                        "Prioritza sempre les dades bíbliques reals i distingeix amb cura entre el que és explícit i el que és inferit. "
-                        "No hi incloguis una aplicació devocional extensa, tret que sigui molt breu al final. "
+                        "Redacta un estudi informatiu de personatge, objectiu, ordenat i amb enfocament de veritable estudi bÃ­blic. "
+                        "Organitza el contingut amb aquests tres grans apartats i subtÃ­tols clars: "
+                        "'1. Perfil biogrÃ fic', '2. Cronologia de la seva vida' i '3. Perfil de carÃ cter'. "
+                        "A 'Perfil biogrÃ fic' inclou, quan sigui possible, significat del nom, genealogia i famÃ­lia, context geogrÃ fic i ocupaciÃ³ o paper principal. "
+                        "A 'Cronologia de la seva vida' resumeix la seva crida o inici, els esdeveniments clau, les seves crisis i fracassos, i el final de la seva vida o la seva Ãºltima menciÃ³ bÃ­blica. "
+                        "A 'Perfil de carÃ cter' analitza fortaleses, debilitats i relacions amb altres persones. "
+                        "No idealitzis el personatge ni ignoris els seus pecats o lÃ­mits. "
+                        "Prioritza sempre les dades bÃ­bliques reals i distingeix amb cura entre el que Ã©s explÃ­cit i el que Ã©s inferit. "
+                        "No hi incloguis una aplicaciÃ³ devocional extensa, tret que sigui molt breu al final. "
                     ) if personaje_seleccionado else (
-                    "Redacta un estudi informatiu de grup bíblic, objectiu, ordenat i amb enfocament de sociologia bíblica seriosa. "
-                    "Organitza el contingut amb aquests cinc grans apartats i subtítols clars: "
-                    "'1. Identitat i origen', '2. Teologia i dogmes', '3. Esfera d'influència', '4. Trobada amb el missatge bíblic' i '5. Ocaso i llegat'. "
-                    "A 'Identitat i origen' inclou etimologia, sorgiment històric i composició social del grup. "
-                    "A 'Teologia i dogmes' explica el seu cànon d'autoritat, allò que negaven i allò que afirmaven. "
-                    "A 'Esfera d'influència' desenvolupa el seu centre de poder, la relació amb l'Estat i les rivalitats amb altres grups. "
-                    "A 'Trobada amb el missatge bíblic' analitza la seva relació amb Jesús i, si escau, amb l'Església primitiva o altres figures centrals. "
+                    "Redacta un estudi informatiu de grup bÃ­blic, objectiu, ordenat i amb enfocament de sociologia bÃ­blica seriosa. "
+                    "Organitza el contingut amb aquests cinc grans apartats i subtÃ­tols clars: "
+                    "'1. Identitat i origen', '2. Teologia i dogmes', '3. Esfera d'influÃ¨ncia', '4. Trobada amb el missatge bÃ­blic' i '5. Ocaso i llegat'. "
+                    "A 'Identitat i origen' inclou etimologia, sorgiment histÃ²ric i composiciÃ³ social del grup. "
+                    "A 'Teologia i dogmes' explica el seu cÃ non d'autoritat, allÃ² que negaven i allÃ² que afirmaven. "
+                    "A 'Esfera d'influÃ¨ncia' desenvolupa el seu centre de poder, la relaciÃ³ amb l'Estat i les rivalitats amb altres grups. "
+                    "A 'Trobada amb el missatge bÃ­blic' analitza la seva relaciÃ³ amb JesÃºs i, si escau, amb l'EsglÃ©sia primitiva o altres figures centrals. "
                     "A 'Ocaso i llegat' explica com va acabar el grup i quina empremta va deixar. "
-                    "No redueixis l'estudi a una simple definició ràpida; explica també mentalitat, poder i impacte bíblic. "
-                    "Prioritza sempre les dades bíbliques reals i distingeix amb cura entre el que és explícit i el que és inferit. "
-                    "No hi incloguis una aplicació devocional extensa, tret que sigui molt breu al final. "
+                    "No redueixis l'estudi a una simple definiciÃ³ rÃ pida; explica tambÃ© mentalitat, poder i impacte bÃ­blic. "
+                    "Prioritza sempre les dades bÃ­bliques reals i distingeix amb cura entre el que Ã©s explÃ­cit i el que Ã©s inferit. "
+                    "No hi incloguis una aplicaciÃ³ devocional extensa, tret que sigui molt breu al final. "
                     ) if grupo_seleccionado else (
-                    "Redacta un estudi informatiu de lloc geogràfic, objectiu, ordenat i amb enfocament de geografia bíblica seriosa. "
-                    "Organitza el contingut amb aquests tres grans apartats i subtítols clars: "
-                    "'1. Ubicació i topografia', '2. Història i arqueologia' i '3. Esdeveniments bíblics clau'. "
-                    "A 'Ubicació i topografia' inclou nom i etimologia, regió o coordenades aproximades, característiques físiques i recursos naturals o valor estratègic. "
-                    "A 'Història i arqueologia' explica les primeres mencions, els descobriments arqueològics rellevants i l'evolució política en diferents èpoques. "
-                    "A 'Esdeveniments bíblics clau' resumeix cronològicament les trobades amb Déu, batalles, miracles i personatges associats a aquest lloc. "
-                    "No converteixis l'estudi en una simple llista de versicles: explica per què aquest lloc és important en la narrativa bíblica. "
-                    "Prioritza sempre les dades bíbliques reals i distingeix amb cura entre el que és explícit, el que és històric i el que és inferit. "
-                    "No hi incloguis una aplicació devocional extensa, tret que sigui molt breu al final. "
+                    "Redacta un estudi informatiu de lloc geogrÃ fic, objectiu, ordenat i amb enfocament de geografia bÃ­blica seriosa. "
+                    "Organitza el contingut amb aquests tres grans apartats i subtÃ­tols clars: "
+                    "'1. UbicaciÃ³ i topografia', '2. HistÃ²ria i arqueologia' i '3. Esdeveniments bÃ­blics clau'. "
+                    "A 'UbicaciÃ³ i topografia' inclou nom i etimologia, regiÃ³ o coordenades aproximades, caracterÃ­stiques fÃ­siques i recursos naturals o valor estratÃ¨gic. "
+                    "A 'HistÃ²ria i arqueologia' explica les primeres mencions, els descobriments arqueolÃ²gics rellevants i l'evoluciÃ³ polÃ­tica en diferents Ã¨poques. "
+                    "A 'Esdeveniments bÃ­blics clau' resumeix cronolÃ²gicament les trobades amb DÃ©u, batalles, miracles i personatges associats a aquest lloc. "
+                    "No converteixis l'estudi en una simple llista de versicles: explica per quÃ¨ aquest lloc Ã©s important en la narrativa bÃ­blica. "
+                    "Prioritza sempre les dades bÃ­bliques reals i distingeix amb cura entre el que Ã©s explÃ­cit, el que Ã©s histÃ²ric i el que Ã©s inferit. "
+                    "No hi incloguis una aplicaciÃ³ devocional extensa, tret que sigui molt breu al final. "
                     ) if lugar_seleccionado else (
-                    "Redacta un estudi informatiu sobre una religió o branca del cristianisme, objectiu, ordenat i amb enfocament històric-doctrinal comparatiu. "
-                    "Organitza el contingut amb aquests quatre grans apartats i subtítols clars: "
-                    "'1. Orígens i història', '2. Autoritat i fonts de revelació', '3. Pilars doctrinals' i '4. Pràctiques i sagraments'. "
-                    "A 'Orígens i història' inclou fundació, personatges clau, motiu de sorgiment i cronologia principal. "
-                    "A 'Autoritat i fonts de revelació' explica el lloc que ocupa la Bíblia, el cànon que accepta i la relació entre Escriptura i tradició. "
-                    "A 'Pilars doctrinals' analitza especialment la salvació, la persona de Jesús i la comprensió de l'Església o de l'autoritat religiosa. "
-                    "A 'Pràctiques i sagraments' resumeix com viuen la fe, els ritus principals, la forma d'adoració i l'ètica. "
-                    "Quan sigui apropiat, compara de manera clara i respectuosa amb l'ensenyament bíblic històric o amb altres tradicions cristianes, sense caricaturitzar. "
-                    "Mantingues un to informatiu, precís i respectuós, evitant polèmica innecessària. "
-                    "No hi incloguis una aplicació devocional extensa, tret que sigui molt breu al final. "
+                    "Redacta un estudi informatiu sobre una religiÃ³ o branca del cristianisme, objectiu, ordenat i amb enfocament histÃ²ric-doctrinal comparatiu. "
+                    "Organitza el contingut amb aquests quatre grans apartats i subtÃ­tols clars: "
+                    "'1. OrÃ­gens i histÃ²ria', '2. Autoritat i fonts de revelaciÃ³', '3. Pilars doctrinals' i '4. PrÃ ctiques i sagraments'. "
+                    "A 'OrÃ­gens i histÃ²ria' inclou fundaciÃ³, personatges clau, motiu de sorgiment i cronologia principal. "
+                    "A 'Autoritat i fonts de revelaciÃ³' explica el lloc que ocupa la BÃ­blia, el cÃ non que accepta i la relaciÃ³ entre Escriptura i tradiciÃ³. "
+                    "A 'Pilars doctrinals' analitza especialment la salvaciÃ³, la persona de JesÃºs i la comprensiÃ³ de l'EsglÃ©sia o de l'autoritat religiosa. "
+                    "A 'PrÃ ctiques i sagraments' resumeix com viuen la fe, els ritus principals, la forma d'adoraciÃ³ i l'Ã¨tica. "
+                    "Quan sigui apropiat, compara de manera clara i respectuosa amb l'ensenyament bÃ­blic histÃ²ric o amb altres tradicions cristianes, sense caricaturitzar. "
+                    "Mantingues un to informatiu, precÃ­s i respectuÃ³s, evitant polÃ¨mica innecessÃ ria. "
+                    "No hi incloguis una aplicaciÃ³ devocional extensa, tret que sigui molt breu al final. "
                     ) if religion_seleccionada else (
-                    "Redacta un estudi informatiu de poble o nació, objectiu, ordenat i amb enfocament de veritable estudi bíblic. "
-                    "Organitza el contingut amb aquests tres grans apartats i subtítols clars: "
-                    "'1. Identitat i origen', '2. Cultura i religió' i '3. Interacció amb el poble de Déu'. "
-                    "A 'Identitat i origen' inclou, quan sigui possible, ancestre fundador, significat del nom o gentilici i ubicació geogràfica. "
-                    "A 'Cultura i religió' explica els seus déus o creences principals, les pràctiques cultuals i els trets de la seva estructura social o manera de viure. "
-                    "A 'Interacció amb el poble de Déu' desenvolupa el tipus de relació amb Israel o amb el poble de Déu, els conflictes clau i la influència mútua o el sincretisme si n'hi va haver. "
-                    "Prioritza sempre les dades bíbliques reals i distingeix amb cura entre el que és explícit i el que és inferit. "
-                    "No redueixis l'estudi a una simple llista de batalles; explica també identitat, cosmovisió i paper teològic dins la narrativa bíblica. "
-                    "No hi incloguis una aplicació devocional extensa, tret que sigui molt breu al final. "
+                    "Redacta un estudi informatiu de poble o naciÃ³, objectiu, ordenat i amb enfocament de veritable estudi bÃ­blic. "
+                    "Organitza el contingut amb aquests tres grans apartats i subtÃ­tols clars: "
+                    "'1. Identitat i origen', '2. Cultura i religiÃ³' i '3. InteracciÃ³ amb el poble de DÃ©u'. "
+                    "A 'Identitat i origen' inclou, quan sigui possible, ancestre fundador, significat del nom o gentilici i ubicaciÃ³ geogrÃ fica. "
+                    "A 'Cultura i religiÃ³' explica els seus dÃ©us o creences principals, les prÃ ctiques cultuals i els trets de la seva estructura social o manera de viure. "
+                    "A 'InteracciÃ³ amb el poble de DÃ©u' desenvolupa el tipus de relaciÃ³ amb Israel o amb el poble de DÃ©u, els conflictes clau i la influÃ¨ncia mÃºtua o el sincretisme si n'hi va haver. "
+                    "Prioritza sempre les dades bÃ­bliques reals i distingeix amb cura entre el que Ã©s explÃ­cit i el que Ã©s inferit. "
+                    "No redueixis l'estudi a una simple llista de batalles; explica tambÃ© identitat, cosmovisiÃ³ i paper teolÃ²gic dins la narrativa bÃ­blica. "
+                    "No hi incloguis una aplicaciÃ³ devocional extensa, tret que sigui molt breu al final. "
                     ) if pueblo_seleccionado else (
-                    "Redacta un estudi informatiu temàtic, objectiu, ordenat i amb enfocament de veritable estudi bíblic. "
-                    "Organitza el contingut amb aquests cinc grans apartats i subtítols clars: "
-                    "'1. Definició i etimologia', '2. Fonament teològic', '3. Base bíblica estructurada', '4. Exemples pràctics' i '5. Beneficis i conseqüències'. "
-                    "A 'Definició i etimologia' explica què significa el tema en context bíblic i, quan sigui possible, esmenta termes originals, matisos, sinònims i antònims. "
-                    "A 'Fonament teològic' mostra com aquest tema es veu primer en el caràcter de Déu i, quan correspongui, també en Crist. "
-                    "A 'Base bíblica estructurada' no llancis versicles a l'atzar: agrupa'ls per categories o àrees clares. "
-                    "A 'Exemples pràctics' inclou models positius i negatius dins la Bíblia. "
-                    "A 'Beneficis i conseqüències' explica què produeix aquest tema en la vida del creient i per què és important. "
-                    "Prioritza sempre les dades bíbliques reals i distingeix amb cura entre el que és explícit i el que és inferit. "
-                    "No hi incloguis una aplicació devocional extensa, tret que sigui molt breu al final. "
+                    "Redacta un estudi informatiu temÃ tic, objectiu, ordenat i amb enfocament de veritable estudi bÃ­blic. "
+                    "Organitza el contingut amb aquests cinc grans apartats i subtÃ­tols clars: "
+                    "'1. DefiniciÃ³ i etimologia', '2. Fonament teolÃ²gic', '3. Base bÃ­blica estructurada', '4. Exemples prÃ ctics' i '5. Beneficis i conseqÃ¼Ã¨ncies'. "
+                    "A 'DefiniciÃ³ i etimologia' explica quÃ¨ significa el tema en context bÃ­blic i, quan sigui possible, esmenta termes originals, matisos, sinÃ²nims i antÃ²nims. "
+                    "A 'Fonament teolÃ²gic' mostra com aquest tema es veu primer en el carÃ cter de DÃ©u i, quan correspongui, tambÃ© en Crist. "
+                    "A 'Base bÃ­blica estructurada' no llancis versicles a l'atzar: agrupa'ls per categories o Ã rees clares. "
+                    "A 'Exemples prÃ ctics' inclou models positius i negatius dins la BÃ­blia. "
+                    "A 'Beneficis i conseqÃ¼Ã¨ncies' explica quÃ¨ produeix aquest tema en la vida del creient i per quÃ¨ Ã©s important. "
+                    "Prioritza sempre les dades bÃ­bliques reals i distingeix amb cura entre el que Ã©s explÃ­cit i el que Ã©s inferit. "
+                    "No hi incloguis una aplicaciÃ³ devocional extensa, tret que sigui molt breu al final. "
                     ) if tema_seleccionado else (
-                    "Redacta un estudi informatiu, objectiu, ordenat i amb enfocament de veritable estudi bíblic. "
-                    "Organitza el contingut, en la mesura que encaixi amb el passatge o el tema, en tres grans apartats amb subtítols clars: "
-                    "'1. Marc contextual', '2. Anàlisi del text' i '3. Exegesi i doctrina'. "
-                    "A 'Marc contextual' inclou, quan sigui possible, autor i data, destinataris, context històric-cultural i propòsit del llibre. "
-                    "A 'Anàlisi del text' explica el gènere literari, les paraules clau i l'estructura del passatge o del tema tractat. "
+                    "Redacta un estudi informatiu, objectiu, ordenat i amb enfocament de veritable estudi bÃ­blic. "
+                    "Organitza el contingut, en la mesura que encaixi amb el passatge o el tema, en tres grans apartats amb subtÃ­tols clars: "
+                    "'1. Marc contextual', '2. AnÃ lisi del text' i '3. Exegesi i doctrina'. "
+                    "A 'Marc contextual' inclou, quan sigui possible, autor i data, destinataris, context histÃ²ric-cultural i propÃ²sit del llibre. "
+                    "A 'AnÃ lisi del text' explica el gÃ¨nere literari, les paraules clau i l'estructura del passatge o del tema tractat. "
                     "A 'Exegesi i doctrina' desenvolupa el significat original del text per als primers oients o lectors, l'ensenyament central i les doctrines principals implicades. "
-                    "Evita passar massa ràpid a l'aplicació personal; primer prioritza la intenció original de l'autor. "
-                    "No hi incloguis una aplicació devocional extensa, tret que sigui molt breu al final. "
+                    "Evita passar massa rÃ pid a l'aplicaciÃ³ personal; primer prioritza la intenciÃ³ original de l'autor. "
+                    "No hi incloguis una aplicaciÃ³ devocional extensa, tret que sigui molt breu al final. "
                     )
                     if lang_code == "ca" else
                     (
                         (
-                        "Rédige une étude informative sur un personnage, objective, ordonnée et avec une approche de véritable étude biblique. "
+                        "RÃ©dige une Ã©tude informative sur un personnage, objective, ordonnÃ©e et avec une approche de vÃ©ritable Ã©tude biblique. "
                         "Organise le contenu avec ces trois grandes parties et des sous-titres clairs : "
-                        "'1. Profil biographique', '2. Chronologie de sa vie' et '3. Profil de caractère'. "
-                        "Dans 'Profil biographique', inclue si possible la signification du nom, la généalogie et la famille, le contexte géographique et l'occupation ou le rôle principal. "
-                        "Dans 'Chronologie de sa vie', résume l'appel ou le commencement, les événements clés, les crises et les échecs, ainsi que la fin de sa vie ou sa dernière mention biblique. "
-                        "Dans 'Profil de caractère', analyse les forces, les faiblesses et les relations avec les autres. "
-                        "N'idéalise pas le personnage et n'ignore pas ses péchés ou ses limites. "
-                        "Donne toujours la priorité aux données bibliques réelles et distingue soigneusement ce qui est explicite de ce qui est déduit. "
-                        "N'ajoute pas une longue application dévotionnelle, sauf éventuellement une remarque très brève à la fin. "
+                        "'1. Profil biographique', '2. Chronologie de sa vie' et '3. Profil de caractÃ¨re'. "
+                        "Dans 'Profil biographique', inclue si possible la signification du nom, la gÃ©nÃ©alogie et la famille, le contexte gÃ©ographique et l'occupation ou le rÃ´le principal. "
+                        "Dans 'Chronologie de sa vie', rÃ©sume l'appel ou le commencement, les Ã©vÃ©nements clÃ©s, les crises et les Ã©checs, ainsi que la fin de sa vie ou sa derniÃ¨re mention biblique. "
+                        "Dans 'Profil de caractÃ¨re', analyse les forces, les faiblesses et les relations avec les autres. "
+                        "N'idÃ©alise pas le personnage et n'ignore pas ses pÃ©chÃ©s ou ses limites. "
+                        "Donne toujours la prioritÃ© aux donnÃ©es bibliques rÃ©elles et distingue soigneusement ce qui est explicite de ce qui est dÃ©duit. "
+                        "N'ajoute pas une longue application dÃ©votionnelle, sauf Ã©ventuellement une remarque trÃ¨s brÃ¨ve Ã  la fin. "
                         ) if personaje_seleccionado else (
-                        "Rédige une étude informative sur un groupe biblique, objective, ordonnée et avec une approche sérieuse de sociologie biblique. "
+                        "RÃ©dige une Ã©tude informative sur un groupe biblique, objective, ordonnÃ©e et avec une approche sÃ©rieuse de sociologie biblique. "
                         "Organise le contenu avec ces cinq grandes parties et des sous-titres clairs : "
-                        "'1. Identité et origine', '2. Théologie et dogmes', '3. Sphère d'influence', '4. Rencontre avec le message biblique' et '5. Déclin et héritage'. "
-                        "Dans 'Identité et origine', inclue l'étymologie, l'apparition historique et la composition sociale du groupe. "
-                        "Dans 'Théologie et dogmes', explique son canon d'autorité, ce qu'il niait et ce qu'il affirmait. "
-                        "Dans 'Sphère d'influence', développe son centre de pouvoir, sa relation avec l'État et ses rivalités avec d'autres groupes. "
-                        "Dans 'Rencontre avec le message biblique', analyse sa relation avec Jésus et, si cela convient, avec l'Église primitive ou d'autres figures centrales. "
-                        "Dans 'Déclin et héritage', explique comment le groupe a pris fin et quelle trace il a laissée. "
-                        "Ne réduis pas l'étude à une simple définition rapide ; explique aussi la mentalité, le pouvoir et l'impact biblique. "
-                        "Donne toujours la priorité aux données bibliques réelles et distingue soigneusement ce qui est explicite de ce qui est déduit. "
-                        "N'ajoute pas une longue application dévotionnelle, sauf éventuellement une remarque très brève à la fin. "
+                        "'1. IdentitÃ© et origine', '2. ThÃ©ologie et dogmes', '3. SphÃ¨re d'influence', '4. Rencontre avec le message biblique' et '5. DÃ©clin et hÃ©ritage'. "
+                        "Dans 'IdentitÃ© et origine', inclue l'Ã©tymologie, l'apparition historique et la composition sociale du groupe. "
+                        "Dans 'ThÃ©ologie et dogmes', explique son canon d'autoritÃ©, ce qu'il niait et ce qu'il affirmait. "
+                        "Dans 'SphÃ¨re d'influence', dÃ©veloppe son centre de pouvoir, sa relation avec l'Ã‰tat et ses rivalitÃ©s avec d'autres groupes. "
+                        "Dans 'Rencontre avec le message biblique', analyse sa relation avec JÃ©sus et, si cela convient, avec l'Ã‰glise primitive ou d'autres figures centrales. "
+                        "Dans 'DÃ©clin et hÃ©ritage', explique comment le groupe a pris fin et quelle trace il a laissÃ©e. "
+                        "Ne rÃ©duis pas l'Ã©tude Ã  une simple dÃ©finition rapide ; explique aussi la mentalitÃ©, le pouvoir et l'impact biblique. "
+                        "Donne toujours la prioritÃ© aux donnÃ©es bibliques rÃ©elles et distingue soigneusement ce qui est explicite de ce qui est dÃ©duit. "
+                        "N'ajoute pas une longue application dÃ©votionnelle, sauf Ã©ventuellement une remarque trÃ¨s brÃ¨ve Ã  la fin. "
                         ) if grupo_seleccionado else (
-                        "Rédige une étude informative sur un lieu géographique, objective, ordonnée et avec une approche sérieuse de géographie biblique. "
+                        "RÃ©dige une Ã©tude informative sur un lieu gÃ©ographique, objective, ordonnÃ©e et avec une approche sÃ©rieuse de gÃ©ographie biblique. "
                         "Organise le contenu avec ces trois grandes parties et des sous-titres clairs : "
-                        "'1. Localisation et topographie', '2. Histoire et archéologie' et '3. Événements bibliques clés'. "
-                        "Dans 'Localisation et topographie', inclue le nom et l'étymologie, la région ou des coordonnées approximatives, les caractéristiques physiques et les ressources naturelles ou la valeur stratégique. "
-                        "Dans 'Histoire et archéologie', explique les premières mentions, les découvertes archéologiques pertinentes et l'évolution politique à différentes époques. "
-                        "Dans 'Événements bibliques clés', résume chronologiquement les rencontres avec Dieu, les batailles, les miracles et les personnages associés à ce lieu. "
-                        "Ne transforme pas l'étude en simple liste de versets : explique pourquoi ce lieu est important dans le récit biblique. "
-                        "Donne toujours la priorité aux données bibliques réelles et distingue soigneusement ce qui est explicite, historique et déduit. "
-                        "N'ajoute pas une longue application dévotionnelle, sauf éventuellement une remarque très brève à la fin. "
+                        "'1. Localisation et topographie', '2. Histoire et archÃ©ologie' et '3. Ã‰vÃ©nements bibliques clÃ©s'. "
+                        "Dans 'Localisation et topographie', inclue le nom et l'Ã©tymologie, la rÃ©gion ou des coordonnÃ©es approximatives, les caractÃ©ristiques physiques et les ressources naturelles ou la valeur stratÃ©gique. "
+                        "Dans 'Histoire et archÃ©ologie', explique les premiÃ¨res mentions, les dÃ©couvertes archÃ©ologiques pertinentes et l'Ã©volution politique Ã  diffÃ©rentes Ã©poques. "
+                        "Dans 'Ã‰vÃ©nements bibliques clÃ©s', rÃ©sume chronologiquement les rencontres avec Dieu, les batailles, les miracles et les personnages associÃ©s Ã  ce lieu. "
+                        "Ne transforme pas l'Ã©tude en simple liste de versets : explique pourquoi ce lieu est important dans le rÃ©cit biblique. "
+                        "Donne toujours la prioritÃ© aux donnÃ©es bibliques rÃ©elles et distingue soigneusement ce qui est explicite, historique et dÃ©duit. "
+                        "N'ajoute pas une longue application dÃ©votionnelle, sauf Ã©ventuellement une remarque trÃ¨s brÃ¨ve Ã  la fin. "
                         ) if lugar_seleccionado else (
-                        "Rédige une étude informative sur une religion ou une branche du christianisme, objective, ordonnée et avec une approche historico-doctrinale comparative. "
+                        "RÃ©dige une Ã©tude informative sur une religion ou une branche du christianisme, objective, ordonnÃ©e et avec une approche historico-doctrinale comparative. "
                         "Organise le contenu avec ces quatre grandes parties et des sous-titres clairs : "
-                        "'1. Origines et histoire', '2. Autorité et sources de révélation', '3. Piliers doctrinaux' et '4. Pratiques et sacrements'. "
-                        "Dans 'Origines et histoire', inclue la fondation, les personnages clés, la raison de l'émergence et la chronologie principale. "
-                        "Dans 'Autorité et sources de révélation', explique la place de la Bible, le canon accepté et la relation entre l'Écriture et la tradition. "
-                        "Dans 'Piliers doctrinaux', analyse en particulier le salut, la personne de Jésus et la compréhension de l'Église ou de l'autorité religieuse. "
-                        "Dans 'Pratiques et sacrements', résume la manière de vivre la foi, les rites principaux, la forme d'adoration et l'éthique. "
-                        "Lorsque c'est approprié, compare de manière claire et respectueuse avec l'enseignement biblique historique ou avec d'autres traditions chrétiennes, sans caricaturer. "
-                        "Garde un ton informatif, précis et respectueux, en évitant toute polémique inutile. "
-                        "N'ajoute pas une longue application dévotionnelle, sauf éventuellement une remarque très brève à la fin. "
+                        "'1. Origines et histoire', '2. AutoritÃ© et sources de rÃ©vÃ©lation', '3. Piliers doctrinaux' et '4. Pratiques et sacrements'. "
+                        "Dans 'Origines et histoire', inclue la fondation, les personnages clÃ©s, la raison de l'Ã©mergence et la chronologie principale. "
+                        "Dans 'AutoritÃ© et sources de rÃ©vÃ©lation', explique la place de la Bible, le canon acceptÃ© et la relation entre l'Ã‰criture et la tradition. "
+                        "Dans 'Piliers doctrinaux', analyse en particulier le salut, la personne de JÃ©sus et la comprÃ©hension de l'Ã‰glise ou de l'autoritÃ© religieuse. "
+                        "Dans 'Pratiques et sacrements', rÃ©sume la maniÃ¨re de vivre la foi, les rites principaux, la forme d'adoration et l'Ã©thique. "
+                        "Lorsque c'est appropriÃ©, compare de maniÃ¨re claire et respectueuse avec l'enseignement biblique historique ou avec d'autres traditions chrÃ©tiennes, sans caricaturer. "
+                        "Garde un ton informatif, prÃ©cis et respectueux, en Ã©vitant toute polÃ©mique inutile. "
+                        "N'ajoute pas une longue application dÃ©votionnelle, sauf Ã©ventuellement une remarque trÃ¨s brÃ¨ve Ã  la fin. "
                         ) if religion_seleccionada else (
-                        "Rédige une étude informative sur un peuple ou une nation, objective, ordonnée et avec une approche de véritable étude biblique. "
+                        "RÃ©dige une Ã©tude informative sur un peuple ou une nation, objective, ordonnÃ©e et avec une approche de vÃ©ritable Ã©tude biblique. "
                         "Organise le contenu avec ces trois grandes parties et des sous-titres clairs : "
-                        "'1. Identité et origine', '2. Culture et religion' et '3. Interaction avec le peuple de Dieu'. "
-                        "Dans 'Identité et origine', inclue si possible l'ancêtre fondateur, la signification du nom ou du gentilé et la localisation géographique. "
+                        "'1. IdentitÃ© et origine', '2. Culture et religion' et '3. Interaction avec le peuple de Dieu'. "
+                        "Dans 'IdentitÃ© et origine', inclue si possible l'ancÃªtre fondateur, la signification du nom ou du gentilÃ© et la localisation gÃ©ographique. "
                         "Dans 'Culture et religion', explique les principaux dieux ou croyances, les pratiques cultuelles et les traits de leur structure sociale ou de leur mode de vie. "
-                        "Dans 'Interaction avec le peuple de Dieu', développe le type de relation avec Israël ou avec le peuple de Dieu, les conflits clés et l'influence réciproque ou le syncrétisme s'il y en a eu. "
-                        "Donne toujours la priorité aux données bibliques réelles et distingue soigneusement ce qui est explicite de ce qui est déduit. "
-                        "Ne réduis pas l'étude à une simple liste de batailles ; explique aussi l'identité, la vision du monde et le rôle théologique dans le récit biblique. "
-                        "N'ajoute pas une longue application dévotionnelle, sauf éventuellement une remarque très brève à la fin. "
+                        "Dans 'Interaction avec le peuple de Dieu', dÃ©veloppe le type de relation avec IsraÃ«l ou avec le peuple de Dieu, les conflits clÃ©s et l'influence rÃ©ciproque ou le syncrÃ©tisme s'il y en a eu. "
+                        "Donne toujours la prioritÃ© aux donnÃ©es bibliques rÃ©elles et distingue soigneusement ce qui est explicite de ce qui est dÃ©duit. "
+                        "Ne rÃ©duis pas l'Ã©tude Ã  une simple liste de batailles ; explique aussi l'identitÃ©, la vision du monde et le rÃ´le thÃ©ologique dans le rÃ©cit biblique. "
+                        "N'ajoute pas une longue application dÃ©votionnelle, sauf Ã©ventuellement une remarque trÃ¨s brÃ¨ve Ã  la fin. "
                         ) if pueblo_seleccionado else (
-                        "Rédige une étude thématique informative, objective, ordonnée et avec une approche de véritable étude biblique. "
+                        "RÃ©dige une Ã©tude thÃ©matique informative, objective, ordonnÃ©e et avec une approche de vÃ©ritable Ã©tude biblique. "
                         "Organise le contenu avec ces cinq grandes parties et des sous-titres clairs : "
-                        "'1. Définition et étymologie', '2. Fondement théologique', '3. Base biblique structurée', '4. Exemples pratiques' et '5. Bénéfices et conséquences'. "
-                        "Dans 'Définition et étymologie', explique ce que signifie le thème dans le contexte biblique et, si possible, mentionne les termes originaux, les nuances, les synonymes et les antonymes. "
-                        "Dans 'Fondement théologique', montre comment ce thème apparaît d'abord dans le caractère de Dieu et, quand cela convient, aussi dans le Christ. "
-                        "Dans 'Base biblique structurée', ne lance pas des versets au hasard : regroupe-les par catégories ou domaines clairs. "
-                        "Dans 'Exemples pratiques', inclue des modèles positifs et négatifs dans la Bible. "
-                        "Dans 'Bénéfices et conséquences', explique ce que ce thème produit dans la vie du croyant et pourquoi il est important. "
-                        "Donne toujours la priorité aux données bibliques réelles et distingue soigneusement ce qui est explicite de ce qui est déduit. "
-                        "N'ajoute pas une longue application dévotionnelle, sauf éventuellement une remarque très brève à la fin. "
+                        "'1. DÃ©finition et Ã©tymologie', '2. Fondement thÃ©ologique', '3. Base biblique structurÃ©e', '4. Exemples pratiques' et '5. BÃ©nÃ©fices et consÃ©quences'. "
+                        "Dans 'DÃ©finition et Ã©tymologie', explique ce que signifie le thÃ¨me dans le contexte biblique et, si possible, mentionne les termes originaux, les nuances, les synonymes et les antonymes. "
+                        "Dans 'Fondement thÃ©ologique', montre comment ce thÃ¨me apparaÃ®t d'abord dans le caractÃ¨re de Dieu et, quand cela convient, aussi dans le Christ. "
+                        "Dans 'Base biblique structurÃ©e', ne lance pas des versets au hasard : regroupe-les par catÃ©gories ou domaines clairs. "
+                        "Dans 'Exemples pratiques', inclue des modÃ¨les positifs et nÃ©gatifs dans la Bible. "
+                        "Dans 'BÃ©nÃ©fices et consÃ©quences', explique ce que ce thÃ¨me produit dans la vie du croyant et pourquoi il est important. "
+                        "Donne toujours la prioritÃ© aux donnÃ©es bibliques rÃ©elles et distingue soigneusement ce qui est explicite de ce qui est dÃ©duit. "
+                        "N'ajoute pas une longue application dÃ©votionnelle, sauf Ã©ventuellement une remarque trÃ¨s brÃ¨ve Ã  la fin. "
                         ) if tema_seleccionado else (
-                        "Rédige une étude informative, objective, ordonnée et avec une approche de véritable étude biblique. "
-                        "Organise le contenu, dans la mesure où cela convient au passage ou au thème, en trois grandes parties avec des sous-titres clairs : "
-                        "'1. Cadre contextuel', '2. Analyse du texte' et '3. Exégèse et doctrine'. "
+                        "RÃ©dige une Ã©tude informative, objective, ordonnÃ©e et avec une approche de vÃ©ritable Ã©tude biblique. "
+                        "Organise le contenu, dans la mesure oÃ¹ cela convient au passage ou au thÃ¨me, en trois grandes parties avec des sous-titres clairs : "
+                        "'1. Cadre contextuel', '2. Analyse du texte' et '3. ExÃ©gÃ¨se et doctrine'. "
                         "Dans 'Cadre contextuel', inclue si possible l'auteur et la date, les destinataires, le contexte historico-culturel et le but du livre. "
-                        "Dans 'Analyse du texte', explique le genre littéraire, les mots-clés et la structure du passage ou du thème traité. "
-                        "Dans 'Exégèse et doctrine', développe le sens original du texte pour ses premiers auditeurs ou lecteurs, l'enseignement central et les principales doctrines impliquées. "
-                        "Évite de passer trop vite à l'application personnelle ; donne d'abord la priorité à l'intention originale de l'auteur. "
-                        "N'ajoute pas une longue application dévotionnelle, sauf éventuellement une remarque très brève à la fin. "
+                        "Dans 'Analyse du texte', explique le genre littÃ©raire, les mots-clÃ©s et la structure du passage ou du thÃ¨me traitÃ©. "
+                        "Dans 'ExÃ©gÃ¨se et doctrine', dÃ©veloppe le sens original du texte pour ses premiers auditeurs ou lecteurs, l'enseignement central et les principales doctrines impliquÃ©es. "
+                        "Ã‰vite de passer trop vite Ã  l'application personnelle ; donne d'abord la prioritÃ© Ã  l'intention originale de l'auteur. "
+                        "N'ajoute pas une longue application dÃ©votionnelle, sauf Ã©ventuellement une remarque trÃ¨s brÃ¨ve Ã  la fin. "
                         )
                         if lang_code == "fr" else
                         (
@@ -9132,25 +9082,25 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ),
             "Estudio versiculos": (
                 (
-                    "Redacta un estudio de versículos, ordenado y fiel al texto. "
-                    "Si hay un pasaje bíblico concreto seleccionado, estudia los versículos uno a uno y en orden, sin hacer solo un resumen general del conjunto. "
-                    "Dedica un apartado breve a cada versículo o unidad inmediata del pasaje, explicando su sentido, su conexión con el anterior y el siguiente, y su aportación al mensaje total. "
-                    "Mantén el foco en el texto mismo, evita desviarte a temas lejanos y no inventes datos ni interpretaciones forzadas. "
-                    "Si no hay un pasaje exacto, analiza los versículos principales relacionados con el asunto, uno por uno. "
+                    "Redacta un estudio de versÃ­culos, ordenado y fiel al texto. "
+                    "Si hay un pasaje bÃ­blico concreto seleccionado, estudia los versÃ­culos uno a uno y en orden, sin hacer solo un resumen general del conjunto. "
+                    "Dedica un apartado breve a cada versÃ­culo o unidad inmediata del pasaje, explicando su sentido, su conexiÃ³n con el anterior y el siguiente, y su aportaciÃ³n al mensaje total. "
+                    "MantÃ©n el foco en el texto mismo, evita desviarte a temas lejanos y no inventes datos ni interpretaciones forzadas. "
+                    "Si no hay un pasaje exacto, analiza los versÃ­culos principales relacionados con el asunto, uno por uno. "
                 ) if lang_code == "es" else
                 (
                     "Redacta un estudi de versicles, ordenat i fidel al text. "
-                    "Si hi ha un passatge bíblic concret seleccionat, estudia els versicles un per un i en ordre, sense fer només un resum general del conjunt. "
-                    "Dedica un apartat breu a cada versicle o unitat immediata del passatge, explicant-ne el sentit, la connexió amb l'anterior i el següent, i la seva aportació al missatge total. "
-                    "Mantén el focus en el text mateix, evita desviar-te cap a temes llunyans i no inventis dades ni interpretacions forçades. "
+                    "Si hi ha un passatge bÃ­blic concret seleccionat, estudia els versicles un per un i en ordre, sense fer nomÃ©s un resum general del conjunt. "
+                    "Dedica un apartat breu a cada versicle o unitat immediata del passatge, explicant-ne el sentit, la connexiÃ³ amb l'anterior i el segÃ¼ent, i la seva aportaciÃ³ al missatge total. "
+                    "MantÃ©n el focus en el text mateix, evita desviar-te cap a temes llunyans i no inventis dades ni interpretacions forÃ§ades. "
                     "Si no hi ha un passatge exacte, analitza els versicles principals relacionats amb l'assumpte, un per un. "
                     if lang_code == "ca" else
                     (
-                        "Rédige une étude de versets, ordonnée et fidèle au texte. "
-                        "S'il y a un passage biblique précis sélectionné, étudie les versets un par un et dans l'ordre, sans faire seulement un résumé général de l'ensemble. "
-                        "Consacre une courte section à chaque verset ou unité immédiate du passage, en expliquant son sens, son lien avec ce qui précède et ce qui suit, et sa contribution au message global. "
-                        "Garde le focus sur le texte lui-même, évite de te disperser vers des thèmes lointains et n'invente ni données ni interprétations forcées. "
-                        "S'il n'y a pas de passage exact, analyse les principaux versets liés au sujet, un par un. "
+                        "RÃ©dige une Ã©tude de versets, ordonnÃ©e et fidÃ¨le au texte. "
+                        "S'il y a un passage biblique prÃ©cis sÃ©lectionnÃ©, Ã©tudie les versets un par un et dans l'ordre, sans faire seulement un rÃ©sumÃ© gÃ©nÃ©ral de l'ensemble. "
+                        "Consacre une courte section Ã  chaque verset ou unitÃ© immÃ©diate du passage, en expliquant son sens, son lien avec ce qui prÃ©cÃ¨de et ce qui suit, et sa contribution au message global. "
+                        "Garde le focus sur le texte lui-mÃªme, Ã©vite de te disperser vers des thÃ¨mes lointains et n'invente ni donnÃ©es ni interprÃ©tations forcÃ©es. "
+                        "S'il n'y a pas de passage exact, analyse les principaux versets liÃ©s au sujet, un par un. "
                         if lang_code == "fr" else
                         "Write a verse-by-verse study that is ordered and faithful to the text. "
                         "If a specific Bible passage has been selected, study the verses one by one and in order, rather than giving only a general summary of the whole passage. "
@@ -9161,38 +9111,38 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 )
             ),
             "Reflexion biblica": (
-                "Redacta una reflexión bíblica pastoral, reverente y centrada en Cristo. "
-                "Explica brevemente el sentido del texto y extrae enseñanzas espirituales fieles a la Escritura. "
-                "Incluye una aplicación personal clara y edificante. "
+                "Redacta una reflexiÃ³n bÃ­blica pastoral, reverente y centrada en Cristo. "
+                "Explica brevemente el sentido del texto y extrae enseÃ±anzas espirituales fieles a la Escritura. "
+                "Incluye una aplicaciÃ³n personal clara y edificante. "
                 if lang_code == "es" else
                 (
-                    "Redacta una reflexió bíblica pastoral, reverent i centrada en Crist. "
+                    "Redacta una reflexiÃ³ bÃ­blica pastoral, reverent i centrada en Crist. "
                     "Explica breument el sentit del text i extreu ensenyaments espirituals fidels a l'Escriptura. "
-                    "Inclou una aplicació personal clara i edificant. "
+                    "Inclou una aplicaciÃ³ personal clara i edificant. "
                     if lang_code == "ca" else
                     (
-                        "Rédige une réflexion biblique pastorale, révérencieuse et centrée sur le Christ. "
-                        "Explique brièvement le sens du texte et tire des enseignements spirituels fidèles à l'Écriture. "
-                        "Inclue une application personnelle claire et édifiante. "
+                        "RÃ©dige une rÃ©flexion biblique pastorale, rÃ©vÃ©rencieuse et centrÃ©e sur le Christ. "
+                        "Explique briÃ¨vement le sens du texte et tire des enseignements spirituels fidÃ¨les Ã  l'Ã‰criture. "
+                        "Inclue une application personnelle claire et Ã©difiante. "
                         if lang_code == "fr" else
                         "Write a pastoral, reverent biblical reflection centered on Christ. Briefly explain the meaning of the text and draw spiritual lessons faithful to Scripture. Include a clear and edifying personal application. "
                     )
                 )
             ),
             "Aplicacion practica": (
-                "Redacta una enseñanza enfocada en la vida diaria del creyente. "
-                "Extrae principios concretos, prácticos y accionables, siempre fieles al texto bíblico. "
+                "Redacta una enseÃ±anza enfocada en la vida diaria del creyente. "
+                "Extrae principios concretos, prÃ¡cticos y accionables, siempre fieles al texto bÃ­blico. "
                 "Incluye pasos o ideas claras para vivir esa verdad. "
                 if lang_code == "es" else
                 (
-                    "Redacta un ensenyament enfocat en la vida diària del creient. "
-                    "Extreu principis concrets, pràctics i accionables, sempre fidels al text bíblic. "
+                    "Redacta un ensenyament enfocat en la vida diÃ ria del creient. "
+                    "Extreu principis concrets, prÃ ctics i accionables, sempre fidels al text bÃ­blic. "
                     "Inclou passos o idees clares per viure aquesta veritat. "
                     if lang_code == "ca" else
                     (
-                        "Rédige un enseignement centré sur la vie quotidienne du croyant. "
-                        "Tire des principes concrets, pratiques et applicables, toujours fidèles au texte biblique. "
-                        "Inclue des étapes ou des idées claires pour vivre cette vérité. "
+                        "RÃ©dige un enseignement centrÃ© sur la vie quotidienne du croyant. "
+                        "Tire des principes concrets, pratiques et applicables, toujours fidÃ¨les au texte biblique. "
+                        "Inclue des Ã©tapes ou des idÃ©es claires pour vivre cette vÃ©ritÃ©. "
                         if lang_code == "fr" else
                         "Write a teaching focused on the believer's daily life. Draw concrete, practical, actionable principles that remain faithful to the biblical text. Include clear steps or ideas for living out that truth. "
                     )
@@ -9200,40 +9150,40 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ),
             "Bosquejo para predicar": (
                 (
-                    "Redacta un bosquejo para predicar claro, bíblico, ordenado y útil para exponer en público. "
-                    "Organízalo exactamente en estos cuatro grandes apartados con títulos visibles en Markdown: "
-                    "'1. Título y texto base', '2. Introducción', '3. Cuerpo', y '4. Conclusión'. "
-                    "En '1. Título y texto base', propone un título sugerente, fiel al tema, y señala el pasaje bíblico base; si el usuario ya seleccionó un pasaje concreto, úsalo como texto base. "
-                    "En '2. Introducción', incluye un gancho inicial de no más de dos minutos con una ilustración, una pregunta o una situación real, y termina con una proposición que resuma el mensaje. "
-                    "En '3. Cuerpo', desarrolla de dos a tres puntos principales. En cada punto incluye siempre estas tres partes: explicación del texto, ilustración sencilla de la vida cotidiana y aplicación práctica para hoy. "
-                    "En '4. Conclusión', no hagas un cierre aburrido: crea un clímax pastoral con recapitulación breve, llamado a la acción concreto para la congregación y una oración final corta. "
-                    "Haz que el esquema sea predicable, fácil de seguir, memorable y fiel a la Escritura. "
-                    "Puedes usar numeración tipo I, II y III dentro del cuerpo si ayuda a la claridad. "
+                    "Redacta un bosquejo para predicar claro, bÃ­blico, ordenado y Ãºtil para exponer en pÃºblico. "
+                    "OrganÃ­zalo exactamente en estos cuatro grandes apartados con tÃ­tulos visibles en Markdown: "
+                    "'1. TÃ­tulo y texto base', '2. IntroducciÃ³n', '3. Cuerpo', y '4. ConclusiÃ³n'. "
+                    "En '1. TÃ­tulo y texto base', propone un tÃ­tulo sugerente, fiel al tema, y seÃ±ala el pasaje bÃ­blico base; si el usuario ya seleccionÃ³ un pasaje concreto, Ãºsalo como texto base. "
+                    "En '2. IntroducciÃ³n', incluye un gancho inicial de no mÃ¡s de dos minutos con una ilustraciÃ³n, una pregunta o una situaciÃ³n real, y termina con una proposiciÃ³n que resuma el mensaje. "
+                    "En '3. Cuerpo', desarrolla de dos a tres puntos principales. En cada punto incluye siempre estas tres partes: explicaciÃ³n del texto, ilustraciÃ³n sencilla de la vida cotidiana y aplicaciÃ³n prÃ¡ctica para hoy. "
+                    "En '4. ConclusiÃ³n', no hagas un cierre aburrido: crea un clÃ­max pastoral con recapitulaciÃ³n breve, llamado a la acciÃ³n concreto para la congregaciÃ³n y una oraciÃ³n final corta. "
+                    "Haz que el esquema sea predicable, fÃ¡cil de seguir, memorable y fiel a la Escritura. "
+                    "Puedes usar numeraciÃ³n tipo I, II y III dentro del cuerpo si ayuda a la claridad. "
                     "No conviertas el bosquejo en un ensayo largo: prioriza estructura, claridad y fuerza pastoral. "
                 ) if lang_code == "es" else
                 (
-                    "Redacta un esquema per predicar clar, bíblic, ordenat i útil per exposar en públic. "
-                    "Organitza'l exactament en aquests quatre grans apartats amb títols visibles en Markdown: "
-                    "'1. Títol i text base', '2. Introducció', '3. Cos', i '4. Conclusió'. "
-                    "A '1. Títol i text base', proposa un títol suggerent, fidel al tema, i indica el passatge bíblic base; si l'usuari ja ha seleccionat un passatge concret, fes-lo servir com a text base. "
-                    "A '2. Introducció', inclou un ganxo inicial de no més de dos minuts amb una il·lustració, una pregunta o una situació real, i acaba amb una proposició que resumeixi el missatge. "
-                    "A '3. Cos', desenvolupa de dos a tres punts principals. A cada punt inclou sempre aquestes tres parts: explicació del text, il·lustració senzilla de la vida quotidiana i aplicació pràctica per a avui. "
-                    "A '4. Conclusió', no facis un tancament avorrit: crea un clímax pastoral amb recapitulació breu, crida a l'acció concreta per a la congregació i una oració final curta. "
-                    "Fes que l'esquema sigui predicable, fàcil de seguir, memorable i fidel a l'Escriptura. "
-                    "Pots fer servir numeració tipus I, II i III dins del cos si ajuda a la claredat. "
-                    "No converteixis l'esquema en un assaig llarg: prioritza estructura, claredat i força pastoral. "
+                    "Redacta un esquema per predicar clar, bÃ­blic, ordenat i Ãºtil per exposar en pÃºblic. "
+                    "Organitza'l exactament en aquests quatre grans apartats amb tÃ­tols visibles en Markdown: "
+                    "'1. TÃ­tol i text base', '2. IntroducciÃ³', '3. Cos', i '4. ConclusiÃ³'. "
+                    "A '1. TÃ­tol i text base', proposa un tÃ­tol suggerent, fidel al tema, i indica el passatge bÃ­blic base; si l'usuari ja ha seleccionat un passatge concret, fes-lo servir com a text base. "
+                    "A '2. IntroducciÃ³', inclou un ganxo inicial de no mÃ©s de dos minuts amb una ilÂ·lustraciÃ³, una pregunta o una situaciÃ³ real, i acaba amb una proposiciÃ³ que resumeixi el missatge. "
+                    "A '3. Cos', desenvolupa de dos a tres punts principals. A cada punt inclou sempre aquestes tres parts: explicaciÃ³ del text, ilÂ·lustraciÃ³ senzilla de la vida quotidiana i aplicaciÃ³ prÃ ctica per a avui. "
+                    "A '4. ConclusiÃ³', no facis un tancament avorrit: crea un clÃ­max pastoral amb recapitulaciÃ³ breu, crida a l'acciÃ³ concreta per a la congregaciÃ³ i una oraciÃ³ final curta. "
+                    "Fes que l'esquema sigui predicable, fÃ cil de seguir, memorable i fidel a l'Escriptura. "
+                    "Pots fer servir numeraciÃ³ tipus I, II i III dins del cos si ajuda a la claredat. "
+                    "No converteixis l'esquema en un assaig llarg: prioritza estructura, claredat i forÃ§a pastoral. "
                     if lang_code == "ca" else
                     (
-                        "Rédige un plan de prédication clair, biblique, ordonné et réellement utile pour prêcher en public. "
+                        "RÃ©dige un plan de prÃ©dication clair, biblique, ordonnÃ© et rÃ©ellement utile pour prÃªcher en public. "
                         "Organise-le exactement en quatre grandes sections avec des titres visibles en Markdown : "
                         "'1. Titre et texte de base', '2. Introduction', '3. Corps', et '4. Conclusion'. "
-                        "Dans '1. Titre et texte de base', propose un titre accrocheur mais fidèle au thème, puis indique le passage biblique de base ; si l'utilisateur a déjà choisi un passage précis, utilise-le comme texte de base. "
-                        "Dans '2. Introduction', inclus une accroche initiale de moins de deux minutes avec une illustration, une question ou une situation réelle, puis termine par une proposition qui résume le message. "
-                        "Dans '3. Corps', développe de deux à trois points principaux. Pour chaque point, inclus toujours ces trois éléments : explication du texte, illustration simple de la vie quotidienne et application pratique pour aujourd'hui. "
-                        "Dans '4. Conclusion', ne fais pas une fin plate : crée un point culminant pastoral avec une brève récapitulation, un appel concret à l'action pour l'assemblée et une courte prière finale. "
-                        "Fais en sorte que le plan soit prêchable, facile à suivre, mémorable et fidèle à l'Écriture. "
-                        "Tu peux utiliser une numérotation de type I, II et III dans le corps si cela améliore la clarté. "
-                        "Ne transforme pas le plan en long essai : privilégie la structure, la clarté et la force pastorale. "
+                        "Dans '1. Titre et texte de base', propose un titre accrocheur mais fidÃ¨le au thÃ¨me, puis indique le passage biblique de base ; si l'utilisateur a dÃ©jÃ  choisi un passage prÃ©cis, utilise-le comme texte de base. "
+                        "Dans '2. Introduction', inclus une accroche initiale de moins de deux minutes avec une illustration, une question ou une situation rÃ©elle, puis termine par une proposition qui rÃ©sume le message. "
+                        "Dans '3. Corps', dÃ©veloppe de deux Ã  trois points principaux. Pour chaque point, inclus toujours ces trois Ã©lÃ©ments : explication du texte, illustration simple de la vie quotidienne et application pratique pour aujourd'hui. "
+                        "Dans '4. Conclusion', ne fais pas une fin plate : crÃ©e un point culminant pastoral avec une brÃ¨ve rÃ©capitulation, un appel concret Ã  l'action pour l'assemblÃ©e et une courte priÃ¨re finale. "
+                        "Fais en sorte que le plan soit prÃªchable, facile Ã  suivre, mÃ©morable et fidÃ¨le Ã  l'Ã‰criture. "
+                        "Tu peux utiliser une numÃ©rotation de type I, II et III dans le corps si cela amÃ©liore la clartÃ©. "
+                        "Ne transforme pas le plan en long essai : privilÃ©gie la structure, la clartÃ© et la force pastorale. "
                         if lang_code == "fr" else
                         "Write a preaching outline that is clear, biblical, well ordered, and genuinely useful for public preaching. "
                         "Organize it exactly into these four major sections with visible Markdown headings: "
@@ -9249,16 +9199,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 )
             ),
             "Devocional breve": (
-                "Redacta un devocional breve, cálido, reverente y fácil de leer. "
-                "Incluye una idea central, una breve meditación pastoral y un cierre inspirador. "
+                "Redacta un devocional breve, cÃ¡lido, reverente y fÃ¡cil de leer. "
+                "Incluye una idea central, una breve meditaciÃ³n pastoral y un cierre inspirador. "
                 if lang_code == "es" else
                 (
-                    "Redacta un devocional breu, càlid, reverent i fàcil de llegir. "
-                    "Inclou una idea central, una breu meditació pastoral i un tancament inspirador. "
+                    "Redacta un devocional breu, cÃ lid, reverent i fÃ cil de llegir. "
+                    "Inclou una idea central, una breu meditaciÃ³ pastoral i un tancament inspirador. "
                     if lang_code == "ca" else
                     (
-                        "Rédige une dévotion brève, chaleureuse, révérencieuse et facile à lire. "
-                        "Inclue une idée centrale, une courte méditation pastorale et une conclusion inspirante. "
+                        "RÃ©dige une dÃ©votion brÃ¨ve, chaleureuse, rÃ©vÃ©rencieuse et facile Ã  lire. "
+                        "Inclue une idÃ©e centrale, une courte mÃ©ditation pastorale et une conclusion inspirante. "
                         if lang_code == "fr" else
                         "Write a brief devotional that is warm, reverent, and easy to read. Include a central idea, a short pastoral meditation, and an inspiring closing. "
                     )
@@ -9431,16 +9381,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         instruccion_tipo = instrucciones_tipo.get(dd_tipo.value, "")
         rango = rango_objetivo()
         longitud_objetivo = (
-            f"Escribe aproximadamente {dd_tamano.value} palabras; si te mueves cerca de ese rango, está bien." if rango and lang_code == "es"
-            else (f"Escriu aproximadament {dd_tamano.value} paraules; si et mous a prop d'aquest rang, està bé." if rango and lang_code == "ca"
-            else (f"Écris environ {dd_tamano.value} mots ; si tu restes proche de cette plage, c'est très bien." if rango and lang_code == "fr"
+            f"Escribe aproximadamente {dd_tamano.value} palabras; si te mueves cerca de ese rango, estÃ¡ bien." if rango and lang_code == "es"
+            else (f"Escriu aproximadament {dd_tamano.value} paraules; si et mous a prop d'aquest rang, estÃ  bÃ©." if rango and lang_code == "ca"
+            else (f"Ã‰cris environ {dd_tamano.value} mots ; si tu restes proche de cette plage, c'est trÃ¨s bien." if rango and lang_code == "fr"
             else (f"Write about {dd_tamano.value} words; staying reasonably close to that range is fine." if rango else "")))
         )
         if not longitud_objetivo:
             longitud_objetivo = (
                 f"Escribe aproximadamente {dd_tamano.value} palabras." if lang_code == "es"
                 else (f"Escriu aproximadament {dd_tamano.value} paraules." if lang_code == "ca"
-                else (f"Écris environ {dd_tamano.value} mots." if lang_code == "fr"
+                else (f"Ã‰cris environ {dd_tamano.value} mots." if lang_code == "fr"
                 else f"Write about {dd_tamano.value} words."))
             )
 
@@ -9465,46 +9415,46 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 f"{longitud_objetivo} "
                 f"{instruccion_pasaje}"
                 f"{aclaracion_longitud}"
-                "No hace falta que el número de palabras sea exacto; basta con que sea aproximado. "
-                "El contenido final debe estar escrito en español de España. "
-                "Debes responder con fidelidad al texto bíblico, sin inventar datos, citas ni versículos. "
+                "No hace falta que el nÃºmero de palabras sea exacto; basta con que sea aproximado. "
+                "El contenido final debe estar escrito en espaÃ±ol de EspaÃ±a. "
+                "Debes responder con fidelidad al texto bÃ­blico, sin inventar datos, citas ni versÃ­culos. "
                 f"{instruccion_tipo}"
                 f"{instruccion_tema_breve}"
                 f"{instruccion_estilo_bonito}"
                 "Usa Markdown claro y profesional. "
-                "Concluye indicando en mayúsculas, cursiva y negrita que el contenido ha sido generado por IA y puede contener errores."
+                "Concluye indicando en mayÃºsculas, cursiva y negrita que el contenido ha sido generado por IA y puede contener errores."
             )
         if lang_code == "ca":
             return (
                 f"Genera un text de {dd_tamano.value} paraules sobre {sujeto}{version_texto}.{enfoque_tema} "
-                f"Tipus sol·licitat: {localize_study_type(dd_tipo.value)}. "
+                f"Tipus solÂ·licitat: {localize_study_type(dd_tipo.value)}. "
                 f"{longitud_objetivo} "
                 f"{instruccion_pasaje}"
                 f"{aclaracion_longitud}"
                 "No cal que el nombre de paraules sigui exacte; n'hi ha prou que sigui aproximat. "
-                "El contingut final ha d'estar escrit en català. "
-                "Has de respondre amb fidelitat al text bíblic, sense inventar dades, cites ni versicles. "
+                "El contingut final ha d'estar escrit en catalÃ . "
+                "Has de respondre amb fidelitat al text bÃ­blic, sense inventar dades, cites ni versicles. "
                 f"{instruccion_tipo}"
                 f"{instruccion_tema_breve}"
                 f"{instruccion_estilo_bonito}"
                 "Fes servir Markdown clar i professional. "
-                "Acaba indicant en majúscules, cursiva i negreta que el contingut ha estat generat per IA i pot contenir errors."
+                "Acaba indicant en majÃºscules, cursiva i negreta que el contingut ha estat generat per IA i pot contenir errors."
             )
         if lang_code == "fr":
             return (
-                f"Génère un texte de {dd_tamano.value} mots sur {sujeto}{version_texto}.{enfoque_tema} "
-                f"Type demandé : {localize_study_type(dd_tipo.value)}. "
+                f"GÃ©nÃ¨re un texte de {dd_tamano.value} mots sur {sujeto}{version_texto}.{enfoque_tema} "
+                f"Type demandÃ© : {localize_study_type(dd_tipo.value)}. "
                 f"{longitud_objetivo} "
                 f"{instruccion_pasaje}"
                 f"{aclaracion_longitud}"
-                "Il n'est pas nécessaire que le nombre de mots soit exact ; il suffit qu'il reste approximatif. "
-                "Le contenu final doit être rédigé en français. "
-                "Tu dois répondre avec fidélité au texte biblique, sans inventer de faits, citations ou versets. "
+                "Il n'est pas nÃ©cessaire que le nombre de mots soit exact ; il suffit qu'il reste approximatif. "
+                "Le contenu final doit Ãªtre rÃ©digÃ© en franÃ§ais. "
+                "Tu dois rÃ©pondre avec fidÃ©litÃ© au texte biblique, sans inventer de faits, citations ou versets. "
                 f"{instruccion_tipo}"
                 f"{instruccion_tema_breve}"
                 f"{instruccion_estilo_bonito}"
                 "Utilise un Markdown clair et professionnel. "
-                "Termine en indiquant en majuscules, italique et gras que le contenu a été généré par IA et peut contenir des erreurs."
+                "Termine en indiquant en majuscules, italique et gras que le contenu a Ã©tÃ© gÃ©nÃ©rÃ© par IA et peut contenir des erreurs."
             )
         return (
             f"Generate a {dd_tamano.value}-word text about {sujeto}{version_texto}.{enfoque_tema} "
@@ -9526,42 +9476,42 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         situacion = mapa_situaciones_comportamiento.get(dd_comportamiento.value, "")
         if lang_code == "es":
             return (
-                f"Escribe una respuesta cristiana y práctica sobre cómo comportarme en esta situación: {situacion}. "
+                f"Escribe una respuesta cristiana y prÃ¡ctica sobre cÃ³mo comportarme en esta situaciÃ³n: {situacion}. "
                 f"Debe tener aproximadamente {dd_tamano_comportamiento.value} palabras. "
-                "Habla con tono cercano, sereno, claro y útil. "
-                "Da consejos concretos sobre actitud, palabras, límites sanos y disposición del corazón. "
-                "La respuesta debe centrarse en cómo actuar de manera bíblica, no solo en teoría. "
-                "Termina con un apartado final breve titulado 'Versículo relacionado' e incluye un versículo bíblico apropiado para esa situación, escribiendo tanto la referencia como el texto del versículo. "
-                "No inventes citas bíblicas ni cambies el sentido del texto. Si no estás seguro del texto exacto, usa un versículo que conozcas con seguridad. "
-                "Después añade una línea final en mayúsculas, cursiva y negrita indicando que el contenido ha sido generado por IA y puede contener errores. "
-                "Añade también una recomendación breve diciendo que, en caso de duda, conviene hablar con tu pastor. "
-                "Usa Markdown claro y fácil de leer."
+                "Habla con tono cercano, sereno, claro y Ãºtil. "
+                "Da consejos concretos sobre actitud, palabras, lÃ­mites sanos y disposiciÃ³n del corazÃ³n. "
+                "La respuesta debe centrarse en cÃ³mo actuar de manera bÃ­blica, no solo en teorÃ­a. "
+                "Termina con un apartado final breve titulado 'VersÃ­culo relacionado' e incluye un versÃ­culo bÃ­blico apropiado para esa situaciÃ³n, escribiendo tanto la referencia como el texto del versÃ­culo. "
+                "No inventes citas bÃ­blicas ni cambies el sentido del texto. Si no estÃ¡s seguro del texto exacto, usa un versÃ­culo que conozcas con seguridad. "
+                "DespuÃ©s aÃ±ade una lÃ­nea final en mayÃºsculas, cursiva y negrita indicando que el contenido ha sido generado por IA y puede contener errores. "
+                "AÃ±ade tambiÃ©n una recomendaciÃ³n breve diciendo que, en caso de duda, conviene hablar con tu pastor. "
+                "Usa Markdown claro y fÃ¡cil de leer."
             )
         if lang_code == "ca":
             return (
-                f"Escriu una resposta cristiana i pràctica sobre com comportar-me en aquesta situació: {situacion}. "
+                f"Escriu una resposta cristiana i prÃ ctica sobre com comportar-me en aquesta situaciÃ³: {situacion}. "
                 f"Ha de tenir aproximadament {dd_tamano_comportamiento.value} paraules. "
-                "Parla amb un to proper, serè, clar i útil. "
-                "Dona consells concrets sobre actitud, paraules, límits sans i disposició del cor. "
-                "La resposta s'ha de centrar en com actuar de manera bíblica, no només en teoria. "
-                "Acaba amb un apartat final breu titulat 'Versicle relacionat' i inclou un versicle bíblic adequat per a aquesta situació, escrivint tant la referència com el text del versicle. "
-                "No inventis cites bíbliques ni canviïs el sentit del text. Si no estàs segur del text exacte, fes servir un versicle que coneguis amb seguretat. "
-                "Després afegeix una línia final en majúscules, cursiva i negreta indicant que el contingut ha estat generat per IA i pot contenir errors. "
-                "Afegeix també una recomanació breu dient que, en cas de dubte, convé parlar amb el teu pastor. "
-                "Fes servir Markdown clar i fàcil de llegir."
+                "Parla amb un to proper, serÃ¨, clar i Ãºtil. "
+                "Dona consells concrets sobre actitud, paraules, lÃ­mits sans i disposiciÃ³ del cor. "
+                "La resposta s'ha de centrar en com actuar de manera bÃ­blica, no nomÃ©s en teoria. "
+                "Acaba amb un apartat final breu titulat 'Versicle relacionat' i inclou un versicle bÃ­blic adequat per a aquesta situaciÃ³, escrivint tant la referÃ¨ncia com el text del versicle. "
+                "No inventis cites bÃ­bliques ni canviÃ¯s el sentit del text. Si no estÃ s segur del text exacte, fes servir un versicle que coneguis amb seguretat. "
+                "DesprÃ©s afegeix una lÃ­nia final en majÃºscules, cursiva i negreta indicant que el contingut ha estat generat per IA i pot contenir errors. "
+                "Afegeix tambÃ© una recomanaciÃ³ breu dient que, en cas de dubte, convÃ© parlar amb el teu pastor. "
+                "Fes servir Markdown clar i fÃ cil de llegir."
             )
         if lang_code == "fr":
             return (
-                f"Rédige une réponse chrétienne et pratique sur la manière de me comporter dans cette situation : {situacion}. "
+                f"RÃ©dige une rÃ©ponse chrÃ©tienne et pratique sur la maniÃ¨re de me comporter dans cette situation : {situacion}. "
                 f"Elle doit contenir environ {dd_tamano_comportamiento.value} mots. "
                 "Utilise un ton proche, paisible, clair et utile. "
-                "Donne des conseils concrets sur l'attitude, les paroles, les limites saines et la disposition du cÅ“ur. "
-                "La réponse doit montrer comment agir de manière biblique, pas seulement donner de la théorie. "
-                "Termine par une courte section intitulée 'Verset lié' en incluant un verset biblique adapté à cette situation, avec la référence et le texte du verset. "
+                "Donne des conseils concrets sur l'attitude, les paroles, les limites saines et la disposition du cÃ…â€œur. "
+                "La rÃ©ponse doit montrer comment agir de maniÃ¨re biblique, pas seulement donner de la thÃ©orie. "
+                "Termine par une courte section intitulÃ©e 'Verset liÃ©' en incluant un verset biblique adaptÃ© Ã  cette situation, avec la rÃ©fÃ©rence et le texte du verset. "
                 "N'invente pas de citations bibliques et ne change pas le sens du texte. Si tu n'es pas certain du texte exact, utilise un verset que tu connais avec certitude. "
-                "Ajoute ensuite une ligne finale en majuscules, italique et gras indiquant que le contenu a été généré par IA et peut contenir des erreurs. "
-                "Ajoute aussi une brève recommandation disant qu'en cas de doute, il convient d'en parler avec ton pasteur. "
-                "Utilise un Markdown clair et facile à lire."
+                "Ajoute ensuite une ligne finale en majuscules, italique et gras indiquant que le contenu a Ã©tÃ© gÃ©nÃ©rÃ© par IA et peut contenir des erreurs. "
+                "Ajoute aussi une brÃ¨ve recommandation disant qu'en cas de doute, il convient d'en parler avec ton pasteur. "
+                "Utilise un Markdown clair et facile Ã  lire."
             )
         return (
             f"Write a practical Christian response about how I should behave in this situation: {situacion}. "
@@ -9580,39 +9530,39 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         pregunta = mapa_preguntas_incredulo.get(dd_incredulo.value, "")
         if lang_code == "es":
             return (
-                f"Escribe una respuesta cristiana, clara y respetuosa para responder a un incrédulo en esta situación: {pregunta}. "
+                f"Escribe una respuesta cristiana, clara y respetuosa para responder a un incrÃ©dulo en esta situaciÃ³n: {pregunta}. "
                 f"Debe tener aproximadamente {dd_tamano_incredulo.value} palabras. "
                 "Responde con tono amable, firme, comprensible y nada agresivo. "
-                "Da una explicación sencilla, bíblica y razonable, útil para conversación real, sin sonar a discusión. "
-                "Incluye un argumento central fácil de recordar y evita tecnicismos innecesarios. "
-                "Termina con un apartado breve titulado 'Versículo relacionado' e incluye la referencia y el texto del versículo. "
-                "Después añade una línea final en mayúsculas, cursiva y negrita indicando que el contenido ha sido generado por IA y puede contener errores. "
-                "Añade también una recomendación breve diciendo que, en caso de duda, conviene hablar con tu pastor. "
-                "No inventes citas bíblicas. Usa Markdown claro y fácil de leer."
+                "Da una explicaciÃ³n sencilla, bÃ­blica y razonable, Ãºtil para conversaciÃ³n real, sin sonar a discusiÃ³n. "
+                "Incluye un argumento central fÃ¡cil de recordar y evita tecnicismos innecesarios. "
+                "Termina con un apartado breve titulado 'VersÃ­culo relacionado' e incluye la referencia y el texto del versÃ­culo. "
+                "DespuÃ©s aÃ±ade una lÃ­nea final en mayÃºsculas, cursiva y negrita indicando que el contenido ha sido generado por IA y puede contener errores. "
+                "AÃ±ade tambiÃ©n una recomendaciÃ³n breve diciendo que, en caso de duda, conviene hablar con tu pastor. "
+                "No inventes citas bÃ­blicas. Usa Markdown claro y fÃ¡cil de leer."
             )
         if lang_code == "ca":
             return (
-                f"Escriu una resposta cristiana, clara i respectuosa per respondre a un incrèdul en aquesta situació: {pregunta}. "
+                f"Escriu una resposta cristiana, clara i respectuosa per respondre a un incrÃ¨dul en aquesta situaciÃ³: {pregunta}. "
                 f"Ha de tenir aproximadament {dd_tamano_incredulo.value} paraules. "
                 "Respon amb un to amable, ferm, comprensible i gens agressiu. "
-                "Dona una explicació senzilla, bíblica i raonable, útil per a una conversa real, sense sonar a discussió. "
-                "Inclou un argument central fàcil de recordar i evita tecnicismes innecessaris. "
-                "Acaba amb un apartat breu titulat 'Versicle relacionat' i inclou la referència i el text del versicle. "
-                "Després afegeix una línia final en majúscules, cursiva i negreta indicant que el contingut ha estat generat per IA i pot contenir errors. "
-                "Afegeix també una recomanació breu dient que, en cas de dubte, convé parlar amb el teu pastor. "
-                "No inventis cites bíbliques. Fes servir Markdown clar i fàcil de llegir."
+                "Dona una explicaciÃ³ senzilla, bÃ­blica i raonable, Ãºtil per a una conversa real, sense sonar a discussiÃ³. "
+                "Inclou un argument central fÃ cil de recordar i evita tecnicismes innecessaris. "
+                "Acaba amb un apartat breu titulat 'Versicle relacionat' i inclou la referÃ¨ncia i el text del versicle. "
+                "DesprÃ©s afegeix una lÃ­nia final en majÃºscules, cursiva i negreta indicant que el contingut ha estat generat per IA i pot contenir errors. "
+                "Afegeix tambÃ© una recomanaciÃ³ breu dient que, en cas de dubte, convÃ© parlar amb el teu pastor. "
+                "No inventis cites bÃ­bliques. Fes servir Markdown clar i fÃ cil de llegir."
             )
         if lang_code == "fr":
             return (
-                f"Rédige une réponse chrétienne, claire et respectueuse pour répondre à un incrédule dans cette situation : {pregunta}. "
+                f"RÃ©dige une rÃ©ponse chrÃ©tienne, claire et respectueuse pour rÃ©pondre Ã  un incrÃ©dule dans cette situation : {pregunta}. "
                 f"Elle doit contenir environ {dd_tamano_incredulo.value} mots. "
-                "Réponds avec un ton aimable, ferme, compréhensible et jamais agressif. "
+                "RÃ©ponds avec un ton aimable, ferme, comprÃ©hensible et jamais agressif. "
                 "Donne une explication simple, biblique et raisonnable, utile dans une vraie conversation, sans ton de dispute. "
-                "Inclue une idée centrale facile à retenir et évite les technicismes inutiles. "
-                "Termine par une courte section intitulée 'Verset lié' avec la référence et le texte du verset. "
-                "Ajoute ensuite une ligne finale en majuscules, italique et gras indiquant que le contenu a été généré par IA et peut contenir des erreurs. "
-                "Ajoute aussi une brève recommandation disant qu'en cas de doute, il convient d'en parler avec ton pasteur. "
-                "N'invente pas de citations bibliques. Utilise un Markdown clair et facile à lire."
+                "Inclue une idÃ©e centrale facile Ã  retenir et Ã©vite les technicismes inutiles. "
+                "Termine par une courte section intitulÃ©e 'Verset liÃ©' avec la rÃ©fÃ©rence et le texte du verset. "
+                "Ajoute ensuite une ligne finale en majuscules, italique et gras indiquant que le contenu a Ã©tÃ© gÃ©nÃ©rÃ© par IA et peut contenir des erreurs. "
+                "Ajoute aussi une brÃ¨ve recommandation disant qu'en cas de doute, il convient d'en parler avec ton pasteur. "
+                "N'invente pas de citations bibliques. Utilise un Markdown clair et facile Ã  lire."
             )
         return (
             f"Write a clear, respectful Christian response for answering an unbeliever in this situation: {pregunta}. "
@@ -9637,8 +9587,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Incluye orientacion concreta para el corazon, la mente, la oracion y los siguientes pasos practicos. "
                 "Si conviene, distingue entre lo que la Biblia afirma claramente y lo que requiere sabiduria pastoral. "
                 "Termina con un apartado breve titulado 'Versiculo relacionado' e incluye la referencia y el texto del versiculo. "
-                "Despues añade una linea final en mayusculas, cursiva y negrita indicando que el contenido ha sido generado por IA y puede contener errores. "
-                "Añade tambien una recomendacion breve diciendo que, en caso de duda, conviene hablar con tu pastor. "
+                "Despues aÃ±ade una linea final en mayusculas, cursiva y negrita indicando que el contenido ha sido generado por IA y puede contener errores. "
+                "AÃ±ade tambien una recomendacion breve diciendo que, en caso de duda, conviene hablar con tu pastor. "
                 "No inventes citas biblicas. Usa Markdown claro y facil de leer."
             )
         if lang_code == "ca":
@@ -9648,15 +9598,15 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Respon amb un to proper, biblic, esperancador i honest, sense duresa ni frases buides. "
                 "Parla com una ajuda per a un cristia real que vol obeir Deu pero esta lluitant o confos. "
                 "Inclou orientacio concreta per al cor, la ment, la pregaria i els passos practics seguents. "
-                "Si convé, distingeix entre el que la Biblia afirma clarament i el que requereix saviesa pastoral. "
+                "Si convÃ©, distingeix entre el que la Biblia afirma clarament i el que requereix saviesa pastoral. "
                 "Acaba amb un apartat breu titulat 'Versicle relacionat' i inclou la referencia i el text del versicle. "
                 "Despres afegeix una linia final en majuscules, cursiva i negreta indicant que el contingut ha estat generat per IA i pot contenir errors. "
-                "Afegeix tambe una recomanacio breu dient que, en cas de dubte, convé parlar amb el teu pastor. "
+                "Afegeix tambe una recomanacio breu dient que, en cas de dubte, convÃ© parlar amb el teu pastor. "
                 "No inventis cites bibliques. Fes servir Markdown clar i facil de llegir."
             )
         if lang_code == "fr":
             return (
-                f"Rédige une réponse chrétienne, pastorale, claire et pratique pour cette question qu'un croyant se pose : {pregunta}. "
+                f"RÃ©dige une rÃ©ponse chrÃ©tienne, pastorale, claire et pratique pour cette question qu'un croyant se pose : {pregunta}. "
                 f"Elle doit contenir environ {dd_tamano_cristianos.value} mots. "
                 "Reponds avec un ton proche, biblique, plein d'esperance et honnete, sans durete ni phrases creuses. "
                 "Parle comme une aide pour un chretien reel qui veut obeir a Dieu mais qui lutte ou se sent perdu. "
@@ -9939,10 +9889,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Responde en mensajes muy breves, buscando ocupar solo 2 o 3 lineas como maximo. "
                 "Normalmente responde en 1 a 3 frases breves, sin parrafos largos, sin listas y sin formato Markdown. "
                 "Deja que se note que sufres con la persona, que te duele lo que esta viviendo y que intentas cargar un poco con ella en la conversacion. "
-                "En los primeros intercambios, prioriza escuchar, acompañar, reflejar lo que la persona esta viviendo y transmitir interes genuino. "
+                "En los primeros intercambios, prioriza escuchar, acompaÃ±ar, reflejar lo que la persona esta viviendo y transmitir interes genuino. "
                 "Solo ofrece un consejo concreto cuando la persona ya se ha explicado mejor, cuando te lo pida, o cuando veas claramente que una orientacion breve y pastoral puede ayudar. "
                 "Cuando aconsejes, hazlo poco a poco, con consejos pequenos, sueltos y muy concretos, no con muchas recomendaciones juntas. "
-                "No conviertas cada respuesta en una solucion; a veces basta con acompañar, consolar, preguntar y dirigir suavemente el corazon hacia Cristo. "
+                "No conviertas cada respuesta en una solucion; a veces basta con acompaÃ±ar, consolar, preguntar y dirigir suavemente el corazon hacia Cristo. "
                 "Deja espacio para que la otra persona siga hablando y, cuando encaje, termina con una pregunta corta y pastoral. "
                 "No hagas introducciones largas ni mini sermones. "
                 "Solo cita un pasaje biblico si de verdad ayuda y hazlo de forma breve. "
@@ -9954,17 +9904,17 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ), instruccion_turno)
         if lang_code == "ca":
             return agregar_instruccion_turno_chat((
-                "Actua com un conseller cristià evangelic, compassiu, prudent i fidel a la Biblia. "
+                "Actua com un conseller cristiÃ  evangelic, compassiu, prudent i fidel a la Biblia. "
                 "Base les teves respostes exclusivament en la Biblia i, quan ajudi, en comentaris evangelics reconeguts com Matthew Henry, MacArthur, Wiersbe, Spurgeon, McGee, Sproul, la Biblia d'Estudi Holman i la Biblia d'Estudi MacArthur. "
                 "Respon en catala, amb un to pastoral, amable, proper, esperancador i practic. "
                 "No inventis versicles, doctrines, afirmacions bibliques ni referencies. "
                 "Cita passatges biblics quan siga rellevant. "
                 "Dona orientacio per al cor, la ment, la pregaria i els seguents passos concrets. "
                 "Quan convingui, distingeix entre el que la Biblia ensenya clarament i el que requereix saviesa pastoral. "
-                "No facis servir llenguatge místic, esoteric ni d'autoajuda secular. "
+                "No facis servir llenguatge mÃ­stic, esoteric ni d'autoajuda secular. "
                 "No donis consells medics, legals ni psicologics professionals. "
-                "Si la consulta surt del cristianisme, respon amb respecte i redirigeix cap a la veritat biblica, Crist i l'obediencia a la Paraula de Déu. "
-                "Si detectes perill immediat, abús, autolesio, idees suicides o un risc serios, digues-ho amb claredat i anima a buscar ajuda urgent local i a contactar amb un pastor o una persona de confiança. "
+                "Si la consulta surt del cristianisme, respon amb respecte i redirigeix cap a la veritat biblica, Crist i l'obediencia a la Paraula de DÃ©u. "
+                "Si detectes perill immediat, abÃºs, autolesio, idees suicides o un risc serios, digues-ho amb claredat i anima a buscar ajuda urgent local i a contactar amb un pastor o una persona de confianÃ§a. "
                 "Respon com en un xat real, amb frases curtes i naturals, com un pastor que escolta de veritat. "
                 "Abans d'aconsellar, procura entendre be la persona, el seu dolor, la seva confusio o la seva lluita. "
                 "Aprofundeix primer en el problema amb preguntes senzilles i pastorals, per entendre millor que esta passant, des de quan, que li pesa mes i com ho esta vivint per dins. "
@@ -9972,7 +9922,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Dona una sola idea principal per missatge. "
                 "Respon amb missatges molt breus, buscant ocupar nomes 2 o 3 linies com a maxim. "
                 "Normalment respon en 1 a 3 frases breus, sense paragrafs llargs, sense llistes i sense format Markdown. "
-                "En els primers intercanvis, prioritza escoltar, acompanyar, reflectir el que la persona esta vivint i transmetre interes genuí. "
+                "En els primers intercanvis, prioritza escoltar, acompanyar, reflectir el que la persona esta vivint i transmetre interes genuÃ­. "
                 "Nomes ofereix un consell concret quan la persona ja s'haja explicat millor, quan t'ho demane, o quan veges clarament que una orientacio breu i pastoral pot ajudar. "
                 "Quan aconselles, fes-ho a poc a poc, amb consells petits, solts i molt concrets, no amb moltes recomanacions juntes. "
                 "No convertisques cada resposta en una solucio; de vegades n'hi ha prou amb acompanyar, consolar, preguntar i dirigir suaument el cor cap a Crist. "
@@ -10064,12 +10014,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             )
         if lang_code == "ca":
             return (
-                "Actua com un conseller cristià evangelic, compassiu, prudent i fidel a la Biblia. "
+                "Actua com un conseller cristiÃ  evangelic, compassiu, prudent i fidel a la Biblia. "
                 "Respon en catala, amb un to proper, esperancador i practic. "
                 "No inventis versicles ni afirmacions bibliques. "
                 "Dona orientacio per al cor, la ment, la pregaria i els seguents passos concrets. "
                 "Quan convingui, distingeix entre el que la Biblia ensenya clarament i el que requereix saviesa pastoral. "
-                "Si detectes perill immediat, abús, autolesio, idees suicides o un risc serios, digues-ho amb claredat i anima a buscar ajuda urgent local i a contactar amb un pastor o una persona de confiança. "
+                "Si detectes perill immediat, abÃºs, autolesio, idees suicides o un risc serios, digues-ho amb claredat i anima a buscar ajuda urgent local i a contactar amb un pastor o una persona de confianÃ§a. "
                 "Respon en Markdown, de manera conversacional, sense sonar robotic. "
                 "No facis introduccions llargues. "
                 "Acaba amb una pregaria breu si encaixa de manera natural. "
@@ -10140,7 +10090,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Ajuda amb errors habituals com API key invalida, manca de connexio, limit 429 de Groq, models no disponibles o respostes buides. "
                 "Si l'usuari esmenta un error, explica que vol dir i proposa un o dos passos concrets per provar, sense llistes llargues. "
                 "Si l'usuari pregunta per teologia, conselleria o estudi biblic, redirigeix-lo amb amabilitat a la seccio adequada de l'app en lloc de respondre com a conseller. "
-                "No inventis funcions que l'app no tingui. Si alguna cosa no esta clara, digues-ho amb honestedat i parla nomes del que es pot deduir per la interfície i el flux del programa. "
+                "No inventis funcions que l'app no tingui. Si alguna cosa no esta clara, digues-ho amb honestedat i parla nomes del que es pot deduir per la interfÃ­cie i el flux del programa. "
                 "Respon com en un xat real, amb frases curtes i naturals. "
                 "Dona una sola idea principal per missatge i normalment respon en 1 a 4 frases breus, sense Markdown ni llistes. "
                 "Quan ajudi, acaba amb una pregunta curta per continuar guiant l'usuari. "
@@ -10219,13 +10169,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Si l'usuari busca una lectura esoterica o d'endevinacio, rebutja aquest marc amb respecte i redirigeix cap a Crist, l'Escriptura i el discerniment en pregaria. "
                 "Base les teves observacions nomes en la Biblia i, quan ajude, en principis evangelics sobris. "
                 "No inventis simbolismes ni versicles. Si un simbol no te una base biblica clara, digues-ho amb honestedat. "
-                "Explica que no tot somni ve necessàriament de Deu; alguns poden reflectir carregues, records, pors, desitjos o preocupacions. "
+                "Explica que no tot somni ve necessÃ riament de Deu; alguns poden reflectir carregues, records, pors, desitjos o preocupacions. "
                 "Abans d'interpretar, procura entendre be el somni i el context espiritual i emocional de la persona. "
                 "La teva prioritat normal es donar una interpretacio inicial amb el que ja hi ha, encara que siga breu i prudent. "
                 "Si falten detalls importants, fes com a maxim una sola pregunta breu d'aclariment, i nomes si sense aixo seria irresponsable interpretar. "
                 "No convertisques la conversa en una entrevista ni encadenes diverses preguntes seguides. "
                 "Si falten dades secundaries, esmenta la limitacio en una frase i tot i aixi ofereix una lectura preliminar amb el que tens. "
-                "Quan ja tingues prou context, respon de manera tentativa i humil amb expressions com 'podria suggerir', 'podria apuntar a' o 'convé discernir si'. "
+                "Quan ja tingues prou context, respon de manera tentativa i humil amb expressions com 'podria suggerir', 'podria apuntar a' o 'convÃ© discernir si'. "
                 "Quan esmentes un simbol, connecta'l amb la seva possible base biblica i amb el context concret del somni. "
                 "No afirmes dates, destins tancats, promeses automatiques ni anuncis categorics sobre el futur. "
                 "Dona sempre una orientacio final cap a la pregaria, la Biblia i el consell pastoral madur. "
@@ -10434,7 +10384,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                     "des paz, claridad y sabiduria para este tiempo. En el nombre de Jesus. Amen."
                 ),
                 (
-                    "Señor Dios, ponemos esta conversacion en tus manos y te pedimos tu "
+                    "SeÃ±or Dios, ponemos esta conversacion en tus manos y te pedimos tu "
                     "direccion, tu paz y tu luz para hablar con verdad y amor. En el nombre de Jesus. Amen."
                 ),
                 (
@@ -10528,7 +10478,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return ""
 
         respuesta_usuario = normalizar_texto_chat_consejero(ultimo_usuario)
-        if respuesta_usuario not in {"amen", "amén"}:
+        if respuesta_usuario not in {"amen", "amÃ©n"}:
             return ""
         if not es_respuesta_oracion_chat_consejero(ultimo_asistente, ""):
             return ""
@@ -10713,28 +10663,28 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         pistas_usuario = [
             "ora por mi",
-            "ora por mí",
+            "ora por mÃ­",
             "oremos",
             "puedes orar",
             "puedes hacer una oracion",
-            "puedes hacer una oración",
+            "puedes hacer una oraciÃ³n",
             "haz una oracion",
-            "haz una oración",
+            "haz una oraciÃ³n",
             "necesito oracion",
-            "necesito oración",
+            "necesito oraciÃ³n",
         ]
         if any(pista in consulta for pista in pistas_usuario):
             return True
 
         respuesta_simple = respuesta.lstrip("*_#> -\n\r\t")
         inicios_oracion = (
-            "señor",
+            "seÃ±or",
             "senor",
             "padre",
             "dios",
             "jesus",
             "oracion:",
-            "oración:",
+            "oraciÃ³n:",
             "oremos",
             "te pido",
             "venimos a ti",
@@ -10751,7 +10701,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         respuesta = recortar_solo_oracion_chat_consejero(respuesta)
 
         respuesta = re.sub(
-            r"(?i)[,;:\-]?\s*en el nombre de jes(?:u|Ãº|ú)s\.?\s*am(?:e|Ã©|é)n\.?\s*$",
+            r"(?i)[,;:\-]?\s*en el nombre de jes(?:u|ÃƒÂº|Ãº)s\.?\s*am(?:e|ÃƒÂ©|Ã©)n\.?\s*$",
             "",
             respuesta,
         ).strip()
@@ -10766,14 +10716,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         cierres = [
             "En el nombre de Jesus. Amen.",
-            "En el nombre de Jesús. Amén.",
-            "En el nombre de Jesus. Amén.",
-            "En el nombre de Jesús. Amen.",
+            "En el nombre de JesÃºs. AmÃ©n.",
+            "En el nombre de Jesus. AmÃ©n.",
+            "En el nombre de JesÃºs. Amen.",
         ]
         for cierre in cierres:
             respuesta = respuesta.replace(cierre, "").strip()
-        respuesta = re.sub(r"(?i)[,;:\-]?\s*am(?:e|Ã©|é)n\.?$", "", respuesta).strip()
-        respuesta = re.sub(r"(?i)[,;:\-]?\s*am(?:e|Ã©|é)n\.?$", "", respuesta).strip()
+        respuesta = re.sub(r"(?i)[,;:\-]?\s*am(?:e|ÃƒÂ©|Ã©)n\.?$", "", respuesta).strip()
+        respuesta = re.sub(r"(?i)[,;:\-]?\s*am(?:e|ÃƒÂ©|Ã©)n\.?$", "", respuesta).strip()
         respuesta = re.sub(r"\s{2,}", " ", respuesta).strip()
         return respuesta
 
@@ -10788,7 +10738,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             return respuesta
 
         match = re.match(
-            r"^(?P<prefijo>[\s\"'¿¡\(\[\*_#>\-]*)(?P<lemma>entiendo)(?P<cola>\s+que\b)?",
+            r"^(?P<prefijo>[\s\"'Â¿Â¡\(\[\*_#>\-]*)(?P<lemma>entiendo)(?P<cola>\s+que\b)?",
             respuesta,
             re.IGNORECASE,
         )
@@ -10819,9 +10769,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     def obtener_nombre_usuario_chat_consejero() -> str:
         patrones = (
-            r"\bme llamo\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'\-]{1,30})\b",
-            r"\bsoy\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'\-]{1,30})\b",
-            r"\bmi nombre es\s+([A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'\-]{1,30})\b",
+            r"\bme llamo\s+([A-Za-zÃÃ‰ÃÃ“ÃšÃœÃ‘Ã¡Ã©Ã­Ã³ÃºÃ¼Ã±][A-Za-zÃÃ‰ÃÃ“ÃšÃœÃ‘Ã¡Ã©Ã­Ã³ÃºÃ¼Ã±'\-]{1,30})\b",
+            r"\bsoy\s+([A-Za-zÃÃ‰ÃÃ“ÃšÃœÃ‘Ã¡Ã©Ã­Ã³ÃºÃ¼Ã±][A-Za-zÃÃ‰ÃÃ“ÃšÃœÃ‘Ã¡Ã©Ã­Ã³ÃºÃ¼Ã±'\-]{1,30})\b",
+            r"\bmi nombre es\s+([A-Za-zÃÃ‰ÃÃ“ÃšÃœÃ‘Ã¡Ã©Ã­Ã³ÃºÃ¼Ã±][A-Za-zÃÃ‰ÃÃ“ÃšÃœÃ‘Ã¡Ã©Ã­Ã³ÃºÃ¼Ã±'\-]{1,30})\b",
         )
         for rol, mensaje, _ in reversed(historial_chat_consejero):
             if rol != "user":
@@ -10993,7 +10943,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 indice_pregunta = inicio
 
         patron_cierre = re.search(
-            r"(?i)\ben el nombre de jes(?:u|Ãº)s\.?\s*am(?:e|Ã©)n\.?",
+            r"(?i)\ben el nombre de jes(?:u|ÃƒÂº)s\.?\s*am(?:e|ÃƒÂ©)n\.?",
             respuesta,
         )
         if indice_pregunta is not None and (
@@ -11011,7 +10961,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             r"(?i)\s+[Pp]odrias\b",
             r"(?i)\s+[Qq]ue es lo que\b",
             r"(?i)\s+[Ee]n que\b",
-            r"(?i)\s*¿",
+            r"(?i)\s*Â¿",
             r"\?",
         ):
             coincidencia = re.search(patron, respuesta)
@@ -11036,16 +10986,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         cierres = [
             "En el nombre de Jesus. Amen.",
-            "En el nombre de Jesús. Amén.",
-            "En el nombre de Jesus. Amén.",
-            "En el nombre de Jesús. Amen.",
+            "En el nombre de JesÃºs. AmÃ©n.",
+            "En el nombre de Jesus. AmÃ©n.",
+            "En el nombre de JesÃºs. Amen.",
             "En el nombre de Jesus amen.",
-            "En el nombre de Jesús amen.",
+            "En el nombre de JesÃºs amen.",
         ]
         for cierre in cierres:
             respuesta = respuesta.replace(cierre, "").strip()
         respuesta = re.sub(
-            r"(?i)[,;:\-]?\s*en el nombre de jes(?:u|ú)s\.?\s*amen\.?$",
+            r"(?i)[,;:\-]?\s*en el nombre de jes(?:u|Ãº)s\.?\s*amen\.?$",
             "",
             respuesta,
         ).strip()
@@ -11367,10 +11317,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 f"Usa el siguiente resultado previo como contexto principal para responder la pregunta relacionada:\n\n{contexto_resultado}\n\n"
                 if lang_code == "es" else
                 (
-                    f"Fes servir el resultat previ següent com a context principal per respondre la pregunta relacionada:\n\n{contexto_resultado}\n\n"
+                    f"Fes servir el resultat previ segÃ¼ent com a context principal per respondre la pregunta relacionada:\n\n{contexto_resultado}\n\n"
                     if lang_code == "ca" else
                     (
-                        f"Utilise le résultat précédent suivant comme contexte principal pour répondre à la question liée :\n\n{contexto_resultado}\n\n"
+                        f"Utilise le rÃ©sultat prÃ©cÃ©dent suivant comme contexte principal pour rÃ©pondre Ã  la question liÃ©e :\n\n{contexto_resultado}\n\n"
                         if lang_code == "fr" else
                         f"Use the following previous result as the main context to answer the related question:\n\n{contexto_resultado}\n\n"
                     )
@@ -11392,7 +11342,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 (
                     "Si tu cites le texte biblique litteral, verifie-le silencieusement au moins deux fois et ne melange pas les versions ; si tu n'es pas tres sur du texte exact, donne seulement la reference ou precise qu'il vaut mieux le verifier dans une Bible ou sur un site biblique fiable. "
                     "Quand tu donnes plusieurs versets suivis ou un passage, place d'abord un bref titre du passage en gras, style en-tete biblique ; si tu ne connais pas avec une forte certitude le titre habituel de cette version, utilise un titre descriptif sans le presenter comme officiel. "
-                    "Numérote chaque verset avec son numero reel au debut et ecris chaque verset sur sa propre ligne. "
+                    "NumÃ©rote chaque verset avec son numero reel au debut et ecris chaque verset sur sa propre ligne. "
                     if lang_code == "fr" else
                     "If you quote biblical wording literally, silently verify it at least twice and do not mix translations; if you are not highly certain of the exact wording, give only the reference or say that it should be checked in a trusted Bible or Bible website. "
                     "When you provide several consecutive verses or a passage, place a short passage title in bold first, in a Bible-heading style; if you do not know the usual title for that translation with high confidence, use a descriptive one without presenting it as official. "
@@ -11403,39 +11353,39 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         if lang_code == "es":
             prompt = (
-                "Responde desde una perspectiva cristiana evangélica, con base bíblica, tono claro, pastoral y fiel a la Escritura. "
-                "Prioriza exactitud bíblica, claridad, reverencia y utilidad espiritual. "
-                "Responde en Markdown, con apartados breves si ayudan. Cuida la presentación visual del texto: usa un título bonito y reverente y, si encaja, algunos símbolos cristianos con moderación, evitando caracteres raros o iconos que se vean mal. "
-                "Incluye referencias bíblicas concretas cuando sea apropiado. "
-                "No inventes versículos ni afirmaciones históricas. "
-                "La respuesta final debe estar escrita en español de España. "
-                "Al final indica, en mayúsculas, cursiva y negrita, que el contenido ha sido generado por IA y puede contener errores. "
+                "Responde desde una perspectiva cristiana evangÃ©lica, con base bÃ­blica, tono claro, pastoral y fiel a la Escritura. "
+                "Prioriza exactitud bÃ­blica, claridad, reverencia y utilidad espiritual. "
+                "Responde en Markdown, con apartados breves si ayudan. Cuida la presentaciÃ³n visual del texto: usa un tÃ­tulo bonito y reverente y, si encaja, algunos sÃ­mbolos cristianos con moderaciÃ³n, evitando caracteres raros o iconos que se vean mal. "
+                "Incluye referencias bÃ­blicas concretas cuando sea apropiado. "
+                "No inventes versÃ­culos ni afirmaciones histÃ³ricas. "
+                "La respuesta final debe estar escrita en espaÃ±ol de EspaÃ±a. "
+                "Al final indica, en mayÃºsculas, cursiva y negrita, que el contenido ha sido generado por IA y puede contener errores. "
                 f"{instruccion_precision_preguntas}"
                 f"{bloque_contexto}"
                 f"Pregunta: {pregunta}"
             )
         elif lang_code == "ca":
             prompt = (
-                "Respon des d'una perspectiva cristiana evangèlica, amb base bíblica, to clar, pastoral i fidel a l'Escriptura. "
-                "Prioritza exactitud bíblica, claredat, reverència i utilitat espiritual. "
-                "Respon en Markdown, amb apartats breus si ajuden. Cuida la presentació visual del text: fes servir un títol bonic i reverent i, si encaixa, alguns símbols cristians amb moderació, evitant caràcters estranys o icones que es vegin malament. "
-                "Inclou referències bíbliques concretes quan sigui apropiat. "
-                "No inventis versicles ni afirmacions històriques. "
-                "La resposta final ha d'estar escrita en català. "
-                "Al final indica, en majúscules, cursiva i negreta, que el contingut ha estat generat per IA i pot contenir errors. "
+                "Respon des d'una perspectiva cristiana evangÃ¨lica, amb base bÃ­blica, to clar, pastoral i fidel a l'Escriptura. "
+                "Prioritza exactitud bÃ­blica, claredat, reverÃ¨ncia i utilitat espiritual. "
+                "Respon en Markdown, amb apartats breus si ajuden. Cuida la presentaciÃ³ visual del text: fes servir un tÃ­tol bonic i reverent i, si encaixa, alguns sÃ­mbols cristians amb moderaciÃ³, evitant carÃ cters estranys o icones que es vegin malament. "
+                "Inclou referÃ¨ncies bÃ­bliques concretes quan sigui apropiat. "
+                "No inventis versicles ni afirmacions histÃ²riques. "
+                "La resposta final ha d'estar escrita en catalÃ . "
+                "Al final indica, en majÃºscules, cursiva i negreta, que el contingut ha estat generat per IA i pot contenir errors. "
                 f"{instruccion_precision_preguntas}"
                 f"{bloque_contexto}"
                 f"Pregunta: {pregunta}"
             )
         elif lang_code == "fr":
             prompt = (
-                "Réponds depuis une perspective chrétienne évangélique, avec une base biblique, un ton clair, pastoral et fidèle à l'Écriture. "
-                "Priorise l'exactitude biblique, la clarté, la révérence et l'utilité spirituelle. "
-                "Réponds en Markdown, avec de courtes sections si cela aide. Soigne la présentation visuelle du texte : utilise un beau titre révérencieux et, si cela convient, quelques symboles chrétiens avec modération, en évitant les caractères étranges ou les icônes qui s'affichent mal. "
-                "Inclue des références bibliques concrètes lorsque c'est approprié. "
+                "RÃ©ponds depuis une perspective chrÃ©tienne Ã©vangÃ©lique, avec une base biblique, un ton clair, pastoral et fidÃ¨le Ã  l'Ã‰criture. "
+                "Priorise l'exactitude biblique, la clartÃ©, la rÃ©vÃ©rence et l'utilitÃ© spirituelle. "
+                "RÃ©ponds en Markdown, avec de courtes sections si cela aide. Soigne la prÃ©sentation visuelle du texte : utilise un beau titre rÃ©vÃ©rencieux et, si cela convient, quelques symboles chrÃ©tiens avec modÃ©ration, en Ã©vitant les caractÃ¨res Ã©tranges ou les icÃ´nes qui s'affichent mal. "
+                "Inclue des rÃ©fÃ©rences bibliques concrÃ¨tes lorsque c'est appropriÃ©. "
                 "N'invente ni versets ni affirmations historiques. "
-                "La réponse finale doit être rédigée en français. "
-                "À la fin, indique en majuscules, italique et gras que le contenu a été généré par IA et peut contenir des erreurs. "
+                "La rÃ©ponse finale doit Ãªtre rÃ©digÃ©e en franÃ§ais. "
+                "Ã€ la fin, indique en majuscules, italique et gras que le contenu a Ã©tÃ© gÃ©nÃ©rÃ© par IA et peut contenir des erreurs. "
                 f"{instruccion_precision_preguntas}"
                 f"{bloque_contexto}"
                 f"Question: {pregunta}"
@@ -11753,7 +11703,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
     texto_paciencia = {
         "es": "LA PACIENCIA ES UNA VIRTUD",
-        "ca": "LA PACIÈNCIA ÉS UNA VIRTUT",
+        "ca": "LA PACIÃˆNCIA Ã‰S UNA VIRTUT",
         "fr": "LA PATIENCE EST UNE VERTU",
         "en": "PATIENCE IS A VIRTUE",
     }.get(lang_code, "LA PACIENCIA ES UNA VIRTUD")
@@ -11975,7 +11925,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         width=48,
         height=48,
         bgcolor=theme["secondary"],
-        border=ft.border.all(3, theme["primary"]),
+        border=_border_all(3, theme["primary"]),
         border_radius=24,
         content=ft.Icon(ft.Icons.AUTO_AWESOME if es_modo_chat_suenos else (ft.Icons.HELP_OUTLINE if es_modo_chat_soporte else ft.Icons.FORUM_ROUNDED), color=theme["secondary_text"], size=24),
         alignment=ft.Alignment(0, 0),
@@ -12000,7 +11950,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         contenido_pantalla.padding = 10 if movil else (12 if estrecha else 14)
         contenido_pantalla.border_radius = 12 if movil else 16
         marco_principal.padding = 3 if movil else 6
-        marco_principal.border = ft.border.all(6 if movil else 7, theme["primary"])
+        marco_principal.border = _border_all(6 if movil else 7, theme["primary"])
         marco_principal.border_radius = 18 if movil else 26
 
         contenedor_pasaje.content = (
@@ -12144,22 +12094,22 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 spacing=8 if movil else 12,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.padding.symmetric(horizontal=10 if movil else 12, vertical=10),
+            padding=_padding_symmetric(horizontal=10 if movil else 12, vertical=10),
             bgcolor=theme["primary"],
-            border_radius=_radius_esquinas(top_left=18, top_right=18, bottom_left=12, bottom_right=12),
-            border=ft.border.all(3, theme["border"]),
+            border_radius=ft.BorderRadius(top_left=18, top_right=18, bottom_left=12, bottom_right=12),
+            border=_border_all(3, theme["border"]),
         )
         avatar_chat_consejero.width = 42 if movil else 48
         avatar_chat_consejero.height = 42 if movil else 48
         avatar_chat_consejero.border_radius = 21 if movil else 24
         icono_barra_chat.visible = not movil
-        tf_chat_consejero.content_padding = ft.padding.symmetric(horizontal=12 if movil else 16, vertical=12 if movil else 14)
+        tf_chat_consejero.content_padding = _padding_symmetric(horizontal=12 if movil else 16, vertical=12 if movil else 14)
         btn_enviar_chat_consejero.style = ft.ButtonStyle(
             shape=ft.CircleBorder(),
             padding=10 if movil else 14,
         )
-        caja_chat_consejero.padding = ft.padding.symmetric(horizontal=8 if movil else 12, vertical=10 if movil else 14)
-        barra_chat_consejero.padding = ft.padding.symmetric(horizontal=8 if movil else 10, vertical=8)
+        caja_chat_consejero.padding = _padding_symmetric(horizontal=8 if movil else 12, vertical=10 if movil else 14)
+        barra_chat_consejero.padding = _padding_symmetric(horizontal=8 if movil else 10, vertical=8)
         barra_chat_consejero.content = ft.Row(
             [icono_barra_chat, tf_chat_consejero, btn_enviar_chat_consejero],
             spacing=8 if movil else 10,
@@ -12206,7 +12156,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                     spacing=10,
                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
                 ),
-                padding=ft.padding.symmetric(horizontal=2),
+                padding=_padding_symmetric(horizontal=2),
             )
             if estrecha
             else ft.Row(
@@ -12223,7 +12173,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                     spacing=10,
                     horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
                 ),
-                padding=ft.padding.symmetric(horizontal=2),
+                padding=_padding_symmetric(horizontal=2),
             )
             if estrecha
             else ft.Row(
@@ -12301,7 +12251,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ),
         padding=14,
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=22,
         shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
         expand=True,
@@ -12323,7 +12273,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ),
         padding=14,
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=22,
         shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
         expand=True,
@@ -12343,7 +12293,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ),
         padding=14,
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=22,
         shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
     )
@@ -12361,7 +12311,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ),
         padding=14,
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=22,
         shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
     )
@@ -12379,7 +12329,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ),
         padding=14,
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=22,
         shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
     )
@@ -12391,7 +12341,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 ft.Text(textos_dones["intro"], color=theme["text"], size=13),
                 ft.Container(
                     padding=12,
-                    border=ft.border.all(3, theme["field_border"]),
+                    border=_border_all(3, theme["field_border"]),
                     border_radius=14,
                     bgcolor=theme["accent"],
                     content=ft.Column(
@@ -12419,16 +12369,16 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ),
         padding=14,
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=22,
         shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
     )
     caja_chat_consejero = ft.Container(
         content=chat_conversacion,
-        padding=ft.padding.symmetric(horizontal=12, vertical=14),
+        padding=_padding_symmetric(horizontal=12, vertical=14),
         bgcolor=theme["accent"],
         border_radius=0,
-        border=ft.border.all(0, "transparent"),
+        border=_border_all(0, "transparent"),
         clip_behavior=ft.ClipBehavior.HARD_EDGE,
         expand=True,
     )
@@ -12443,9 +12393,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             spacing=10,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         ),
-        padding=ft.padding.symmetric(horizontal=10, vertical=8),
+        padding=_padding_symmetric(horizontal=10, vertical=8),
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(2, theme["field_border"]),
+        border=_border_all(2, theme["field_border"]),
         border_radius=0,
     )
     panel_chat_consejero = ft.Container(
@@ -12462,7 +12412,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ),
         padding=0,
         bgcolor=theme["page_bg"],
-        border=ft.border.all(2, theme["panel_border"]),
+        border=_border_all(2, theme["panel_border"]),
         border_radius=22,
         shadow=ft.BoxShadow(blur_radius=10, color="#00000014", offset=ft.Offset(0, 3)),
         expand=True,
@@ -12472,7 +12422,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     contenedor_aviso_generacion.padding = 10
     contenedor_aviso_generacion.border_radius = 14
     contenedor_aviso_generacion.bgcolor = theme["secondary"]
-    contenedor_aviso_generacion.border = ft.border.all(4, theme["panel_border"])
+    contenedor_aviso_generacion.border = _border_all(4, theme["panel_border"])
     contenedor_aviso_generacion.visible = False
 
     panel_generacion = ft.Container(
@@ -12491,7 +12441,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ),
         padding=14,
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=22,
         shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
     )
@@ -12501,7 +12451,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         padding=14,
         bgcolor="#FFFFFF",
         border_radius=18,
-        border=ft.border.all(5, theme["panel_border"]),
+        border=_border_all(5, theme["panel_border"]),
         height=350,
     )
 
@@ -12519,7 +12469,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         ),
         padding=18,
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=22,
         shadow=ft.BoxShadow(blur_radius=14, color="#D9D9D9", offset=ft.Offset(0, 4)),
         expand=True,
@@ -12547,8 +12497,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         fila_pregunta_resultado.visible = mostrar_pregunta_resultado
         fila_acciones_resultado.visible = mostrar_pregunta_resultado
 
-        panel_pasaje.border = ft.border.all(4, theme["panel_border"])
-        panel_generacion.border = ft.border.all(4, theme["panel_border"])
+        panel_pasaje.border = _border_all(4, theme["panel_border"])
+        panel_generacion.border = _border_all(4, theme["panel_border"])
         panel_pasaje.bgcolor = theme["panel_bg"]
         panel_generacion.bgcolor = theme["panel_bg"]
         btn_generar.style = estilo_boton_generar_resultado
@@ -12571,11 +12521,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             panel_chat_consejero.visible = False
             panel_comportamiento.visible = True
             panel_comportamiento.bgcolor = theme["panel_bg"]
-            panel_comportamiento.border = ft.border.all(4, theme["panel_border"])
+            panel_comportamiento.border = _border_all(4, theme["panel_border"])
             contenedor_comportamiento.bgcolor = theme["accent"] if not situacion_lista else theme["secondary"]
-            contenedor_comportamiento.border = ft.border.all(6 if not situacion_lista else 4, theme["panel_border"])
+            contenedor_comportamiento.border = _border_all(6 if not situacion_lista else 4, theme["panel_border"])
             contenedor_tamano_comportamiento.bgcolor = theme["accent"] if situacion_lista and not palabras_listas else theme["secondary"]
-            contenedor_tamano_comportamiento.border = ft.border.all(6 if situacion_lista and not palabras_listas else 4, theme["panel_border"])
+            contenedor_tamano_comportamiento.border = _border_all(6 if situacion_lista and not palabras_listas else 4, theme["panel_border"])
             btn_generar_comportamiento.visible = situacion_lista and palabras_listas
             if vista_resultado_completa or mostrar_carga_resultado or hay_resultado_real:
                 contenedor_cuerpo.content = ft.Column([panel_comportamiento, panel_resultado], spacing=18, expand=True)
@@ -12603,11 +12553,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             panel_incredulo.visible = True
             panel_cristianos.visible = False
             panel_incredulo.bgcolor = theme["panel_bg"]
-            panel_incredulo.border = ft.border.all(4, theme["panel_border"])
+            panel_incredulo.border = _border_all(4, theme["panel_border"])
             contenedor_incredulo.bgcolor = theme["accent"] if not pregunta_lista else theme["secondary"]
-            contenedor_incredulo.border = ft.border.all(6 if not pregunta_lista else 4, theme["panel_border"])
+            contenedor_incredulo.border = _border_all(6 if not pregunta_lista else 4, theme["panel_border"])
             contenedor_tamano_incredulo.bgcolor = theme["accent"] if pregunta_lista and not palabras_listas else theme["secondary"]
-            contenedor_tamano_incredulo.border = ft.border.all(6 if pregunta_lista and not palabras_listas else 4, theme["panel_border"])
+            contenedor_tamano_incredulo.border = _border_all(6 if pregunta_lista and not palabras_listas else 4, theme["panel_border"])
             btn_generar_incredulo.visible = pregunta_lista and palabras_listas
             if vista_resultado_completa or mostrar_carga_resultado or hay_resultado_real:
                 contenedor_cuerpo.content = ft.Column([panel_incredulo, panel_resultado], spacing=18, expand=True)
@@ -12635,11 +12585,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             panel_chat_consejero.visible = False
             panel_cristianos.visible = True
             panel_cristianos.bgcolor = theme["panel_bg"]
-            panel_cristianos.border = ft.border.all(4, theme["panel_border"])
+            panel_cristianos.border = _border_all(4, theme["panel_border"])
             contenedor_cristianos.bgcolor = theme["accent"] if not pregunta_lista else theme["secondary"]
-            contenedor_cristianos.border = ft.border.all(6 if not pregunta_lista else 4, theme["panel_border"])
+            contenedor_cristianos.border = _border_all(6 if not pregunta_lista else 4, theme["panel_border"])
             contenedor_tamano_cristianos.bgcolor = theme["accent"] if pregunta_lista and not palabras_listas else theme["secondary"]
-            contenedor_tamano_cristianos.border = ft.border.all(6 if pregunta_lista and not palabras_listas else 4, theme["panel_border"])
+            contenedor_tamano_cristianos.border = _border_all(6 if pregunta_lista and not palabras_listas else 4, theme["panel_border"])
             btn_generar_cristianos.visible = pregunta_lista and palabras_listas
             if vista_resultado_completa or mostrar_carga_resultado or hay_resultado_real:
                 contenedor_cuerpo.content = ft.Column([panel_cristianos, panel_resultado], spacing=18, expand=True)
@@ -12658,7 +12608,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             panel_resultado.visible = False
             panel_dones.visible = True
             panel_dones.bgcolor = theme["panel_bg"]
-            panel_dones.border = ft.border.all(4, theme["panel_border"])
+            panel_dones.border = _border_all(4, theme["panel_border"])
             contenedor_cuerpo.content = ft.Column([panel_dones], spacing=18, expand=True)
             return
 
@@ -12681,9 +12631,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             panel_dones.visible = False
             panel_chat_consejero.visible = True
             panel_chat_consejero.bgcolor = theme["panel_bg"]
-            panel_chat_consejero.border = ft.border.all(4, theme["panel_border"])
+            panel_chat_consejero.border = _border_all(4, theme["panel_border"])
             barra_chat_consejero.bgcolor = theme["panel_bg"]
-            barra_chat_consejero.border = ft.border.all(2 if mensaje_listo else 3, theme["field_border"])
+            barra_chat_consejero.border = _border_all(2 if mensaje_listo else 3, theme["field_border"])
             btn_enviar_chat_consejero.visible = True
             contenedor_cuerpo.content = ft.Column([panel_chat_consejero], spacing=18, expand=True)
             return
@@ -12694,10 +12644,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         panel_dones.visible = False
         panel_chat_consejero.visible = False
         if paso_actual in {"version", "book_order", "book", "chapter", "start", "end"}:
-            panel_pasaje.border = ft.border.all(5, theme["panel_border"])
+            panel_pasaje.border = _border_all(5, theme["panel_border"])
             panel_pasaje.bgcolor = theme["accent"]
         else:
-            panel_generacion.border = ft.border.all(5, theme["panel_border"])
+            panel_generacion.border = _border_all(5, theme["panel_border"])
             panel_generacion.bgcolor = theme["accent"]
             if paso_actual == "generate":
                 btn_generar.style = estilo_boton_generar_resultado
@@ -12768,7 +12718,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     marco_principal = ft.Container(
         content=contenido_pantalla,
         padding=6,
-        border=ft.border.all(7, theme["primary"]),
+        border=_border_all(7, theme["primary"]),
         border_radius=26,
         bgcolor=theme["page_bg"],
         expand=True,
@@ -12821,5 +12771,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         page.update()
 
     page.run_task(hidratar_filtros_async)
+
+
 
 

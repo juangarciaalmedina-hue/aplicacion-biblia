@@ -13,61 +13,12 @@ _SALUDOS_PENDIENTES_POR_IDIOMA: dict[str, list[str]] = {}
 _ULTIMO_SALUDO_POR_IDIOMA: dict[str, str] = {}
 
 
-def _asegurar_compat_flet():
-    border_module = getattr(ft, "border", None)
-    if border_module is not None and not callable(getattr(border_module, "all", None)):
-        def _all(width, color):
-            side = ft.BorderSide(width, color)
-            try:
-                return ft.Border(top=side, right=side, bottom=side, left=side)
-            except TypeError:
-                return ft.Border(side, side, side, side)
+def _border_all(width: float, color: str) -> ft.Border:
+    side = ft.BorderSide(width, color)
+    return ft.Border(left=side, top=side, right=side, bottom=side)
 
-        setattr(border_module, "all", _all)
-
-    radius_module = getattr(ft, "border_radius", None)
-    if radius_module is not None and not callable(getattr(radius_module, "only", None)):
-        def _only(**corners):
-            radius = {
-                "top_left": 0,
-                "top_right": 0,
-                "bottom_left": 0,
-                "bottom_right": 0,
-            }
-            radius.update(corners)
-            try:
-                return ft.BorderRadius(
-                    radius["top_left"],
-                    radius["top_right"],
-                    radius["bottom_left"],
-                    radius["bottom_right"],
-                )
-            except TypeError:
-                return ft.BorderRadius(**radius)
-
-        setattr(radius_module, "only", _only)
-
-
-_asegurar_compat_flet()
-
-
-def _radius_esquinas(**corners):
-    only = getattr(getattr(ft, "border_radius", None), "only", None)
-    if callable(only):
-        return only(**corners)
-    radius = {
-        "top_left": 0,
-        "top_right": 0,
-        "bottom_left": 0,
-        "bottom_right": 0,
-    }
-    radius.update(corners)
-    return ft.BorderRadius(
-        radius["top_left"],
-        radius["top_right"],
-        radius["bottom_left"],
-        radius["bottom_right"],
-    )
+def _padding_symmetric(horizontal: float = 0, vertical: float = 0) -> ft.Padding:
+    return ft.Padding(left=horizontal, top=vertical, right=horizontal, bottom=vertical)
 
 
 def _obtener_siguiente_saludo(language_code: str) -> str:
@@ -94,15 +45,23 @@ def _crear_bandera(tipo: str) -> ft.Control:
         return ft.Container(
             content=ft.Column(
                 [
-                    ft.Container(height=10, bgcolor="#C60B1E", border_radius=_radius_esquinas(top_left=6, top_right=6)),
+                    ft.Container(
+                        height=10,
+                        bgcolor="#C60B1E",
+                        border_radius=ft.BorderRadius(top_left=6, top_right=6, bottom_left=0, bottom_right=0),
+                    ),
                     ft.Container(height=14, bgcolor="#FFC400"),
-                    ft.Container(height=10, bgcolor="#C60B1E", border_radius=_radius_esquinas(bottom_left=6, bottom_right=6)),
+                    ft.Container(
+                        height=10,
+                        bgcolor="#C60B1E",
+                        border_radius=ft.BorderRadius(top_left=0, top_right=0, bottom_left=6, bottom_right=6),
+                    ),
                 ],
                 spacing=0,
                 tight=True,
             ),
             width=34,
-            border=ft.border.all(1, "black"),
+            border=_border_all(1, "black"),
             border_radius=6,
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
         )
@@ -111,12 +70,12 @@ def _crear_bandera(tipo: str) -> ft.Control:
         colores = ["#F6D04D", "#C8102E"] * 4
         for color in colores:
             franjas.append(ft.Container(height=4, bgcolor=color))
-        franjas[0].border_radius = _radius_esquinas(top_left=6, top_right=6)
-        franjas[-1].border_radius = _radius_esquinas(bottom_left=6, bottom_right=6)
+        franjas[0].border_radius = ft.BorderRadius(top_left=6, top_right=6, bottom_left=0, bottom_right=0)
+        franjas[-1].border_radius = ft.BorderRadius(top_left=0, top_right=0, bottom_left=6, bottom_right=6)
         return ft.Container(
             content=ft.Column(franjas, spacing=0, tight=True),
             width=34,
-            border=ft.border.all(1, "black"),
+            border=_border_all(1, "black"),
             border_radius=6,
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
         )
@@ -132,7 +91,7 @@ def _crear_bandera(tipo: str) -> ft.Control:
                 tight=True,
             ),
             height=34,
-            border=ft.border.all(1, "black"),
+            border=_border_all(1, "black"),
             border_radius=6,
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
         )
@@ -153,7 +112,7 @@ def _crear_bandera(tipo: str) -> ft.Control:
             ),
             width=34,
             height=34,
-            border=ft.border.all(1, "black"),
+            border=_border_all(1, "black"),
             border_radius=6,
             clip_behavior=ft.ClipBehavior.HARD_EDGE,
         )
@@ -167,7 +126,7 @@ def _crear_bandera(tipo: str) -> ft.Control:
         ),
         width=34,
         height=34,
-        border=ft.border.all(1, "black"),
+        border=_border_all(1, "black"),
         border_radius=6,
         clip_behavior=ft.ClipBehavior.HARD_EDGE,
     )
@@ -357,7 +316,7 @@ def pantalla_saludos(page: ft.Page, language_code: str, on_continuar, on_volver=
                     side=ft.BorderSide(3, theme["primary"]),
                     shape=ft.RoundedRectangleBorder(radius=10),
                     bgcolor=("#0055A4" if es_frances else "#C8102E") if (es_frances or es_ingles) else theme["field_bg"],
-                    padding=ft.padding.symmetric(horizontal=18, vertical=12),
+                    padding=_padding_symmetric(horizontal=18, vertical=12),
                 ),
                 width=300,
                 height=60,
@@ -592,7 +551,7 @@ def pantalla_selector_modo(page: ft.Page, language_code: str, on_select_mode, on
                 style=ft.ButtonStyle(
                     side=ft.BorderSide(3, theme["border"]),
                     shape=ft.RoundedRectangleBorder(radius=14),
-                    padding=ft.padding.symmetric(horizontal=16, vertical=10),
+                    padding=_padding_symmetric(horizontal=16, vertical=10),
                 ),
                 width=286,
                 height=52,
@@ -752,7 +711,7 @@ def pantalla_intro_dones(page: ft.Page, language_code: str, on_continuar, on_vol
                 color=theme["primary_text"],
                 side=ft.BorderSide(4, theme["border"]),
                 shape=ft.RoundedRectangleBorder(radius=16),
-                padding=ft.padding.symmetric(horizontal=20, vertical=14),
+                padding=_padding_symmetric(horizontal=20, vertical=14),
             ),
             width=280,
             height=56,
@@ -767,7 +726,7 @@ def pantalla_intro_dones(page: ft.Page, language_code: str, on_continuar, on_vol
                     side=ft.BorderSide(3, theme["border"]),
                     color=theme["text"],
                     shape=ft.RoundedRectangleBorder(radius=16),
-                    padding=ft.padding.symmetric(horizontal=20, vertical=14),
+                    padding=_padding_symmetric(horizontal=20, vertical=14),
                 ),
                 width=280,
                 height=52,
@@ -783,14 +742,14 @@ def pantalla_intro_dones(page: ft.Page, language_code: str, on_continuar, on_vol
                 ft.Container(
                     padding=16,
                     bgcolor=theme["accent"],
-                    border=ft.border.all(4, theme["panel_border"]),
+                    border=_border_all(4, theme["panel_border"]),
                     border_radius=20,
                     content=ft.Column(recomendacion_controles, spacing=12),
                 ),
                 ft.Container(
                     padding=16,
                     bgcolor=theme["panel_bg"],
-                    border=ft.border.all(4, theme["panel_border"]),
+                    border=_border_all(4, theme["panel_border"]),
                     border_radius=20,
                     content=ft.Column(
                         consejo_controles,
@@ -812,7 +771,7 @@ def pantalla_intro_dones(page: ft.Page, language_code: str, on_continuar, on_vol
         padding=18,
         border_radius=24,
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(6, theme["primary"]),
+        border=_border_all(6, theme["primary"]),
         shadow=ft.BoxShadow(blur_radius=18, color="#0000001A", offset=ft.Offset(0, 6)),
     )
 
@@ -977,7 +936,7 @@ def pantalla_intro_suenos(page: ft.Page, language_code: str, on_continuar, on_vo
                 color=theme["primary_text"],
                 side=ft.BorderSide(4, theme["border"]),
                 shape=ft.RoundedRectangleBorder(radius=16),
-                padding=ft.padding.symmetric(horizontal=20, vertical=14),
+                padding=_padding_symmetric(horizontal=20, vertical=14),
             ),
             width=280,
             height=56,
@@ -992,7 +951,7 @@ def pantalla_intro_suenos(page: ft.Page, language_code: str, on_continuar, on_vo
                     side=ft.BorderSide(3, theme["border"]),
                     color=theme["text"],
                     shape=ft.RoundedRectangleBorder(radius=16),
-                    padding=ft.padding.symmetric(horizontal=20, vertical=14),
+                    padding=_padding_symmetric(horizontal=20, vertical=14),
                 ),
                 width=280,
                 height=52,
@@ -1008,21 +967,21 @@ def pantalla_intro_suenos(page: ft.Page, language_code: str, on_continuar, on_vo
                 ft.Container(
                     padding=16,
                     bgcolor=theme["accent"],
-                    border=ft.border.all(4, theme["panel_border"]),
+                    border=_border_all(4, theme["panel_border"]),
                     border_radius=20,
                     content=ft.Column(aviso_controles, spacing=12),
                 ),
                 ft.Container(
                     padding=16,
                     bgcolor=theme["panel_bg"],
-                    border=ft.border.all(4, theme["panel_border"]),
+                    border=_border_all(4, theme["panel_border"]),
                     border_radius=20,
                     content=ft.Column(base_controles, spacing=14),
                 ),
                 ft.Container(
                     padding=16,
                     bgcolor=theme["panel_bg"],
-                    border=ft.border.all(4, theme["panel_border"]),
+                    border=_border_all(4, theme["panel_border"]),
                     border_radius=20,
                     content=ft.Column(uso_controles, spacing=12),
                 ),
@@ -1040,7 +999,7 @@ def pantalla_intro_suenos(page: ft.Page, language_code: str, on_continuar, on_vo
         padding=18,
         border_radius=24,
         bgcolor=theme["panel_bg"],
-        border=ft.border.all(6, theme["primary"]),
+        border=_border_all(6, theme["primary"]),
         shadow=ft.BoxShadow(blur_radius=18, color="#0000001A", offset=ft.Offset(0, 6)),
     )
 
@@ -1164,7 +1123,7 @@ def pantalla_selector_preguntas(page: ft.Page, language_code: str, on_select_mod
                 style=ft.ButtonStyle(
                     side=ft.BorderSide(3, theme["border"]),
                     shape=ft.RoundedRectangleBorder(radius=14),
-                    padding=ft.padding.symmetric(horizontal=16, vertical=10),
+                    padding=_padding_symmetric(horizontal=16, vertical=10),
                 ),
                 width=286,
                 height=52,
@@ -1193,7 +1152,7 @@ def pantalla_carga_saludo(page: ft.Page, language_code: str):
         ),
         padding=20,
         bgcolor=theme["accent"],
-        border=ft.border.all(4, theme["panel_border"]),
+        border=_border_all(4, theme["panel_border"]),
         border_radius=16,
         width=360,
     )
@@ -1219,7 +1178,7 @@ def pantalla_carga_saludo(page: ft.Page, language_code: str):
                 ),
                 padding=20,
                 bgcolor=theme["field_bg"],
-                border=ft.border.all(4, theme["panel_border"]),
+                border=_border_all(4, theme["panel_border"]),
                 border_radius=16,
                 width=360,
             ),
@@ -1229,3 +1188,5 @@ def pantalla_carga_saludo(page: ft.Page, language_code: str):
         spacing=22,
         tight=True,
     )
+
+
