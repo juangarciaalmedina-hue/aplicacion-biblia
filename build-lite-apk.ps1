@@ -7,7 +7,7 @@ $javaHome = "C:\Users\danie\java\17.0.13+11"
 $buildFlutterDir = Join-Path $projectRoot "build\flutter"
 $sitePackagesDir = Join-Path $projectRoot "build\site-packages"
 $sourceApk = Join-Path $buildFlutterDir "build\app\outputs\flutter-apk\app-arm64-v8a-release.apk"
-$targetApk = Join-Path $projectRoot "build\apk\biblia_app-arm64-v8a-lite.apk"
+$targetApk = Join-Path $projectRoot "build\apk\biblia-ia-arm64-v8a-lite.apk"
 $symbolsDir = Join-Path $projectRoot "build\android-debug-symbols"
 
 if (-not (Test-Path $flutterSdk)) {

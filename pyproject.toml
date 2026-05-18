@@ -3,7 +3,7 @@ requires = ["briefcase"]
 build-backend = "briefcase.build"
 
 [project]
-name = "biblia_app"
+name = "biblia-ia"
 version = "1.0.2"
 description = "Aplicacion biblica con bienvenida y contenido IA"
 authors = [{ name = "Juan" }]
@@ -13,14 +13,16 @@ dependencies = ["flet", "certifi", "six"]
 
 [tool.flet]
 product = "Biblia IA"
+artifact = "biblia-ia"
 org = "com.jmgalmedina"
+company = "JM Galmedina"
 build_number = 28
 
 [tool.flet.app]
 path = "src"
 module = "main"
-name = "biblia_app"
-description = "Aplicacion biblica para pruebas"
+name = "biblia-ia"
+description = "Aplicacion biblica con lectura guiada y ayuda de IA"
 exclude = [
     ".git",
     ".github",
@@ -54,6 +56,8 @@ exclude = [
 split_per_abi = true
 target_arch = ["arm64"]
 bundle_id = "com.jmgalmedina"
+artifact = "biblia-ia"
+adaptive_icon_background = "#F7F1E3"
 
 [tool.flet.android.signing]
 key_store = "C:/APLICACIONBIBLIA/android-upload-key.jks"
@@ -83,9 +87,11 @@ route_url_strategy = "hash"
 base_url = "/"
 renderer = "auto"
 wasm = true
+pwa_background_color = "#F7F1E3"
+pwa_theme_color = "#C8102E"
 
 [tool.briefcase]
-project_name = "Biblia App"
+project_name = "Biblia IA"
 bundle = "com.jmgalmedina"
 version = "1.0.2"
 url = "https://tiktok.com/@jmgalmedina"
@@ -93,7 +99,7 @@ author = "Juan"
 author_email = "example@example.com"
 
 [tool.briefcase.app.biblia_app]
-formal_name = "Biblia App"
+formal_name = "Biblia IA"
 description = "Aplicacion biblica con bienvenida y contenido IA"
 sources = ["src/biblia_app"]
 requires = ["flet", "certifi", "six"]

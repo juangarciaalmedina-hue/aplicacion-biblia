@@ -24,6 +24,23 @@ def _border_all(width: float, color: str) -> ft.Border:
 def _padding_symmetric(horizontal: float = 0, vertical: float = 0) -> ft.Padding:
     return ft.Padding(left=horizontal, top=vertical, right=horizontal, bottom=vertical)
 
+
+def _reparar_texto_mojibake(valor):
+    if isinstance(valor, str):
+        if "Ã" in valor or "Â" in valor or any("\x80" <= ch <= "\x9f" for ch in valor):
+            try:
+                return valor.encode("latin-1").decode("utf-8")
+            except (UnicodeEncodeError, UnicodeDecodeError):
+                return valor
+        return valor
+    if isinstance(valor, dict):
+        return {clave: _reparar_texto_mojibake(texto) for clave, texto in valor.items()}
+    if isinstance(valor, list):
+        return [_reparar_texto_mojibake(texto) for texto in valor]
+    if isinstance(valor, tuple):
+        return tuple(_reparar_texto_mojibake(texto) for texto in valor)
+    return valor
+
 from biblia_app.http_client import HttpRequestError, http_request, ES_WEB_ASSEMBLY
 from biblia_app.idiomas import get_language_config, get_language_theme
 from biblia_app.versiculos import VERSICULOS_POR_CAPITULO
@@ -3121,32 +3138,32 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     textos_chat_consejero = {
         "es": {
             "title": "CHAT CONSEJERO CRISTIANO",
-            "message": "CUÃ‰NTAME QUÃ‰ TE PASA",
-            "placeholder": "Escribe aquÃ­ tu situaciÃ³n, duda o carga. Por ejemplo: estoy muy angustiado, no sÃ© cÃ³mo perdonar, tengo miedo, necesito orientaciÃ³n...",
+            "message": "CUÉNTAME QUÉ TE PASA",
+            "placeholder": "Escribe aquí tu situación, duda o carga. Por ejemplo: estoy muy angustiado, no sé cómo perdonar, tengo miedo, necesito orientación...",
             "send": "ENVIAR MENSAJE",
             "clear": "LIMPIAR CHAT",
-            "header_status": "Responde con base bÃ­blica y tono pastoral",
+            "header_status": "Responde con base bíblica y tono pastoral",
             "empty_message": "Escribe primero un mensaje",
             "status_generating": "Estado: respondiendo en el chat...",
             "status_ready": "Estado: respuesta lista",
-            "intro": "Habla con naturalidad. RecibirÃ¡s acompaÃ±amiento bÃ­blico, pastoral y prÃ¡ctico.",
+            "intro": "Habla con naturalidad. Recibirás acompañamiento bíblico, pastoral y práctico.",
             "greetings": [
-                "Hola, soy tu consejero cristiano. Antes de nada, Â¿cÃ³mo te llamas? Y si quieres, cuÃ©ntame quÃ© te pasa o cÃ³mo te puedo ayudar.",
-                "Hola, puedes hablarme con libertad. Â¿CÃ³mo te llamas? DespuÃ©s, si quieres, dime quÃ© estÃ¡s viviendo o en quÃ© te gustarÃ­a que te acompaÃ±ara.",
-                "Bienvenido. Me gustarÃ­a saber cÃ³mo te llamas, y luego puedes contarme con calma quÃ© situaciÃ³n estÃ¡s pasando o cÃ³mo te puedo ayudar.",
-                "Hola, gracias por estar aquÃ­. Â¿CÃ³mo te llamas? Si te parece, despuÃ©s me cuentas quÃ© te preocupa o quÃ© estÃ¡ pasando ahora mismo.",
+                "Hola, soy tu consejero cristiano. Antes de nada, ¿cómo te llamas? Y si quieres, cuéntame qué te pasa o cómo te puedo ayudar.",
+                "Hola, puedes hablarme con libertad. ¿Cómo te llamas? Después, si quieres, dime qué estás viviendo o en qué te gustaría que te acompañara.",
+                "Bienvenido. Me gustaría saber cómo te llamas, y luego puedes contarme con calma qué situación estás pasando o cómo te puedo ayudar.",
+                "Hola, gracias por estar aquí. ¿Cómo te llamas? Si te parece, después me cuentas qué te preocupa o qué está pasando ahora mismo.",
             ],
-            "greeting": "Hola, soy tu consejero cristiano. Antes de nada, Â¿cÃ³mo te llamas? Y si quieres, cuÃ©ntame quÃ© te pasa o cÃ³mo te puedo ayudar.",
-            "warning": "Si hay peligro inmediato, abuso, autolesiÃ³n o ideas suicidas, busca ayuda urgente en tu zona y contacta tambiÃ©n con un pastor o una persona de confianza.",
-            "you": "TÃº",
+            "greeting": "Hola, soy tu consejero cristiano. Antes de nada, ¿cómo te llamas? Y si quieres, cuéntame qué te pasa o cómo te puedo ayudar.",
+            "warning": "Si hay peligro inmediato, abuso, autolesión o ideas suicidas, busca ayuda urgente en tu zona y contacta también con un pastor o una persona de confianza.",
+            "you": "Tú",
             "assistant": "Consejero cristiano",
             "typing": "_Consejero cristiano escribiendo..._",
-            "fallback_response": "Perdona, no me he expresado bien. CuÃ©ntame un poco mÃ¡s y te respondo con mÃ¡s claridad y calma.",
+            "fallback_response": "Perdona, no me he expresado bien. Cuéntame un poco más y te respondo con más claridad y calma.",
             "quick_questions": [
                 "Estoy angustiado",
-                "Necesito oraciÃ³n",
+                "Necesito oración",
                 "Tengo una duda de fe",
-                "No sÃ© quÃ© decisiÃ³n tomar",
+                "No sé qué decisión tomar",
                 "Estoy luchando con el pecado",
                 "Necesito consuelo",
             ],
@@ -3248,6 +3265,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ],
         },
     }.get(lang_code, {})
+    textos_chat_consejero = _reparar_texto_mojibake(textos_chat_consejero)
     textos_chat_soporte = {
         "es": {
             "title": "GUÃA DE LA APP",
@@ -3354,36 +3372,37 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ],
         },
     }.get(lang_code, {})
+    textos_chat_soporte = _reparar_texto_mojibake(textos_chat_soporte)
     textos_chat_suenos = {
         "es": {
-            "title": "CHAT INTERPRETACIÃ“N DE SUEÃ‘OS",
-            "message": "CUÃ‰NTAME TU SUEÃ‘O",
-            "placeholder": "Escribe aquÃ­ tu sueÃ±o con los detalles principales y, si quieres, lo que estÃ¡s viviendo ahora. Por ejemplo: soÃ±aba con agua, una puerta cerrada y mucha inquietud...",
+            "title": "CHAT INTERPRETACIÓN DE SUEÑOS",
+            "message": "CUÉNTAME TU SUEÑO",
+            "placeholder": "Escribe aquí tu sueño con los detalles principales y, si quieres, lo que estás viviendo ahora. Por ejemplo: soñaba con agua, una puerta cerrada y mucha inquietud...",
             "send": "ENVIAR MENSAJE",
             "clear": "LIMPIAR CHAT",
-            "header_status": "OrientaciÃ³n bÃ­blica, no orÃ¡culo ni adivinaciÃ³n",
-            "empty_message": "Escribe primero tu sueÃ±o o tu pregunta",
-            "status_generating": "Estado: discerniendo el sueÃ±o...",
+            "header_status": "Orientación bíblica, no oráculo ni adivinación",
+            "empty_message": "Escribe primero tu sueño o tu pregunta",
+            "status_generating": "Estado: discerniendo el sueño...",
             "status_ready": "Estado: respuesta lista",
-            "intro": "RecibirÃ¡s una orientaciÃ³n prudente, bÃ­blica y pastoral sobre los posibles significados del sueÃ±o.",
+            "intro": "Recibirás una orientación prudente, bíblica y pastoral sobre los posibles significados del sueño.",
             "greetings": [
-                "Hola. Puedes contarme tu sueÃ±o con calma, incluyendo lo que viste, sentiste y el contexto que estÃ¡s viviendo estos dÃ­as. Lo miraremos con prudencia a la luz de la Biblia.",
-                "Hola. Escribe tu sueÃ±o con los detalles principales y, si quieres, tambiÃ©n lo que estÃ¡s orando o discerniendo en este tiempo. Buscaremos una orientaciÃ³n bÃ­blica sin ir mÃ¡s allÃ¡ de lo que la Escritura permite afirmar.",
-                "Bienvenido. CuÃ©ntame el sueÃ±o paso a paso y dime quÃ© fue lo que mÃ¡s te llamÃ³ la atenciÃ³n o te inquietÃ³. Te responderÃ© con una lectura bÃ­blica y pastoral, no esotÃ©rica.",
+                "Hola. Puedes contarme tu sueño con calma, incluyendo lo que viste, sentiste y el contexto que estás viviendo estos días. Lo miraremos con prudencia a la luz de la Biblia.",
+                "Hola. Escribe tu sueño con los detalles principales y, si quieres, también lo que estás orando o discerniendo en este tiempo. Buscaremos una orientación bíblica sin ir más allá de lo que la Escritura permite afirmar.",
+                "Bienvenido. Cuéntame el sueño paso a paso y dime qué fue lo que más te llamó la atención o te inquietó. Te responderé con una lectura bíblica y pastoral, no esotérica.",
             ],
-            "greeting": "Hola. Puedes contarme tu sueÃ±o con calma, incluyendo lo que viste, sentiste y el contexto que estÃ¡s viviendo estos dÃ­as. Lo miraremos con prudencia a la luz de la Biblia.",
-            "warning": "Esta secciÃ³n no funciona como un orÃ¡culo ni reemplaza la Biblia, la oraciÃ³n o la guÃ­a de tu pastor. No usamos tarot, astrologÃ­a ni lenguaje esotÃ©rico.",
-            "you": "TÃº",
-            "assistant": "GuÃ­a bÃ­blica de sueÃ±os",
-            "typing": "_La guÃ­a bÃ­blica de sueÃ±os estÃ¡ escribiendo..._",
-            "fallback_response": "Perdona, necesito un poco mÃ¡s de contexto para ayudarte mejor. CuÃ©ntame el sueÃ±o con mÃ¡s detalle y tambiÃ©n quÃ© sentiste al despertar.",
+            "greeting": "Hola. Puedes contarme tu sueño con calma, incluyendo lo que viste, sentiste y el contexto que estás viviendo estos días. Lo miraremos con prudencia a la luz de la Biblia.",
+            "warning": "Esta sección no funciona como un oráculo ni reemplaza la Biblia, la oración o la guía de tu pastor. No usamos tarot, astrología ni lenguaje esotérico.",
+            "you": "Tú",
+            "assistant": "Guía bíblica de sueños",
+            "typing": "_La guía bíblica de sueños está escribiendo..._",
+            "fallback_response": "Perdona, necesito un poco más de contexto para ayudarte mejor. Cuéntame el sueño con más detalle y también qué sentiste al despertar.",
             "quick_questions": [
-                "He soÃ±ado con agua",
-                "He soÃ±ado con una casa",
-                "He soÃ±ado con animales",
-                "No sÃ© si este sueÃ±o viene de Dios",
-                "Este sueÃ±o me inquieta",
-                "Quiero una orientaciÃ³n bÃ­blica",
+                "He soñado con agua",
+                "He soñado con una casa",
+                "He soñado con animales",
+                "No sé si este sueño viene de Dios",
+                "Este sueño me inquieta",
+                "Quiero una orientación bíblica",
             ],
         },
         "ca": {
@@ -3480,6 +3499,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             ],
         },
     }.get(lang_code, {})
+    textos_chat_suenos = _reparar_texto_mojibake(textos_chat_suenos)
     es_modo_chat = inicio_preferido in {"chat_consejero", "chat_soporte", "chat_suenos"}
     es_modo_chat_soporte = inicio_preferido == "chat_soporte"
     es_modo_chat_suenos = inicio_preferido == "chat_suenos"
