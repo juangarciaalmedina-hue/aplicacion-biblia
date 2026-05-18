@@ -54,6 +54,15 @@ def _asegurar_compat_flet():
         setattr(border_module, "all", _all)
 
     radius_module = getattr(ft, "border_radius", None)
+    border_radius_class = getattr(ft, "BorderRadius", None)
+    if (
+        radius_module is not None
+        and border_radius_class is not None
+        and not callable(getattr(radius_module, "all", None))
+        and callable(getattr(border_radius_class, "all", None))
+    ):
+        setattr(radius_module, "all", border_radius_class.all)
+
     if radius_module is not None and not callable(getattr(radius_module, "only", None)):
         def _only(**corners):
             radius = {
@@ -74,6 +83,24 @@ def _asegurar_compat_flet():
                 return ft.BorderRadius(**radius)
 
         setattr(radius_module, "only", _only)
+
+    padding_module = getattr(ft, "padding", None)
+    padding_class = getattr(ft, "Padding", None)
+    if padding_module is not None and padding_class is not None:
+        for method_name in ("all", "only", "symmetric"):
+            if not callable(getattr(padding_module, method_name, None)):
+                method = getattr(padding_class, method_name, None)
+                if callable(method):
+                    setattr(padding_module, method_name, method)
+
+    margin_module = getattr(ft, "margin", None)
+    margin_class = getattr(ft, "Margin", None)
+    if margin_module is not None and margin_class is not None:
+        for method_name in ("all", "only", "symmetric"):
+            if not callable(getattr(margin_module, method_name, None)):
+                method = getattr(margin_class, method_name, None)
+                if callable(method):
+                    setattr(margin_module, method_name, method)
 
 
 _asegurar_compat_flet()
@@ -1964,7 +1991,7 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.run(main)
 
 
 

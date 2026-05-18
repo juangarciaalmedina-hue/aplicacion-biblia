@@ -7564,6 +7564,72 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         texto_limpio = re.sub(r"\s{2,}", " ", texto_limpio)
         return texto_limpio.strip()
 
+    def asegurar_recordatorio_final_chat_suenos(texto: str) -> str:
+        respuesta = limpiar_respuesta_chat_visible(texto)
+        if not es_modo_chat_suenos or not respuesta:
+            return texto
+        if respuesta.startswith(("Error", "Erreur", "AI error")):
+            return respuesta
+
+        recordatorios = {
+            "es": "Recuerda también que no todos los sueños tienen interpretación, ni todos tienen que venir de parte de Dios. A veces un sueño es solo un sueño, sin que haya que darle más importancia. Y si este sueño te inquieta o te pesa por dentro, sería bueno hablarlo con tu pastor o con algún responsable espiritual de tu iglesia.",
+            "ca": "Recorda també que no tots els somnis tenen interpretació, ni tots han de venir de part de Déu. De vegades un somni és només un somni, sense haver-li de donar més importància. I si aquest somni t'inquieta o et pesa per dins, seria bo parlar-ne amb el teu pastor o amb algun responsable espiritual de la teva església.",
+            "fr": "Rappelle-toi aussi que tous les rêves n'ont pas une interprétation, et qu'ils ne viennent pas tous forcément de Dieu. Parfois un rêve est simplement un rêve, sans qu'il faille lui donner plus d'importance. Et si ce rêve t'inquiète ou te pèse intérieurement, il serait bon d'en parler avec ton pasteur ou avec un responsable spirituel de ton Église.",
+            "en": "Also remember that not every dream has an interpretation, and not every dream has to come from God. Sometimes a dream is simply a dream, without needing to give it more importance. And if this dream troubles you or weighs on you inwardly, it would be good to talk about it with your pastor or a spiritual leader in your church.",
+        }
+        recordatorio = recordatorios.get(lang_code, recordatorios["es"])
+
+        def normalizar(texto_base: str) -> str:
+            texto_base = "".join(
+                ch
+                for ch in unicodedata.normalize("NFKD", texto_base or "")
+                if not unicodedata.combining(ch)
+            )
+            return re.sub(r"\s+", " ", texto_base).lower().strip()
+
+        respuesta_normalizada = normalizar(respuesta)
+        pistas = {
+            "es": ("no todos los suenos", "a veces un sueno es solo un sueno"),
+            "ca": ("no tots els somnis", "un somni es nomes un somni"),
+            "fr": ("tous les reves n'ont pas", "un reve est simplement un reve"),
+            "en": ("not every dream has", "a dream is simply a dream"),
+        }.get(lang_code, ("no todos los suenos", "a veces un sueno es solo un sueno"))
+        if any(pista in respuesta_normalizada for pista in pistas):
+            return respuesta
+
+        return f"{respuesta}\n\n{recordatorio}".strip()
+
+    def asegurar_recordatorio_cierre_chat_consejero(texto: str, resultado_ritmo: str) -> str:
+        respuesta = limpiar_respuesta_chat_visible(texto)
+        if es_modo_chat_simple or resultado_ritmo != "close" or not respuesta:
+            return texto
+        if respuesta.startswith(("Error", "Erreur", "AI error")):
+            return respuesta
+
+        recordatorios = {
+            "es": "Y si esto sigue pesando en tu corazón, sería bueno hablarlo también con tu pastor o con algún responsable espiritual de tu iglesia, para no caminarlo a solas.",
+            "ca": "I si això continua pesant al teu cor, seria bo parlar-ne també amb el teu pastor o amb algun responsable espiritual de la teva església, per no caminar-ho tot sol.",
+            "fr": "Et si cela continue de peser sur ton coeur, il serait bon d'en parler aussi avec ton pasteur ou avec un responsable spirituel de ton Église, afin de ne pas traverser cela seul.",
+            "en": "And if this continues to weigh on your heart, it would be good to talk about it with your pastor or a spiritual leader in your church, so you do not walk through it alone.",
+        }
+        recordatorio = recordatorios.get(lang_code, recordatorios["es"])
+
+        texto_normalizado = "".join(
+            ch
+            for ch in unicodedata.normalize("NFKD", respuesta)
+            if not unicodedata.combining(ch)
+        ).lower()
+        pistas = {
+            "es": ("pastor", "responsable espiritual", "iglesia"),
+            "ca": ("pastor", "responsable espiritual", "esglesia"),
+            "fr": ("pasteur", "responsable spirituel", "eglise"),
+            "en": ("pastor", "spiritual leader", "church"),
+        }.get(lang_code, ("pastor", "responsable espiritual", "iglesia"))
+        if any(pista in texto_normalizado for pista in pistas):
+            return respuesta
+
+        return f"{respuesta}\n\n{recordatorio}".strip()
+
     async def copiar_mensaje_chat_async(texto: str) -> None:
         await clipboard_service.set(texto)
         mostrar_mensaje(page, ui["msg_copied"])
@@ -7819,6 +7885,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 respuesta = respuesta[:417].rstrip(" ,;:") + "..."
             return respuesta
 
+        limite_frases = 7 if es_modo_chat_suenos else 3
+        limite_caracteres = 760 if es_modo_chat_suenos else 360
         respuesta_plana = re.sub(r"\s*\n+\s*", " ", respuesta).strip()
         partes = re.split(r"(?<=[.!?])\s+", respuesta_plana)
         frases = []
@@ -7828,22 +7896,27 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             if not parte_limpia:
                 continue
             incremento = len(parte_limpia) + (1 if frases else 0)
-            if frases and (len(frases) >= 3 or total + incremento > 360):
+            if frases and (len(frases) >= limite_frases or total + incremento > limite_caracteres):
                 break
             frases.append(parte_limpia)
             total += incremento
 
         respuesta_compacta = " ".join(frases).strip() or respuesta_plana
-        if len(respuesta_compacta) > 360:
-            respuesta_compacta = respuesta_compacta[:357].rstrip(" ,;:") + "..."
+        if len(respuesta_compacta) > limite_caracteres:
+            respuesta_compacta = respuesta_compacta[: limite_caracteres - 3].rstrip(" ,;:") + "..."
         return respuesta_compacta
 
-    async def animar_respuesta_chat_consejero(texto: str) -> None:
+    async def animar_respuesta_chat_consejero(texto: str, resultado_ritmo: str = "none") -> None:
         respuesta_final = compactar_respuesta_chat_consejero(texto)
         if not respuesta_final.strip():
             respuesta_final = textos_chat_activo["fallback_response"]
         if not respuesta_final:
             return
+        hay_mensaje_usuario = any(rol == "user" for rol, _, _ in historial_chat_consejero)
+        if hay_mensaje_usuario and es_modo_chat_suenos:
+            respuesta_final = asegurar_recordatorio_final_chat_suenos(respuesta_final)
+        elif hay_mensaje_usuario:
+            respuesta_final = asegurar_recordatorio_cierre_chat_consejero(respuesta_final, resultado_ritmo)
 
         cursor_chat = "â–Œ"
         hora_respuesta = hora_chat_actual()
@@ -10150,13 +10223,14 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "No conviertas la conversacion en una entrevista ni encadenes varias preguntas seguidas. "
                 "Si faltan datos secundarios, menciona la limitacion en una frase y aun asi ofrece una lectura preliminar con lo disponible. "
                 "Cuando ya tengas suficiente contexto, responde de forma tentativa y humilde usando expresiones como 'podria sugerir', 'podria apuntar a' o 'conviene discernir si'. "
+                "Da siempre al menos dos posibles lecturas: una interpretacion principal, la que parezca mas probable con lo contado, y una segunda interpretacion alternativa tambien prudente. No respondas con una sola interpretacion. "
                 "Cuando menciones un simbolo, conectalo con su posible base biblica y con el contexto concreto del sueno. "
                 "No afirmes fechas, destinos cerrados, promesas automaticas ni anuncios categoricos sobre el futuro. "
                 "Da siempre una orientacion final hacia la oracion, la Biblia y el consejo pastoral maduro. "
+                "Termina siempre recordando de forma natural que no todos los sueños tienen interpretación, que no todos vienen de parte de Dios y que a veces un sueño es solo un sueño sin mayor importancia. Añade también que, si el sueño le inquieta o le pesa por dentro, conviene hablarlo con su pastor o con algún responsable espiritual de su iglesia. "
                 "Si el usuario expresa miedo intenso, confusion espiritual fuerte o angustia persistente, responde con calma, anima a orar y a buscar acompanamiento pastoral. "
                 "Responde como en un chat real, con frases cortas y naturales. "
-                "Normalmente responde en 2 a 4 frases breves, sin listas y sin Markdown. "
-                "Da una sola idea principal por mensaje. "
+                "Normalmente responde en 5 a 7 frases breves, sin Markdown. Puedes usar etiquetas naturales como 'Interpretacion principal' y 'Segunda posibilidad' para que las dos lecturas queden claras. "
                 "No termines la mayoria de mensajes con preguntas. Solo pregunta algo al final si esa unica aclaracion es realmente necesaria para afinar la interpretacion. "
                 f"Historial del chat:\n{historial_texto}"
             ),
@@ -10176,12 +10250,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "No convertisques la conversa en una entrevista ni encadenes diverses preguntes seguides. "
                 "Si falten dades secundaries, esmenta la limitacio en una frase i tot i aixi ofereix una lectura preliminar amb el que tens. "
                 "Quan ja tingues prou context, respon de manera tentativa i humil amb expressions com 'podria suggerir', 'podria apuntar a' o 'convÃ© discernir si'. "
+                "Dona sempre almenys dues possibles lectures: una interpretacio principal, la que semble mes probable amb el que s'ha explicat, i una segona interpretacio alternativa tambe prudent. No responguis amb una sola interpretacio. "
                 "Quan esmentes un simbol, connecta'l amb la seva possible base biblica i amb el context concret del somni. "
                 "No afirmes dates, destins tancats, promeses automatiques ni anuncis categorics sobre el futur. "
                 "Dona sempre una orientacio final cap a la pregaria, la Biblia i el consell pastoral madur. "
+                "Acaba sempre recordant de manera natural que no tots els somnis tenen interpretació, que no tots venen de part de Déu i que de vegades un somni és només un somni sense més importància. Afegeix també que, si el somni l'inquieta o li pesa per dins, convé parlar-ne amb el seu pastor o amb algun responsable espiritual de la seva església. "
                 "Respon com en un xat real, amb frases curtes i naturals. "
-                "Normalment respon en 2 a 4 frases breus, sense llistes ni Markdown. "
-                "Dona una sola idea principal per missatge. "
+                "Normalment respon en 5 a 7 frases breus, sense Markdown. Pots usar etiquetes naturals com 'Interpretacio principal' i 'Segona possibilitat' perque les dues lectures queden clares. "
                 "No acabes la majoria de missatges amb preguntes. Nomes pregunta al final si aquesta unica aclariment es realment necessaria per afinar la interpretacio. "
                 f"Historial del xat:\n{historial_texto}"
             ),
@@ -10201,12 +10276,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Ne transforme pas la conversation en interrogatoire et n'enchaine pas plusieurs questions de suite. "
                 "S'il manque seulement des details secondaires, mentionne la limite en une phrase et donne quand meme une lecture preliminaire avec ce qui est deja disponible. "
                 "Quand tu as assez de contexte, reponds de maniere prudente et humble avec des expressions comme 'cela pourrait suggerer' ou 'il peut etre bon de discerner si'. "
+                "Donne toujours au moins deux lectures possibles : une interpretation principale, celle qui semble la plus probable avec ce qui a ete raconte, puis une seconde interpretation alternative, elle aussi prudente. Ne reponds pas avec une seule interpretation. "
                 "Quand tu mentionnes un symbole, relie-le a sa possible base biblique et au contexte concret du reve. "
                 "N'annonce ni dates, ni destins fixes, ni promesses automatiques, ni declarations categorique sur l'avenir. "
                 "Oriente toujours la personne vers la priere, la Bible et un accompagnement pastoral mature. "
+                "Termine toujours en rappelant naturellement que tous les rêves n'ont pas une interprétation, qu'ils ne viennent pas tous de Dieu et que parfois un rêve est simplement un rêve sans plus d'importance. Ajoute aussi que, si le rêve l'inquiète ou lui pèse intérieurement, il est bon d'en parler avec son pasteur ou avec un responsable spirituel de son Église. "
                 "Reponds comme dans un vrai chat, avec des phrases courtes et naturelles. "
-                "Reponds normalement en 2 a 4 phrases breves, sans listes ni Markdown. "
-                "Donne une seule idee principale par message. "
+                "Reponds normalement en 5 a 7 phrases breves, sans Markdown. Tu peux utiliser des etiquettes naturelles comme 'Interpretation principale' et 'Seconde possibilite' pour que les deux lectures soient claires. "
                 "Ne termine pas la plupart des messages par une question. Pose une question finale seulement si cette unique precision est vraiment necessaire pour affiner l'interpretation. "
                 f"Historique du chat:\n{historial_texto}"
             ),
@@ -10226,12 +10302,13 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "Do not turn the conversation into an interview or chain several questions in a row. "
                 "If only secondary details are missing, mention that limitation in one sentence and still offer a preliminary reading with what is already available. "
                 "Once you have enough context, answer tentatively and humbly using wording such as 'this could suggest' or 'it may be wise to discern whether'. "
+                "Always give at least two possible readings: a main interpretation, the one that seems most likely from what was shared, and a second alternative interpretation that also remains prudent. Do not answer with only one interpretation. "
                 "When you mention a symbol, connect it to its possible biblical basis and to the concrete context of the dream. "
                 "Do not announce dates, fixed outcomes, automatic promises, or categorical statements about the future. "
                 "Always point the person toward prayer, Scripture, and mature pastoral counsel. "
+                "Always end by naturally reminding the user that not every dream has an interpretation, not every dream comes from God, and sometimes a dream is simply a dream without greater importance. Also add that, if the dream troubles them or weighs on them inwardly, it is wise to talk about it with their pastor or a spiritual leader in their church. "
                 "Reply like a real chat, with short and natural sentences. "
-                "Usually answer in 2 to 4 short sentences, without lists and without Markdown. "
-                "Give one main idea per message. "
+                "Usually answer in 5 to 7 short sentences, without Markdown. You may use natural labels like 'Main interpretation' and 'Second possibility' so the two readings are clear. "
                 "Do not end most messages with questions. Ask something at the end only if that single clarification is truly necessary to refine the interpretation. "
                 f"Chat history:\n{historial_texto}"
             ),
@@ -10343,11 +10420,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
 
         instrucciones = {
             "es": (
-                "La persona acaba de aceptar tu invitacion a orar. "
-                "En este turno no hagas todavia la pregunta de exploracion. "
-                "Haz ahora una oracion breve, calida, reverente y pastoral pidiendo la direccion de Dios para la conversacion y por la persona. "
-                "No anadas consejo ni preguntas en este mismo mensaje. "
-                "Termina exactamente con esta frase final: En el nombre de Jesus. Amen."
+                "La persona acaba de aceptar tu invitación a orar. "
+                "Haz ahora una oración breve, cálida, reverente y pastoral pidiendo la dirección de Dios para la conversación y por la persona. "
+                "Después de la oración, añade una sola pregunta pastoral breve para seguir acompañando la conversación. "
+                "Termina la oración con esta frase: En el nombre de Jesús. Amén."
             ),
             "ca": (
                 "La persona acaba d'acceptar la teua invitacio a pregar. "
@@ -10380,20 +10456,20 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         respuestas = {
             "es": [
                 (
-                    "Padre celestial, te pedimos que nos guies en esta conversacion y nos "
-                    "des paz, claridad y sabiduria para este tiempo. En el nombre de Jesus. Amen."
+                    "Padre celestial, te pedimos que nos guíes en esta conversación y nos "
+                    "des paz, claridad y sabiduría para este tiempo. En el nombre de Jesús. Amén."
                 ),
                 (
-                    "SeÃ±or Dios, ponemos esta conversacion en tus manos y te pedimos tu "
-                    "direccion, tu paz y tu luz para hablar con verdad y amor. En el nombre de Jesus. Amen."
+                    "Señor Dios, ponemos esta conversación en tus manos y te pedimos tu "
+                    "dirección, tu paz y tu luz para hablar con verdad y amor. En el nombre de Jesús. Amén."
                 ),
                 (
                     "Padre bueno, venimos a ti para pedirte que tomes el control de esta "
-                    "conversacion y nos concedas tu direccion, consuelo y sabiduria. En el nombre de Jesus. Amen."
+                    "conversación y nos concedas tu dirección, consuelo y sabiduría. En el nombre de Jesús. Amén."
                 ),
                 (
-                    "Dios de amor, te rogamos que guies este momento, traigas serenidad al "
-                    "corazon y nos ayudes a caminar esta conversacion bajo tu direccion. En el nombre de Jesus. Amen."
+                    "Dios de amor, te rogamos que guíes este momento, traigas serenidad al "
+                    "corazón y nos ayudes a caminar esta conversación bajo tu dirección. En el nombre de Jesús. Amén."
                 ),
             ],
             "ca": [
@@ -10453,6 +10529,34 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         }
         opciones = respuestas.get(lang_code, respuestas["es"])
         return random.choice(opciones)
+
+    def agregar_pregunta_despues_oracion_inicial_chat_consejero(texto: str) -> str:
+        respuesta = (texto or "").strip()
+        if not respuesta or es_modo_chat_simple:
+            return respuesta
+
+        preguntas = {
+            "es": "Ahora sí, cuéntame con calma: ¿qué es lo que más te pesa en este momento?",
+            "ca": "Ara sí, explica-m'ho amb calma: què és el que et pesa més en aquest moment?",
+            "fr": "Maintenant, raconte-moi calmement : qu'est-ce qui pèse le plus sur ton coeur en ce moment ?",
+            "en": "Now, tell me calmly: what is weighing on your heart the most right now?",
+        }
+        pregunta = preguntas.get(lang_code, preguntas["es"])
+
+        respuesta_normalizada = "".join(
+            ch
+            for ch in unicodedata.normalize("NFKD", respuesta)
+            if not unicodedata.combining(ch)
+        ).lower()
+        pregunta_normalizada = "".join(
+            ch
+            for ch in unicodedata.normalize("NFKD", pregunta)
+            if not unicodedata.combining(ch)
+        ).lower()
+        if pregunta_normalizada in respuesta_normalizada or "?" in respuesta:
+            return respuesta
+
+        return f"{respuesta}\n\n{pregunta}"
 
     def construir_instruccion_despues_de_amen_chat_consejero() -> str:
         if es_modo_chat_simple or len(historial_chat_consejero) < 2:
@@ -10619,7 +10723,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "2) da palabras de animo con un versiculo breve que encaje de verdad; "
                 "3) ofrece un consejo pastoral concreto con otro versiculo breve si ayuda; "
                 "4) termina con una oracion breve y real; "
-                "5) cierra preguntando si puedes ayudar en alguna cosa mas. "
+                "5) antes de cerrar, recuerda con naturalidad que seria bueno hablar tambien con su pastor o con algun responsable espiritual de su iglesia, para no caminarlo a solas; "
+                "6) cierra preguntando si puedes ayudar en alguna cosa mas. "
                 "Hazlo con lenguaje sencillo, cercano y sin sonar como esquema."
             ),
             "ca": (
@@ -10629,7 +10734,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "2) dona paraules d'anim amb un versicle breu que encaixe de veritat; "
                 "3) ofereix un consell pastoral concret amb un altre versicle breu si ajuda; "
                 "4) acaba amb una pregaria breu i real; "
-                "5) tanca preguntant si pots ajudar en alguna cosa mes. "
+                "5) abans de tancar, recorda amb naturalitat que seria bo parlar-ne tambe amb el seu pastor o amb algun responsable espiritual de la seva esglesia, per no caminar-ho tot sol; "
+                "6) tanca preguntant si pots ajudar en alguna cosa mes. "
                 "Fes-ho amb llenguatge senzill, proper i sense sonar com un esquema."
             ),
             "fr": (
@@ -10639,7 +10745,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "2) donne des paroles d'encouragement avec un verset bref qui convient vraiment; "
                 "3) offre un conseil pastoral concret avec un autre verset bref si cela aide; "
                 "4) termine par une priere breve et reelle; "
-                "5) finis en demandant si tu peux aider en quelque chose d'autre. "
+                "5) avant de conclure, rappelle naturellement qu'il serait bon d'en parler aussi avec son pasteur ou avec un responsable spirituel de son Eglise, afin de ne pas traverser cela seul; "
+                "6) finis en demandant si tu peux aider en quelque chose d'autre. "
                 "Fais-le avec un langage simple, proche et naturel."
             ),
             "en": (
@@ -10649,7 +10756,8 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 "2) offer words of encouragement with a short fitting verse; "
                 "3) give one concrete pastoral counsel with another short verse if helpful; "
                 "4) end with a brief real prayer; "
-                "5) close by asking whether you can help with anything else. "
+                "5) before closing, naturally remind the person that it would be good to talk about this with their pastor or a spiritual leader in their church, so they do not walk through it alone; "
+                "6) close by asking whether you can help with anything else. "
                 "Do this in simple, close, natural language rather than sounding like a template."
             ),
         }
@@ -10705,7 +10813,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "",
             respuesta,
         ).strip()
-        return f"{respuesta} En el nombre de Jesus. Amen.".strip()
+        return f"{respuesta} En el nombre de Jesús. Amén.".strip()
 
     def limpiar_cierre_oracion_chat_consejero(texto: str, mensaje_usuario: str) -> str:
         respuesta = (texto or "").strip()
@@ -11056,13 +11164,19 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
                 respuesta = variar_inicio_entiendo_chat_consejero(respuesta)
                 respuesta = suavizar_uso_nombre_chat_consejero(respuesta)
                 respuesta = limpiar_repeticiones_chat_consejero(respuesta)
+                if respuesta_directa_chat:
+                    respuesta = agregar_pregunta_despues_oracion_inicial_chat_consejero(respuesta)
+                if es_modo_chat_suenos:
+                    respuesta = asegurar_recordatorio_final_chat_suenos(respuesta)
+                else:
+                    respuesta = asegurar_recordatorio_cierre_chat_consejero(respuesta, resultado_ritmo_chat)
                 registrar_ritmo_chat_consejero(resultado_ritmo_chat)
                 detener_animacion_espera_chat()
                 sincronizar_chat_consejero_visual()
                 page.update()
                 await desplazar_chat_al_final()
                 await asyncio.sleep(0.05)
-                await animar_respuesta_chat_consejero(respuesta)
+                await animar_respuesta_chat_consejero(respuesta, resultado_ritmo_chat)
             finally:
                 detener_animacion_espera_chat()
                 pr.visible = False
