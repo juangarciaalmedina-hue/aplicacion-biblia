@@ -7877,7 +7877,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         for _ in range(2):
             await asyncio.sleep(0)
             try:
-                chat_conversacion.scroll_to(offset=-1, duration=duracion_lista)
+                chat_conversacion.scroll_to(offset=10_000_000, duration=duracion_lista)
             except Exception:
                 pass
             try:
