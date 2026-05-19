@@ -7936,7 +7936,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         elif hay_mensaje_usuario:
             respuesta_final = asegurar_recordatorio_cierre_chat_consejero(respuesta_final, resultado_ritmo)
 
-        cursor_chat = "â–Œ"
+        cursor_chat = ""
         hora_respuesta = hora_chat_actual()
         indice_mensaje = len(historial_chat_consejero)
         historial_chat_consejero.append(("assistant", "", hora_respuesta))
