@@ -2914,6 +2914,17 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     page.scroll = ft.ScrollMode.AUTO
     inicio_preferido = inicio if inicio in {"biblia", "filtros", "comportamiento", "incredulo", "cristianos", "dones", "chat_consejero", "chat_soporte", "chat_suenos"} else "biblia"
     controles_montados = False
+
+    def programar_scroll_pagina(scroll_key: str, duration: int = 300) -> None:
+        async def tarea_scroll():
+            try:
+                await page.scroll_to(scroll_key=scroll_key, duration=duration)
+            except Exception:
+                pass
+
+        if controles_montados:
+            page.run_task(tarea_scroll)
+
     label_style_theme = ft.TextStyle(color=theme["primary"])
     textos_comportamiento = {
         "es": {
@@ -5641,7 +5652,10 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     chat_conversacion = ft.ListView(
         controls=[],
         spacing=10,
-        auto_scroll=True,
+        auto_scroll=False,
+        build_controls_on_demand=False,
+        padding=ft.Padding(left=0, top=0, right=0, bottom=18),
+        scroll=ft.ScrollMode.ALWAYS,
         expand=True,
     )
     clipboard_service = ft.Clipboard()
@@ -5963,7 +5977,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     def llevar_a_generacion_si_corresponde():
         paso_actual = obtener_paso_actual()
         if paso_actual in {"study_type", "words", "generate"}:
-            page.scroll_to(scroll_key="panel_generacion", duration=300)
+            programar_scroll_pagina("panel_generacion", 300)
 
     def actualizar_versiculos(e=None):
         if dd_libro.value == no_selection or not dd_cap.value:
@@ -6170,7 +6184,7 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         page.update()
         await asyncio.sleep(0.05)
         try:
-            page.scroll_to(scroll_key="resultado_test_dones", duration=260)
+            await page.scroll_to(scroll_key="resultado_test_dones", duration=260)
         except Exception:
             pass
 
@@ -7877,11 +7891,11 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         for _ in range(2):
             await asyncio.sleep(0)
             try:
-                chat_conversacion.scroll_to(offset=10_000_000, duration=duracion_lista)
+                await chat_conversacion.scroll_to(offset=-1, duration=duracion_lista)
             except Exception:
                 pass
             try:
-                page.scroll_to(scroll_key="barra_chat_consejero", duration=duracion_pagina)
+                await page.scroll_to(scroll_key="barra_chat_consejero", duration=duracion_pagina)
             except Exception:
                 pass
 
@@ -11606,18 +11620,12 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
         dd_fin.value = None
         manejar_bloqueos()
         refrescar_por_cambio()
-        try:
-            page.scroll_to(scroll_key="panel_pasaje", duration=300)
-        except Exception:
-            pass
+        programar_scroll_pagina("panel_pasaje", 300)
 
     def volver_a_filtros_estudio(e=None):
         mostrar_filtros_por_vuelta["ok"] = True
         actualizar_disposicion()
-        try:
-            page.scroll_to(scroll_key="panel_filtros", duration=300)
-        except Exception:
-            pass
+        programar_scroll_pagina("panel_filtros", 300)
         page.update()
 
     def volver_desde_generacion(e=None):
@@ -12888,19 +12896,19 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
     page.add(ft.SafeArea(marco_principal))
     controles_montados = True
     if inicio_preferido == "filtros":
-        page.scroll_to(scroll_key="panel_filtros", duration=300)
+        programar_scroll_pagina("panel_filtros", 300)
     elif inicio_preferido == "comportamiento":
-        page.scroll_to(scroll_key="panel_comportamiento", duration=300)
+        programar_scroll_pagina("panel_comportamiento", 300)
     elif inicio_preferido == "incredulo":
-        page.scroll_to(scroll_key="panel_incredulo", duration=300)
+        programar_scroll_pagina("panel_incredulo", 300)
     elif inicio_preferido == "cristianos":
-        page.scroll_to(scroll_key="panel_cristianos", duration=300)
+        programar_scroll_pagina("panel_cristianos", 300)
     elif inicio_preferido == "dones":
-        page.scroll_to(scroll_key="panel_dones", duration=300)
+        programar_scroll_pagina("panel_dones", 300)
     elif es_modo_chat:
-        page.scroll_to(scroll_key="panel_chat_consejero", duration=300)
+        programar_scroll_pagina("panel_chat_consejero", 300)
     else:
-        page.scroll_to(scroll_key="panel_pasaje", duration=300)
+        programar_scroll_pagina("panel_pasaje", 300)
     
     async def hidratar_filtros_async():
         await asyncio.sleep(0.02)
