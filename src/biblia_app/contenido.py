@@ -3386,11 +3386,9 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "status_ready": "Estado: respuesta lista",
             "intro": "Recibirás una orientación prudente, bíblica y pastoral sobre los posibles significados del sueño.",
             "greetings": [
-                "Hola. Puedes contarme tu sueño con calma, incluyendo lo que viste, sentiste y el contexto que estás viviendo estos días. Lo miraremos con prudencia a la luz de la Biblia.",
-                "Hola. Escribe tu sueño con los detalles principales y, si quieres, también lo que estás orando o discerniendo en este tiempo. Buscaremos una orientación bíblica sin ir más allá de lo que la Escritura permite afirmar.",
-                "Bienvenido. Cuéntame el sueño paso a paso y dime qué fue lo que más te llamó la atención o te inquietó. Te responderé con una lectura bíblica y pastoral, no esotérica.",
+                "Dios te bendiga. Soy un chat interpretador de sueños. Con esto quiero decir que no soy Dios, ni soy una persona que te conoce, ni conozco tu vida. Voy a intentar interpretar tu sueño con la información que tengo sobre la interpretación de simbolismos en la Biblia, y con información del contexto cristiano y de fuentes cristianas sobre el tema de los sueños y su interpretación. Dicho esto, si quieres procedemos a interpretar tu sueño. Cuéntamelo.",
             ],
-            "greeting": "Hola. Puedes contarme tu sueño con calma, incluyendo lo que viste, sentiste y el contexto que estás viviendo estos días. Lo miraremos con prudencia a la luz de la Biblia.",
+            "greeting": "Dios te bendiga. Soy un chat interpretador de sueños. Con esto quiero decir que no soy Dios, ni soy una persona que te conoce, ni conozco tu vida. Voy a intentar interpretar tu sueño con la información que tengo sobre la interpretación de simbolismos en la Biblia, y con información del contexto cristiano y de fuentes cristianas sobre el tema de los sueños y su interpretación. Dicho esto, si quieres procedemos a interpretar tu sueño. Cuéntamelo.",
             "warning": "Esta sección no funciona como un oráculo ni reemplaza la Biblia, la oración o la guía de tu pastor. No usamos tarot, astrología ni lenguaje esotérico.",
             "you": "Tú",
             "assistant": "Guía bíblica de sueños",
