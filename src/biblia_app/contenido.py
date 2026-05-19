@@ -7612,10 +7612,30 @@ def pantalla_principal(page: ft.Page, idioma="es", on_volver=None, inicio="bibli
             "fr": ("tous les reves n'ont pas", "un reve est simplement un reve"),
             "en": ("not every dream has", "a dream is simply a dream"),
         }.get(lang_code, ("no todos los suenos", "a veces un sueno es solo un sueno"))
-        if any(pista in respuesta_normalizada for pista in pistas):
-            return respuesta
+        respuesta_con_recordatorio = (
+            respuesta
+            if any(pista in respuesta_normalizada for pista in pistas)
+            else f"{respuesta}\n\n{recordatorio}".strip()
+        )
 
-        return f"{respuesta}\n\n{recordatorio}".strip()
+        cierres = {
+            "es": "Dios te bendiga. Que el Señor te dé paz y te guíe con sabiduría; no camines con miedo, camina mirando a Cristo. \"El Señor es mi pastor; nada me faltará\" (Salmo 23:1). ✝️",
+            "ca": "Déu et beneeixi. Que el Senyor et doni pau i et guiï amb saviesa; no caminis amb por, camina mirant Crist. \"El Senyor és el meu pastor; no em manca res\" (Salm 23:1). ✝️",
+            "fr": "Que Dieu te bénisse. Que le Seigneur te donne la paix et te guide avec sagesse; ne marche pas dans la peur, marche en regardant au Christ. \"Le Seigneur est mon berger: je ne manquerai de rien\" (Psaume 23:1). ✝️",
+            "en": "God bless you. May the Lord give you peace and guide you with wisdom; do not walk in fear, walk with your eyes on Christ. \"The Lord is my shepherd; I shall not want\" (Psalm 23:1). ✝️",
+        }
+        cierre = cierres.get(lang_code, cierres["es"])
+        respuesta_final_normalizada = normalizar(respuesta_con_recordatorio)
+        pistas_cierre = {
+            "es": ("dios te bendiga", "salmo 23:1"),
+            "ca": ("deu et beneeixi", "salm 23:1"),
+            "fr": ("dieu te benisse", "psaume 23:1"),
+            "en": ("god bless you", "psalm 23:1"),
+        }.get(lang_code, ("dios te bendiga", "salmo 23:1"))
+        if any(pista in respuesta_final_normalizada for pista in pistas_cierre):
+            return respuesta_con_recordatorio
+
+        return f"{respuesta_con_recordatorio}\n\n{cierre}".strip()
 
     def asegurar_recordatorio_cierre_chat_consejero(texto: str, resultado_ritmo: str) -> str:
         respuesta = limpiar_respuesta_chat_visible(texto)
