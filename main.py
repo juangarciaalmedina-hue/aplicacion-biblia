@@ -11,9 +11,6 @@ for path in (ROOT, VENDOR_DIR, SRC_DIR):
     if path_str not in sys.path:
         sys.path.insert(0, path_str)
 
-import certifi
-
-
 def _load_local_package(name: str, init_path: Path):
     spec = importlib.util.spec_from_file_location(
         name,

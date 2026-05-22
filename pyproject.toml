@@ -4,19 +4,19 @@ build-backend = "briefcase.build"
 
 [project]
 name = "biblia-ia"
-version = "1.0.2"
+version = "1.0.5"
 description = "Aplicacion biblica con bienvenida y contenido IA"
 authors = [{ name = "Juan" }]
 requires-python = ">=3.10"
 license = { text = "Proprietary" }
-dependencies = ["flet", "certifi", "six"]
+dependencies = ["flet", "six"]
 
 [tool.flet]
 product = "Biblia IA"
 artifact = "biblia-ia"
 org = "com.jmgalmedina"
 company = "JM Galmedina"
-build_number = 28
+build_number = 32
 
 [tool.flet.app]
 path = "src"
@@ -93,7 +93,7 @@ pwa_theme_color = "#C8102E"
 [tool.briefcase]
 project_name = "Biblia IA"
 bundle = "com.jmgalmedina"
-version = "1.0.2"
+version = "1.0.5"
 url = "https://tiktok.com/@jmgalmedina"
 author = "Juan"
 author_email = "example@example.com"
@@ -102,5 +102,5 @@ author_email = "example@example.com"
 formal_name = "Biblia IA"
 description = "Aplicacion biblica con bienvenida y contenido IA"
 sources = ["src/biblia_app"]
-requires = ["flet", "certifi", "six"]
+requires = ["flet", "six"]
 module = "biblia_app"
